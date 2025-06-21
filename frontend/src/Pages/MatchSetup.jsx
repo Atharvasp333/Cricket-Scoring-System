@@ -128,59 +128,55 @@ const MatchSetup = () => {
       
       {/* Toss Section */}
       {!tossCompleted ? (
-        <section className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Toss</h2>
+        <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
+          <h2 className="text-xl font-bold mb-4">Toss</h2>
           <form onSubmit={handleTossSubmit}>
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2">Toss Winner</label>
-              <div className="flex space-x-4">
-                <button 
-                  type="button"
-                  className={`px-4 py-2 rounded ${tossWinner === matchData.team1.name ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                  onClick={() => setTossWinner(matchData.team1.name)}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Toss Winner</label>
+                <select 
+                  className="w-full p-2 border border-gray-300 rounded"
+                  value={tossWinner}
+                  onChange={(e) => setTossWinner(e.target.value)}
+                  required
                 >
-                  {matchData.team1.name}
-                </button>
-                <button 
-                  type="button"
-                  className={`px-4 py-2 rounded ${tossWinner === matchData.team2.name ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                  onClick={() => setTossWinner(matchData.team2.name)}
+                  <option value="">Select Team</option>
+                  <option value="Team A">Team A</option>
+                  <option value="Team B">Team B</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Decision</label>
+                <select 
+                  className="w-full p-2 border border-gray-300 rounded"
+                  value={tossDecision}
+                  onChange={(e) => setTossDecision(e.target.value)}
+                  required
                 >
-                  {matchData.team2.name}
-                </button>
+                  <option value="">Select Decision</option>
+                  <option value="Bat">Bat</option>
+                  <option value="Bowl">Bowl</option>
+                </select>
               </div>
             </div>
             
-            <div className="mb-6">
-              <label className="block text-gray-700 text-sm font-bold mb-2">Decision</label>
-              <div className="flex space-x-4">
-                <button 
-                  type="button"
-                  className={`px-4 py-2 rounded ${tossDecision === 'bat' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                  onClick={() => setTossDecision('bat')}
-                  disabled={!tossWinner}
-                >
-                  Bat
-                </button>
-                <button 
-                  type="button"
-                  className={`px-4 py-2 rounded ${tossDecision === 'bowl' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                  onClick={() => setTossDecision('bowl')}
-                  disabled={!tossWinner}
-                >
-                  Bowl
-                </button>
+            {/* Toss Selection Preview */}
+            {tossWinner && tossDecision && (
+              <div className="mt-4 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-center font-medium">
+                  <span className="font-bold text-blue-700">{tossWinner}</span> won the toss and elected to <span className="font-bold text-blue-700">{tossDecision.toLowerCase()}</span> first
+                </p>
               </div>
-            </div>
+            )}
             
             <button 
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              className="w-full py-2 px-4 bg-blue-600 text-white font-bold rounded hover:bg-blue-700"
             >
               Confirm Toss
             </button>
           </form>
-        </section>
+        </div>
       ) : !teamSelectionCompleted ? (
         // Team Selection Section
         <section className="bg-white p-6 rounded-lg shadow-md mb-8">

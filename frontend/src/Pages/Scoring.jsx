@@ -18,7 +18,7 @@ const Scoring = () => {
     },
     venue: 'Stadium 1',
     date: '2023-10-15',
-    overs: 20
+    overs: 20.0
   }
 
   // State for match progress
@@ -71,9 +71,11 @@ const Scoring = () => {
   const [isWicket, setIsWicket] = useState(false)
   const [wicketType, setWicketType] = useState('')
   const [showWicketModal, setShowWicketModal] = useState(false)
+  const [showNewBatsmanModal, setShowNewBatsmanModal] = useState(false)
   const [showExtraModal, setShowExtraModal] = useState(false)
   const [showBallTypeModal, setShowBallTypeModal] = useState(false)
   const [showChangeBowlerModal, setShowChangeBowlerModal] = useState(false)
+  const [lastBowler, setLastBowler] = useState('')
 
   // Handle runs button click
   const handleRunsClick = (runs) => {
@@ -110,6 +112,20 @@ const Scoring = () => {
   const handleWicketTypeSelect = (type) => {
     setWicketType(type)
     setShowWicketModal(false)
+    setShowNewBatsmanModal(true)
+  }
+  
+  // Handle new batsman selection
+  const handleNewBatsmanSelect = (player) => {
+    setStriker({
+      name: player,
+      runs: 0,
+      balls: 0,
+      fours: 0,
+      sixes: 0,
+      strikeRate: 0
+    })
+    setShowNewBatsmanModal(false)
   }
 
   // Handle extra type selection
@@ -131,6 +147,12 @@ const Scoring = () => {
 
   // Handle bowler selection
   const handleBowlerSelect = (bowlerName) => {
+    // Prevent selecting the same bowler consecutively
+    if (bowlerName === lastBowler) {
+      alert('The same bowler cannot bowl consecutive overs')
+      return
+    }
+    
     setCurrentBowler({
       name: bowlerName,
       overs: 0,
@@ -155,13 +177,39 @@ const Scoring = () => {
     const temp = striker
     setStriker(nonStriker)
     setNonStriker(temp)
+    // Store current bowler as last bowler
+    setLastBowler(currentBowler.name)
     // Show change bowler modal
     setShowChangeBowlerModal(true)
   }
 
   // Handle submit ball
   const handleSubmitBall = () => {
-    // Create ball object
+    // Check if ball type is selected for legal deliveries
+    if (!isExtra && !ballType) {
+      alert('Please select a ball type for legal deliveries')
+      return
+    }
+    
+    // Create ball object with display text for extras with runs
+    let displayText = ''
+    if (isExtra) {
+      if (extraType === 'wide' || extraType === 'no-ball') {
+        displayText = extraType === 'wide' ? 'Wd' : 'Nb'
+        if (runsScored > 0) {
+          displayText += '+' + runsScored
+        }
+      } else {
+        displayText = extraType === 'leg-bye' ? 'Lb' : 'B'
+        if (runsScored > 0) {
+          displayText += '+' + runsScored
+        }
+      }
+    } else {
+      displayText = runsScored !== null ? runsScored.toString() : ''
+      if (isWicket) displayText = 'W'
+    }
+    
     const ball = {
       runs: runsScored,
       isExtra,
@@ -170,14 +218,15 @@ const Scoring = () => {
       wicketType,
       ballType,
       bowler: currentBowler.name,
-      batsman: striker.name
+      batsman: striker.name,
+      displayText: displayText
     }
 
     // Update current over
     setCurrentOver([...currentOver, ball])
 
     // Update score
-    let runsToAdd = runsScored
+    let runsToAdd = runsScored || 0
     if (isExtra && (extraType === 'wide' || extraType === 'no-ball')) {
       runsToAdd += 1
     }
@@ -186,30 +235,30 @@ const Scoring = () => {
     // Update wickets
     if (isWicket) {
       setWickets(wickets + 1)
-      // In a real app, you would show a modal to select the new batsman
-      // For now, we'll just update the striker with a new batsman
-      setStriker({
-        name: `Player A${wickets + 3}`, // Simple way to get next player
-        runs: 0,
-        balls: 0,
-        fours: 0,
-        sixes: 0,
-        strikeRate: 0
-      })
+      // Modal for new batsman selection will be shown after ball is submitted
+      // We'll show it at the end of this function
     }
 
     // Update balls only if it's not a wide or no-ball
     if (!isExtra || (isExtra && extraType !== 'wide' && extraType !== 'no-ball')) {
       setBalls(balls + 1)
       
-      // Update striker stats
+      // Update striker stats - only for legal deliveries
+      // For singles and triples, don't add runs to batsman but change strike
       const updatedStriker = {
-        ...striker,
-        runs: striker.runs + runsScored,
-        balls: striker.balls + 1,
-        fours: runsScored === 4 ? striker.fours + 1 : striker.fours,
-        sixes: runsScored === 6 ? striker.sixes + 1 : striker.sixes
+        ...striker
       }
+      
+      // Only update batsman stats if it's not a single or triple
+      // This ensures batsman doesn't get credit for singles/triples
+      if (runsScored !== 1 && runsScored !== 3) {
+        updatedStriker.runs = striker.runs + (runsScored || 0)
+        updatedStriker.fours = runsScored === 4 ? striker.fours + 1 : striker.fours
+        updatedStriker.sixes = runsScored === 6 ? striker.sixes + 1 : striker.sixes
+      }
+      
+      // Always increment balls faced for legal deliveries
+      updatedStriker.balls = striker.balls + 1
       updatedStriker.strikeRate = ((updatedStriker.runs / updatedStriker.balls) * 100).toFixed(2)
       setStriker(updatedStriker)
       
@@ -272,11 +321,16 @@ const Scoring = () => {
     setWicketType('')
     setBallType('')
 
-    // Swap striker if odd runs or end of over
-    if (runsScored % 2 === 1) {
+    // Swap striker if odd runs (1 or 3) on a legal delivery
+    if (runsScored && runsScored % 2 === 1 && (!isExtra || (isExtra && extraType !== 'wide' && extraType !== 'no-ball'))) {
       const temp = striker
       setStriker(nonStriker)
       setNonStriker(temp)
+    }
+    
+    // Show new batsman modal if a wicket fell
+    if (isWicket) {
+      setShowNewBatsmanModal(true)
     }
   }
 
@@ -380,15 +434,14 @@ const Scoring = () => {
             {currentOver.length > 0 ? (
               currentOver.map((ball, index) => (
                 <div key={index} className={`
-                  w-10 h-10 flex items-center justify-center rounded-full m-1 text-white font-bold
+                  w-auto min-w-10 h-10 px-2 flex items-center justify-center rounded-full m-1 text-white font-bold
                   ${ball.isWicket ? 'bg-red-500' : 
                     ball.isExtra ? 'bg-yellow-500' : 
                     ball.runs === 4 ? 'bg-green-500' : 
                     ball.runs === 6 ? 'bg-purple-500' : 'bg-blue-500'}
                 `}>
-                  {ball.isWicket ? 'W' : 
-                   ball.isExtra ? (ball.extraType === 'wide' ? 'Wd' : ball.extraType === 'no-ball' ? 'Nb' : 'Lb') : 
-                   ball.runs}
+                  {/* Display the ball's displayText which includes extras with runs */}
+                  {ball.displayText}
                 </div>
               ))
             ) : (
@@ -408,15 +461,14 @@ const Scoring = () => {
                   <div className="flex flex-wrap">
                     {over.map((ball, ballIndex) => (
                       <div key={ballIndex} className={`
-                        w-8 h-8 flex items-center justify-center rounded-full m-1 text-white font-bold text-sm
+                        w-auto min-w-8 h-8 px-1 flex items-center justify-center rounded-full m-1 text-white font-bold text-sm
                         ${ball.isWicket ? 'bg-red-500' : 
                           ball.isExtra ? 'bg-yellow-500' : 
                           ball.runs === 4 ? 'bg-green-500' : 
                           ball.runs === 6 ? 'bg-purple-500' : 'bg-blue-500'}
                       `}>
-                        {ball.isWicket ? 'W' : 
-                         ball.isExtra ? (ball.extraType === 'wide' ? 'Wd' : ball.extraType === 'no-ball' ? 'Nb' : 'Lb') : 
-                         ball.runs}
+                        {/* Display the ball's displayText which includes extras with runs */}
+                        {ball.displayText}
                       </div>
                     ))}
                   </div>
@@ -655,11 +707,12 @@ const Scoring = () => {
       {/* Ball Type Modal */}
       {showBallTypeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl">
             <h2 className="text-xl font-bold mb-4">Select Ball Type</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
+              {/* Pace Bowling */}
               <div>
-                <h3 className="font-medium mb-2">Pace</h3>
+                <h3 className="font-medium mb-2 text-blue-700">Pace</h3>
                 <div className="grid grid-cols-1 gap-2">
                   <button 
                     className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
@@ -675,14 +728,34 @@ const Scoring = () => {
                   </button>
                   <button 
                     className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                    onClick={() => handleBallTypeSelect('Full Toss')}
+                  >
+                    Full Toss
+                  </button>
+                  <button 
+                    className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
                     onClick={() => handleBallTypeSelect('Length Ball')}
                   >
                     Length Ball
                   </button>
+                  <button 
+                    className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                    onClick={() => handleBallTypeSelect('Short Ball')}
+                  >
+                    Short Ball
+                  </button>
+                  <button 
+                    className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                    onClick={() => handleBallTypeSelect('Slower Ball')}
+                  >
+                    Slower Ball
+                  </button>
                 </div>
               </div>
+              
+              {/* Spin Bowling */}
               <div>
-                <h3 className="font-medium mb-2">Spin</h3>
+                <h3 className="font-medium mb-2 text-green-700">Spin</h3>
                 <div className="grid grid-cols-1 gap-2">
                   <button 
                     className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
@@ -701,6 +774,67 @@ const Scoring = () => {
                     onClick={() => handleBallTypeSelect('Googly')}
                   >
                     Googly
+                  </button>
+                  <button 
+                    className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                    onClick={() => handleBallTypeSelect('Doosra')}
+                  >
+                    Doosra
+                  </button>
+                  <button 
+                    className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                    onClick={() => handleBallTypeSelect('Carrom Ball')}
+                  >
+                    Carrom Ball
+                  </button>
+                  <button 
+                    className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                    onClick={() => handleBallTypeSelect('Arm Ball')}
+                  >
+                    Arm Ball
+                  </button>
+                </div>
+              </div>
+              
+              {/* Seam Bowling */}
+              <div>
+                <h3 className="font-medium mb-2 text-red-700">Seam</h3>
+                <div className="grid grid-cols-1 gap-2">
+                  <button 
+                    className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                    onClick={() => handleBallTypeSelect('Outswinger')}
+                  >
+                    Outswinger
+                  </button>
+                  <button 
+                    className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                    onClick={() => handleBallTypeSelect('Inswinger')}
+                  >
+                    Inswinger
+                  </button>
+                  <button 
+                    className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                    onClick={() => handleBallTypeSelect('Reverse Swing')}
+                  >
+                    Reverse Swing
+                  </button>
+                  <button 
+                    className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                    onClick={() => handleBallTypeSelect('Cutter')}
+                  >
+                    Cutter
+                  </button>
+                  <button 
+                    className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                    onClick={() => handleBallTypeSelect('Off Cutter')}
+                  >
+                    Off Cutter
+                  </button>
+                  <button 
+                    className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                    onClick={() => handleBallTypeSelect('Leg Cutter')}
+                  >
+                    Leg Cutter
                   </button>
                 </div>
               </div>
@@ -726,14 +860,43 @@ const Scoring = () => {
                   key={index}
                   className="w-full py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium mb-2 text-left"
                   onClick={() => handleBowlerSelect(player)}
+                  disabled={player === lastBowler}
                 >
-                  {player}
+                  {player} {player === lastBowler && "(bowled last over)"}
                 </button>
               ))}
             </div>
             <button 
               className="mt-4 w-full py-2 px-4 rounded bg-gray-500 text-white font-bold hover:bg-gray-600"
               onClick={() => setShowChangeBowlerModal(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* New Batsman Modal */}
+      {showNewBatsmanModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Select New Batsman</h2>
+            <div className="max-h-60 overflow-y-auto">
+              {battingTeam.players
+                .filter(player => player !== striker.name && player !== nonStriker.name)
+                .map((player, index) => (
+                  <button 
+                    key={index}
+                    className="w-full py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium mb-2 text-left"
+                    onClick={() => handleNewBatsmanSelect(player)}
+                  >
+                    {player}
+                  </button>
+                ))}
+            </div>
+            <button 
+              className="mt-4 w-full py-2 px-4 rounded bg-gray-500 text-white font-bold hover:bg-gray-600"
+              onClick={() => setShowNewBatsmanModal(false)}
             >
               Cancel
             </button>
