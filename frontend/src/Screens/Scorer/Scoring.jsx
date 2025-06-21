@@ -403,11 +403,11 @@ const Scoring = () => {
         <div className="bg-white/90 p-4 rounded-lg shadow-lg">
           <h2 className="text-lg font-semibold mb-2 text-blue-900">Batsmen</h2>
           <div className="grid grid-cols-2 gap-2">
-            <div className={`p-2 rounded ${striker ? 'bg-blue-400' : 'bg-gray-400'}`}>
+            <div className={`p-2 rounded ${striker ? 'bg-blue-400' : 'bg-gray-700'}`}>
               <div className="font-medium">{striker.name} *</div>
               <div className="text-sm">{striker.runs} ({striker.balls}) | {striker.fours}x4 | {striker.sixes}x6 | SR: {striker.strikeRate}</div>
             </div>
-            <div className={`p-2 rounded ${!striker ? 'bg-blue-400' : 'bg-gray-400'}`}>
+            <div className={`p-2 rounded ${!striker ? 'bg-blue-400' : 'bg-gray-700'}`}>
               <div className="font-medium">{nonStriker.name}</div>
               <div className="text-sm">{nonStriker.runs} ({nonStriker.balls}) | {nonStriker.fours}x4 | {nonStriker.sixes}x6 | SR: {nonStriker.strikeRate}</div>
             </div>
@@ -417,7 +417,7 @@ const Scoring = () => {
         {/* Bowler Info */}
         <div className="bg-white/90 p-4 rounded-lg shadow-lg">
           <h2 className="text-lg font-semibold mb-2 text-blue-900">Bowler</h2>
-          <div className="p-2 rounded bg-orange-500">
+          <div className="p-2 rounded bg-red-500">
             <div className="font-medium">{currentBowler.name}</div>
             <div className="text-sm">{currentBowler.overs} overs | {currentBowler.runs}R | {currentBowler.wickets}W | Econ: {currentBowler.economy}</div>
           </div>

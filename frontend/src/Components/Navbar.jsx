@@ -6,18 +6,18 @@ const Navbar = () => {
   
   // Function to check if the link is active
   const isActive = (path) => {
-    return location.pathname === path ? 'text-blue-300' : 'hover:text-gray-300'
+    return location.pathname === path ? 'text-white-300' : 'hover:text-gray-300'
   }
   
   return (
-    <nav className="bg-gray-800 text-white p-4">
+    <nav className="bg-cyan-700 text-white p-4">
       <div className="container mx-auto flex justify-between items-center">
-        <div className="text-xl font-bold">
+        <div className="text-xl text-white font-bold">
           <Link to="/">Cricket Scoring System</Link>
         </div>
-        <ul className="flex space-x-6">
+        <ul className="flex text-white space-x-6">
           <li>
-            <Link to="/scorer-home" className={isActive('/scorer-home')}>Scorer Home</Link>
+            <Link to="/scorer-home" className={isActive('/scorer-home')}>Home</Link>
           </li>
           <li>
             <Link to="/matches" className={isActive('/matches')}>Matches</Link>

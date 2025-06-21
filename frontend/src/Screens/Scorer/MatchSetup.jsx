@@ -117,11 +117,11 @@ const MatchSetup = () => {
       <h1 className="text-3xl font-bold mb-8">Match Setup</h1>
       
       {/* Match Info */}
-      <div className="bg-gray-100 p-6 rounded-lg shadow-md mb-8">
+      <div className="bg-green-700 p-6 text-blue rounded-lg shadow-md mb-8">
         <h2 className="text-2xl font-semibold mb-4">{matchData.team1.name} vs {matchData.team2.name}</h2>
-        <p className="text-gray-600">
-          <span className="font-medium">Venue:</span> {matchData.venue} | 
-          <span className="font-medium">Date:</span> {matchData.date} | 
+        <p className="text-gray-200 text-lg">
+          <span className="font-medium">Venue:</span> {matchData.venue} <space>|</space> <space/>
+          <span className="font-medium">Date:</span> {matchData.date}   <space>|</space>  <space/>
           <span className="font-medium">Time:</span> {matchData.time}
         </p>
       </div>
@@ -129,13 +129,13 @@ const MatchSetup = () => {
       {/* Toss Section */}
       {!tossCompleted ? (
         <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
-          <h2 className="text-xl font-bold mb-4">Toss</h2>
+          <h2 className="text-2xl text-black font-bold mb-4">TOSS</h2>
           <form onSubmit={handleTossSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">Toss Winner</label>
                 <select 
-                  className="w-full p-2 border border-gray-300 rounded"
+                  className="w-full p-2 text-gray-700 border border-gray-300 rounded"
                   value={tossWinner}
                   onChange={(e) => setTossWinner(e.target.value)}
                   required
@@ -148,7 +148,7 @@ const MatchSetup = () => {
               <div>
                 <label className="block text-gray-700 font-medium mb-2">Decision</label>
                 <select 
-                  className="w-full p-2 border border-gray-300 rounded"
+                  className="w-full p-2 border text-gray-700 border-gray-300 rounded"
                   value={tossDecision}
                   onChange={(e) => setTossDecision(e.target.value)}
                   required
@@ -162,8 +162,8 @@ const MatchSetup = () => {
             
             {/* Toss Selection Preview */}
             {tossWinner && tossDecision && (
-              <div className="mt-4 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <p className="text-center font-medium">
+              <div className="mt-4 mb-4 p-3 bg-blue-100 border border-blue-200 rounded-md">
+                <p className="text-center text-black font-medium">
                   <span className="font-bold text-blue-700">{tossWinner}</span> won the toss and elected to <span className="font-bold text-blue-700">{tossDecision.toLowerCase()}</span> first
                 </p>
               </div>
@@ -179,8 +179,8 @@ const MatchSetup = () => {
         </div>
       ) : !teamSelectionCompleted ? (
         // Team Selection Section
-        <section className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Select Playing XI</h2>
+        <section className="bg-green-100 p-6 rounded-lg shadow-md mb-8">
+          <h2 className="text-2xl text-gray-800 font-semibold mb-4">Select Playing XI</h2>
           <p className="mb-4 text-gray-600">
             <span className="font-medium">{tossWinner}</span> won the toss and elected to {tossDecision} first
           </p>
@@ -188,9 +188,9 @@ const MatchSetup = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Team 1 Selection */}
             <div>
-              <h3 className="text-xl font-semibold mb-3">{matchData.team1.name}</h3>
+              <h3 className="text-xl text-black font-semibold mb-3">{matchData.team1.name}</h3>
               <p className="mb-2 text-sm text-gray-600">Select 11 players ({team1Players.length}/11 selected)</p>
-              <div className="bg-gray-100 p-4 rounded-lg max-h-96 overflow-y-auto">
+              <div className="bg-gray-100 text-gray-800 p-4 rounded-lg max-h-96 overflow-y-auto">
                 {matchData.team1.players.map((player, index) => (
                   <div 
                     key={index} 
@@ -205,9 +205,9 @@ const MatchSetup = () => {
             
             {/* Team 2 Selection */}
             <div>
-              <h3 className="text-xl font-semibold mb-3">{matchData.team2.name}</h3>
+              <h3 className="text-xl text-black font-semibold mb-3">{matchData.team2.name}</h3>
               <p className="mb-2 text-sm text-gray-600">Select 11 players ({team2Players.length}/11 selected)</p>
-              <div className="bg-gray-100 p-4 rounded-lg max-h-96 overflow-y-auto">
+              <div className="bg-gray-100 p-4 text-gray-800 rounded-lg max-h-96 overflow-y-auto">
                 {matchData.team2.players.map((player, index) => (
                   <div 
                     key={index} 
