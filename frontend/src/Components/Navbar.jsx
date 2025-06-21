@@ -1,24 +1,32 @@
 import React from 'react'
+import { Link, useLocation } from 'react-router-dom'
 
 const Navbar = () => {
+  const location = useLocation()
+  
+  // Function to check if the link is active
+  const isActive = (path) => {
+    return location.pathname === path ? 'text-blue-300' : 'hover:text-gray-300'
+  }
+  
   return (
     <nav className="bg-gray-800 text-white p-4">
       <div className="container mx-auto flex justify-between items-center">
         <div className="text-xl font-bold">
-          <a href="/">Cricket Scoring System</a>
+          <Link to="/">Cricket Scoring System</Link>
         </div>
         <ul className="flex space-x-6">
           <li>
-            <a href="/" className="hover:text-gray-300">Home</a>
+            <Link to="/scorer-home" className={isActive('/scorer-home')}>Scorer Home</Link>
           </li>
           <li>
-            <a href="/matches" className="hover:text-gray-300">Matches</a>
+            <Link to="/matches" className={isActive('/matches')}>Matches</Link>
           </li>
           <li>
-            <a href="/teams" className="hover:text-gray-300">Teams</a>
+            <Link to="/teams" className={isActive('/teams')}>Teams</Link>
           </li>
           <li>
-            <a href="/stats" className="hover:text-gray-300">Statistics</a>
+            <Link to="/stats" className={isActive('/stats')}>Statistics</Link>
           </li>
         </ul>
       </div>
