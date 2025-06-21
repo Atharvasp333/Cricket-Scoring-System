@@ -112,7 +112,7 @@ const Scoring = () => {
   const handleWicketTypeSelect = (type) => {
     setWicketType(type)
     setShowWicketModal(false)
-    setShowNewBatsmanModal(true)
+    // setShowNewBatsmanModal(true)
   }
   
   // Handle new batsman selection
@@ -250,9 +250,8 @@ const Scoring = () => {
       }
       
       // Only update batsman stats if it's not a single or triple
-      // This ensures batsman doesn't get credit for singles/triples
-      if (runsScored !== 1 && runsScored !== 3) {
-        updatedStriker.runs = striker.runs + (runsScored || 0)
+      if (!isExtra && runsScored !== null) {
+        updatedStriker.runs = striker.runs + runsScored
         updatedStriker.fours = runsScored === 4 ? striker.fours + 1 : striker.fours
         updatedStriker.sixes = runsScored === 6 ? striker.sixes + 1 : striker.sixes
       }
@@ -341,27 +340,27 @@ const Scoring = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-200 via-green-100 to-yellow-100 container mx-auto px-4 py-6">
       {/* Match Info */}
-      <div className="bg-gray-100 p-4 rounded-lg shadow-md mb-6">
-        <h1 className="text-2xl font-bold mb-2">{battingTeam.name} vs {bowlingTeam.name}</h1>
+      <div className="bg-white/90 p-4 rounded-lg shadow-lg mb-6 text-black">
+        <h1 className="text-3xl font-bold mb-2 text-blue-900">{battingTeam.name} vs {bowlingTeam.name}</h1>
         <p className="text-gray-600 mb-2">
-          <span className="font-medium">Venue:</span> {matchData.venue} | 
-          <span className="font-medium">Date:</span> {matchData.date}
+          <span className="font-medium text-blue-900">Venue:</span> {matchData.venue} | 
+          <span className="font-medium text-blue-900">Date:</span> {matchData.date}
         </p>
         <div className="flex flex-wrap justify-between items-center">
           <div className="text-xl font-bold">
             {battingTeam.name}: {score}/{wickets}
           </div>
           <div>
-            <span className="font-medium">Overs:</span> {overs}.{balls} / {matchData.overs}
+            <span className="font-medium text-blue-900">Overs:</span> {overs}.{balls} / {matchData.overs}
           </div>
           <div>
-            <span className="font-medium">CRR:</span> {crr.toFixed(2)}
+            <span className="font-medium text-blue-900">CRR:</span> {crr.toFixed(2)}
             {innings === 2 && target && (
               <span className="ml-4">
-                <span className="font-medium">Target:</span> {target} | 
-                <span className="font-medium">RRR:</span> {rrr.toFixed(2)}
+                <span className="font-medium text-blue-900">Target:</span> {target} | 
+                <span className="font-medium text-blue-900">RRR:</span> {rrr.toFixed(2)}
               </span>
             )}
           </div>
@@ -371,44 +370,44 @@ const Scoring = () => {
       {/* Current Ball and Batsmen/Bowler Info */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Current Ball */}
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Current Ball</h2>
+        <div className="bg-white/90 p-4 rounded-lg shadow-lg">
+          <h2 className="text-lg font-semibold mb-2 text-blue-900">Current Ball</h2>
           <div className="flex flex-wrap items-center">
-            <div className="mr-4 mb-2">
-              <span className="font-medium">Over:</span> {overs}.{balls}
+            <div className="mr-4 text-black mb-2">
+              <span className="font-medium text-blue-900">Over:</span> {overs}.{balls}
             </div>
             {runsScored !== null && (
               <div className="mr-4 mb-2">
-                <span className="font-medium">Runs:</span> {runsScored}
+                <span className="font-medium text-blue-900">Runs:</span> {runsScored}
               </div>
             )}
             {isExtra && (
               <div className="mr-4 mb-2">
-                <span className="font-medium">Extra:</span> {extraType}
+                <span className="font-medium text-blue-900">Extra:</span> {extraType}
               </div>
             )}
             {isWicket && (
               <div className="mr-4 mb-2">
-                <span className="font-medium">Wicket:</span> {wicketType}
+                <span className="font-medium text-blue-900">Wicket:</span> {wicketType}
               </div>
             )}
             {ballType && (
               <div className="mr-4 mb-2">
-                <span className="font-medium">Ball Type:</span> {ballType}
+                <span className="font-medium text-blue-900">Ball Type:</span> {ballType}
               </div>
             )}
           </div>
         </div>
         
         {/* Batsmen Info */}
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Batsmen</h2>
+        <div className="bg-white/90 p-4 rounded-lg shadow-lg">
+          <h2 className="text-lg font-semibold mb-2 text-blue-900">Batsmen</h2>
           <div className="grid grid-cols-2 gap-2">
-            <div className={`p-2 rounded ${striker ? 'bg-blue-100' : 'bg-gray-100'}`}>
+            <div className={`p-2 rounded ${striker ? 'bg-blue-400' : 'bg-gray-400'}`}>
               <div className="font-medium">{striker.name} *</div>
               <div className="text-sm">{striker.runs} ({striker.balls}) | {striker.fours}x4 | {striker.sixes}x6 | SR: {striker.strikeRate}</div>
             </div>
-            <div className={`p-2 rounded ${!striker ? 'bg-blue-100' : 'bg-gray-100'}`}>
+            <div className={`p-2 rounded ${!striker ? 'bg-blue-400' : 'bg-gray-400'}`}>
               <div className="font-medium">{nonStriker.name}</div>
               <div className="text-sm">{nonStriker.runs} ({nonStriker.balls}) | {nonStriker.fours}x4 | {nonStriker.sixes}x6 | SR: {nonStriker.strikeRate}</div>
             </div>
@@ -416,9 +415,9 @@ const Scoring = () => {
         </div>
         
         {/* Bowler Info */}
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Bowler</h2>
-          <div className="p-2 rounded bg-gray-100">
+        <div className="bg-white/90 p-4 rounded-lg shadow-lg">
+          <h2 className="text-lg font-semibold mb-2 text-blue-900">Bowler</h2>
+          <div className="p-2 rounded bg-orange-500">
             <div className="font-medium">{currentBowler.name}</div>
             <div className="text-sm">{currentBowler.overs} overs | {currentBowler.runs}R | {currentBowler.wickets}W | Econ: {currentBowler.economy}</div>
           </div>
@@ -428,8 +427,8 @@ const Scoring = () => {
       {/* Over Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Current Over */}
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Current Over</h2>
+        <div className="bg-white/90 p-4 rounded-lg shadow-lg">
+          <h2 className="text-lg font-semibold mb-2 text-blue-900">Current Over</h2>
           <div className="flex flex-wrap">
             {currentOver.length > 0 ? (
               currentOver.map((ball, index) => (
@@ -451,13 +450,13 @@ const Scoring = () => {
         </div>
         
         {/* Previous Overs */}
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Previous Overs</h2>
+        <div className="bg-white/90 p-4 rounded-lg shadow-lg">
+          <h2 className="text-lg font-semibold mb-2 text-blue-900">Previous Overs</h2>
           <div className="max-h-32 overflow-y-auto">
             {previousOvers.length > 0 ? (
               previousOvers.map((over, overIndex) => (
                 <div key={overIndex} className="mb-2">
-                  <span className="font-medium">Over {overIndex + 1}:</span>
+                  <span className="font-medium text-blue-900">Over {overIndex + 1}:</span>
                   <div className="flex flex-wrap">
                     {over.map((ball, ballIndex) => (
                       <div key={ballIndex} className={`
@@ -482,45 +481,45 @@ const Scoring = () => {
       </div>
 
       {/* Scoring Controls */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <h2 className="text-lg font-semibold mb-4">Scoring Controls</h2>
+      <div className="bg-white/90 p-4 rounded-lg shadow-lg mb-6">
+        <h2 className="text-lg font-semibold mb-4 text-blue-900">Scoring Controls</h2>
         
         {/* Runs Buttons */}
         <div className="mb-4">
-          <h3 className="text-md font-medium mb-2">Runs</h3>
+          <h3 className="text-md font-medium mb-2 text-blue-900">Runs</h3>
           <div className="flex flex-wrap gap-2">
             <button 
-              className={`w-12 h-12 rounded-full font-bold ${runsScored === 0 && !isWicket && !isExtra ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              className={`w-12 h-12 rounded-full font-bold bg-blue-600 text-white hover:brightness-110 ${runsScored === 0 && !isWicket && !isExtra ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
               onClick={() => handleRunsClick(0)}
             >
               0
             </button>
             <button 
-              className={`w-12 h-12 rounded-full font-bold ${runsScored === 1 && !isWicket && !isExtra ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              className={`w-12 h-12 rounded-full font-bold bg-blue-600 text-white hover:brightness-110 ${runsScored === 1 && !isWicket && !isExtra ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
               onClick={() => handleRunsClick(1)}
             >
               1
             </button>
             <button 
-              className={`w-12 h-12 rounded-full font-bold ${runsScored === 2 && !isWicket && !isExtra ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              className={`w-12 h-12 rounded-full font-bold bg-blue-600 text-white hover:brightness-110 ${runsScored === 2 && !isWicket && !isExtra ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
               onClick={() => handleRunsClick(2)}
             >
               2
             </button>
             <button 
-              className={`w-12 h-12 rounded-full font-bold ${runsScored === 3 && !isWicket && !isExtra ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              className={`w-12 h-12 rounded-full font-bold bg-blue-600 text-white hover:brightness-110 ${runsScored === 3 && !isWicket && !isExtra ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
               onClick={() => handleRunsClick(3)}
             >
               3
             </button>
             <button 
-              className={`w-12 h-12 rounded-full font-bold ${runsScored === 4 && !isWicket && !isExtra ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+              className={`w-12 h-12 rounded-full font-bold bg-blue-600 text-white hover:brightness-110 ${runsScored === 4 && !isWicket && !isExtra ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
               onClick={() => handleRunsClick(4)}
             >
               4
             </button>
             <button 
-              className={`w-12 h-12 rounded-full font-bold ${runsScored === 6 && !isWicket && !isExtra ? 'bg-purple-500 text-white' : 'bg-gray-200'}`}
+              className={`w-12 h-12 rounded-full font-bold bg-blue-600 text-white hover:brightness-110 ${runsScored === 6 && !isWicket && !isExtra ? 'bg-purple-500 text-white' : 'bg-gray-200'}`}
               onClick={() => handleRunsClick(6)}
             >
               6
@@ -531,18 +530,18 @@ const Scoring = () => {
         {/* Wicket and Extras Buttons */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <h3 className="text-md font-medium mb-2">Wicket</h3>
+            <h3 className="text-md font-medium mb-2 text-blue-900">Wicket</h3>
             <button 
-              className={`w-full py-2 px-4 rounded font-bold ${isWicket ? 'bg-red-500 text-white' : 'bg-gray-200'}`}
+              className={`w-full py-2 px-4 rounded font-bold bg-red-500 text-white hover:brightness-110 ${isWicket ? 'bg-red-500 text-white' : 'bg-gray-200'}`}
               onClick={handleWicketClick}
             >
               Wicket
             </button>
           </div>
           <div>
-            <h3 className="text-md font-medium mb-2">Extras</h3>
+            <h3 className="text-md font-medium mb-2 text-blue-900">Extras</h3>
             <button 
-              className={`w-full py-2 px-4 rounded font-bold ${isExtra ? 'bg-yellow-500 text-white' : 'bg-gray-200'}`}
+              className={`w-full py-2 px-4 rounded font-bold bg-yellow-400 text-white hover:brightness-110 ${isExtra ? 'bg-yellow-500 text-white' : 'bg-gray-200'}`}
               onClick={handleExtraClick}
             >
               Extras
@@ -552,9 +551,9 @@ const Scoring = () => {
         
         {/* Ball Type Button */}
         <div className="mb-4">
-          <h3 className="text-md font-medium mb-2">Ball Type</h3>
+          <h3 className="text-md font-medium mb-2 text-blue-900">Ball Type</h3>
           <button 
-            className={`w-full py-2 px-4 rounded font-bold ${ballType ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            className={`w-full py-2 px-4 rounded font-bold bg-blue-600 text-white hover:brightness-110 ${ballType ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
             onClick={handleBallTypeClick}
           >
             {ballType || 'Select Ball Type'}
@@ -588,11 +587,11 @@ const Scoring = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white p-4 rounded-lg shadow-md">
-        <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+      <div className="bg-white/90 p-4 rounded-lg shadow-lg">
+        <h2 className="text-lg font-semibold mb-4 text-blue-900">Quick Actions</h2>
         <div className="grid grid-cols-2 gap-4">
           <button 
-            className="py-2 px-4 rounded bg-blue-500 text-white font-bold hover:bg-blue-600"
+            className="py-2 px-4 rounded bg-blue-600 text-white font-bold hover:bg-blue-700"
             onClick={handleChangeBowler}
           >
             Change Bowler
@@ -613,9 +612,9 @@ const Scoring = () => {
       {/* Wicket Modal */}
       {showWicketModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Select Wicket Type</h2>
-            <div className="grid grid-cols-2 gap-4">
+          <div className="bg-pink-100 p-6 rounded-lg shadow-lg w-full max-w-md text-black">
+            <h2 className="text-xl font-bold mb-4 text-blue-900">Select Wicket Type</h2>
+            <div className="grid grid-cols-2 text-white gap-4">
               <button 
                 className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
                 onClick={() => handleWicketTypeSelect('bowled')}
@@ -666,9 +665,9 @@ const Scoring = () => {
       {/* Extra Modal */}
       {showExtraModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Select Extra Type</h2>
-            <div className="grid grid-cols-2 gap-4">
+          <div className="bg-yellow-100 p-6 rounded-lg shadow-lg w-full max-w-md text-black">
+            <h2 className="text-xl font-bold mb-4 text-blue-900">Select Extra Type</h2>
+            <div className="grid grid-cols-2 text-white gap-4">
               <button 
                 className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
                 onClick={() => handleExtraTypeSelect('wide')}
@@ -707,9 +706,9 @@ const Scoring = () => {
       {/* Ball Type Modal */}
       {showBallTypeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl">
-            <h2 className="text-xl font-bold mb-4">Select Ball Type</h2>
-            <div className="grid grid-cols-3 gap-4">
+          <div className="bg-yellow-100 p-6 rounded-lg shadow-lg w-full max-w-4xl text-black">
+            <h2 className="text-xl font-bold mb-4 text-blue-900">Select Ball Type</h2>
+            <div className="grid text-white grid-cols-3 gap-4">
               {/* Pace Bowling */}
               <div>
                 <h3 className="font-medium mb-2 text-blue-700">Pace</h3>
@@ -852,8 +851,8 @@ const Scoring = () => {
       {/* Change Bowler Modal */}
       {showChangeBowlerModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Select Bowler</h2>
+          <div className="bg-yellow-100 p-6 rounded-lg shadow-lg w-full max-w-md text-black">
+            <h2 className="text-xl font-bold mb-4 text-blue-900">Select Bowler</h2>
             <div className="max-h-60 overflow-y-auto">
               {bowlingTeam.players.map((player, index) => (
                 <button 
@@ -879,9 +878,9 @@ const Scoring = () => {
       {/* New Batsman Modal */}
       {showNewBatsmanModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Select New Batsman</h2>
-            <div className="max-h-60 overflow-y-auto">
+          <div className="bg-pink-100 p-6 rounded-lg shadow-lg w-full max-w-md text-black">
+            <h2 className="text-xl font-bold mb-4 text-blue-900">Select New Batsman</h2>
+            <div className="max-h-60 text-white overflow-y-auto">
               {battingTeam.players
                 .filter(player => player !== striker.name && player !== nonStriker.name)
                 .map((player, index) => (
