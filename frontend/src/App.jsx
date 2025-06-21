@@ -5,11 +5,11 @@ import Navbar from './Components/Navbar'
 import './App.css'
 
 // Import Pages
-import ScorerHome from './Pages/ScorerHome'
-import MatchSetup from './Pages/MatchSetup'
-import Scoring from './Pages/Scoring'
-import InningsBreak from './Pages/InningsBreak'
-import MatchSummary from './Pages/MatchSummary'
+import ScorerHome from './Screens/Scorer/ScorerHome'
+import MatchSetup from './Screens/Scorer/MatchSetup'
+import Scoring from './Screens/Scorer/Scoring'
+import InningsBreak from './Screens/Scorer/InningsBreak'
+import MatchSummary from './Screens/Scorer/MatchSummary'
 
 function App() {
   return (
