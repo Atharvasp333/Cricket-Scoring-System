@@ -119,8 +119,8 @@ const MatchSetup = () => {
         
         {/* Match Info */}
         <div className="bg-[#16638A] p-6 text-white rounded-lg shadow-md mb-8">
-          <h2 className="text-2xl font-semibold mb-4">{matchData.team1.name} vs {matchData.team2.name}</h2>
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-white">
+          <h2 className="text-3xl text-center font-bold mb-4">{matchData.team1.name} vs {matchData.team2.name}</h2>
+          <div className="flex flex-wrap justify-center text-xl gap-x-4 gap-y-2 text-white">
             <p><span className="font-medium">Venue:</span> {matchData.venue}</p>
             <p><span className="font-medium">Date:</span> {matchData.date}</p>
             <p><span className="font-medium">Time:</span> {matchData.time}</p>
@@ -134,9 +134,9 @@ const MatchSetup = () => {
             <form onSubmit={handleTossSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label className="block text-gray-700 font-medium mb-2">Toss Winner</label>
+                  <label className="block text-gray-700 text-xl font-medium mb-2">Toss Winner</label>
                   <select 
-                    className="w-full p-3 text-gray-700 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#16638A] focus:border-[#16638A]"
+                    className="w-full p-4 text-gray-700 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#16638A] focus:border-[#16638A]"
                     value={tossWinner}
                     onChange={(e) => setTossWinner(e.target.value)}
                     required
@@ -147,9 +147,9 @@ const MatchSetup = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-medium mb-2">Decision</label>
+                  <label className="block text-gray-700 text-xl font-medium mb-2">Decision</label>
                   <select 
-                    className="w-full p-3 border text-gray-700 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#16638A] focus:border-[#16638A]"
+                    className="w-full p-4 border text-gray-700 text-lg border-gray-300 rounded-lg focus:ring-2 focus:ring-[#16638A] focus:border-[#16638A]"
                     value={tossDecision}
                     onChange={(e) => setTossDecision(e.target.value)}
                     required

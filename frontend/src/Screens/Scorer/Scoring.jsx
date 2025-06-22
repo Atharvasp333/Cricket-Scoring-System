@@ -666,15 +666,16 @@ const Scoring = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-200 via-green-100 to-yellow-100 container mx-auto px-4 py-6">
+    <div className="w-full bg-gradient-to-br from-teal-200 via-green-200 to-yellow-200 mx-auto px-4 py-6">
       {/* Match Info */}
-      <div className="bg-white/90 p-4 rounded-lg shadow-lg mb-6 text-black">
-        <h1 className="text-3xl font-bold mb-2 text-blue-900">
+      <div className="bg-white/90 p-4 shadow-lg mb-6 text-black">
+        <span className=" font-bold text-5xl mb-2 text-blue-900">
           {matchState.battingTeam.name} vs {matchState.bowlingTeam.name}
-        </h1>
-        <p className="text-gray-600 mb-2">
-          <span className="font-medium text-blue-900">Venue:</span> {matchData.venue} |
-          <span className="font-medium text-blue-900">Date:</span> {matchData.date}
+        </span>
+        <p className="text-gray-600 py-2 text-xl mb-2">
+          <span className="font-medium text-green-900">Venue:</span> {matchData.venue} <space></space>
+          <span className="text-xl font-bold text-black"> | </span>
+          <span className="font-medium font-bold text-green-900"> Date: </span> {matchData.date}
         </p>
         <div className="flex flex-wrap justify-between items-center">
           <div className="text-xl font-bold">
@@ -682,10 +683,11 @@ const Scoring = () => {
             {matchState.extras.total > 0 && ` (${matchState.extras.total} extras)`}
           </div>
           <div>
-            <span className="font-medium text-blue-900">Overs:</span> {matchState.overs}.{matchState.balls} / {matchData.overs}
-          </div>
-          <div>
-            <span className="font-medium text-blue-900">CRR:</span> {matchState.crr.toFixed(2)}
+            <span className="font-medium text-lg text-blue-900">CRR:</span> {matchState.crr.toFixed(2)}
+            </div>
+            <div>
+            <span className="font-medium text-lg text-blue-900">Overs:</span> {matchState.overs}.{matchState.balls} / {matchData.overs}
+          
             {matchState.innings === 2 && matchState.target && (
               <span className="ml-4">
                 <span className="font-medium text-blue-900">Target:</span> {matchState.target} |
@@ -701,27 +703,27 @@ const Scoring = () => {
         {/* Current Ball */}
         <div className="bg-white/90 p-4 rounded-lg shadow-lg">
           <h2 className="text-lg font-semibold mb-2 text-blue-900">Current Ball</h2>
-          <div className="flex flex-wrap items-center">
+          <div className="flex flex-wrap text-lg items-center">
             <div className="mr-4 text-black mb-2">
               <span className="font-medium text-blue-900">Over:</span> {matchState.overs}.{matchState.balls+1}
             </div>
             {uiState.runsScored !== null && (
-              <div className="mr-4 mb-2">
+              <div className="mr-4 text-black mb-2">
                 <span className="font-medium text-blue-900">Runs:</span> {uiState.runsScored}
               </div>
             )}
             {uiState.isExtra && (
-              <div className="mr-4 mb-2">
+              <div className="mr-4 text-black mb-2">
                 <span className="font-medium text-blue-900">Extra:</span> {uiState.extraType}
               </div>
             )}
             {uiState.isWicket && (
-              <div className="mr-4 mb-2">
+              <div className="mr-4 text-black mb-2">
                 <span className="font-medium text-blue-900">Wicket:</span> {uiState.wicketType}
               </div>
             )}
             {uiState.ballType && (
-              <div className="mr-4 mb-2">
+              <div className="mr-4 text-black mb-2">
                 <span className="font-medium text-blue-900">Ball Type:</span> {uiState.ballType}
               </div>
             )}
@@ -952,7 +954,7 @@ const Scoring = () => {
       {/* Extra Modal */}
       {uiState.showExtraModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-yellow-100 p-6 rounded-lg shadow-lg w-full max-w-md text-black">
+          <div className="bg-pink-100 p-6 rounded-lg shadow-lg w-full max-w-md text-black">
             <h2 className="text-xl font-bold mb-4 text-blue-900">Select Extra Type</h2>
             <div className="grid grid-cols-2 text-white gap-4">
               {['wide', 'no-ball', 'leg-bye', 'bye'].map(type => (
@@ -978,7 +980,7 @@ const Scoring = () => {
       {/* Ball Type Modal */}
       {uiState.showBallTypeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-yellow-100 p-6 rounded-lg shadow-lg w-full max-w-4xl text-black">
+          <div className="bg-pink-100 p-6 rounded-lg shadow-lg w-full max-w-4xl text-black">
             <h2 className="text-xl font-bold mb-4 text-blue-900">Select Ball Type</h2>
             <div className="grid text-white grid-cols-3 gap-4">
               {/* Pace Bowling */}
@@ -1042,13 +1044,13 @@ const Scoring = () => {
       {/* Change Bowler Modal */}
       {uiState.showChangeBowlerModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-yellow-100 p-6 rounded-lg shadow-lg w-full max-w-md text-black">
+          <div className="bg-pink-100 p-6 rounded-lg shadow-lg w-full max-w-md text-black">
             <h2 className="text-xl font-bold mb-4 text-blue-900">Select Bowler</h2>
             <div className="max-h-60 overflow-y-auto">
               {matchState.bowlingTeam.players.map((player, index) => (
                 <button
                   key={index}
-                  className={`w-full py-2 px-4 rounded ${player === matchState.lastBowler ? 'bg-gray-300' : 'bg-gray-200 hover:bg-gray-300'
+                  className={`w-full text-white py-2 px-4 rounded ${player === matchState.lastBowler ? 'bg-gray-300' : 'bg-gray-200 hover:bg-gray-300'
                     } font-medium mb-2 text-left`}
                   onClick={() => handleBowlerSelect(player)}
                   disabled={player === matchState.lastBowler}

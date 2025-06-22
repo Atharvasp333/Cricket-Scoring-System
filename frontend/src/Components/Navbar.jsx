@@ -10,7 +10,7 @@ const Navbar = () => {
   };
   
   return (
-    <nav className="bg-[#16638A] text-white p-4 shadow-md">
+    <nav className="bg-[#16638A] text-white p-3.5 shadow-md">
       <div className="max-w-screen-2xl mx-auto flex justify-between items-center">
         {/* Left side - Logo */}
         <div className="flex items-center">
@@ -51,6 +51,12 @@ const Navbar = () => {
 
                 <FiAward className="mr-1" />
                 <span className="hidden sm:inline">Tournaments</span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/player-stats" className={`flex items-center ${isActive('/player-stats')}`}>
+                <FiAward className="mr-1" />
+                <span className="hidden sm:inline">Player Stats</span>
               </Link>
             </li>
           </ul>
