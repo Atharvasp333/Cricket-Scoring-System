@@ -2,6 +2,7 @@ import React from 'react'
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './Components/Navbar'
+import Footer from './Components/Footer'
 import './App.css'
 
 // Import Pages
@@ -37,6 +38,7 @@ function App() {
           <Route path="/viewer-home" element={<ViewerHome />} />
 
         </Routes>
+        <Footer />
       </Router>
   )
 }

@@ -5,6 +5,22 @@ const Footer = () => {
   return (
     <footer className="bg-[#16638A] text-white py-10">
       <div className="container mx-auto px-4">
+        {/* Zemo Logo */}
+        <div className="flex items-center justify-center mb-8">
+          <img 
+            src="https://zemo.co.in/images/ZemoLogoNeon.svg" 
+            alt="Zemo Logo" 
+            className="h-12 w-auto"
+            onError={(e) => {
+              console.error('Logo failed to load:', e);
+              // Fallback to text logo if image fails
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+          <span className="text-2xl font-bold text-white hidden">Zemo</span>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Useful Links */}
           <div>
