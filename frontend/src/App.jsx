@@ -13,6 +13,8 @@ import MatchSummary from './Screens/Scorer/MatchSummary'
 import CompletedMatches from './Screens/Scorer/CompletedMatches'
 import CompletedTournaments from './Screens/Scorer/CompletedTournaments'
 
+import MatchDetails from './Screens/Viewer/MatchDetails'
+import ViewerHome from './Screens/Viewer/ViewerHome'
 
 function App() {
   return (
@@ -31,6 +33,8 @@ function App() {
           <Route path="/scoring/:matchId" element={<Scoring />} />
           <Route path="/innings-break/:matchId" element={<InningsBreak />} />
           <Route path="/match-summary/:matchId" element={<MatchSummary />} />
+          <Route path="/match-details/:matchId" element={<MatchDetails />} />
+          <Route path="/viewer-home" element={<ViewerHome />} />
 
         </Routes>
       </Router>
