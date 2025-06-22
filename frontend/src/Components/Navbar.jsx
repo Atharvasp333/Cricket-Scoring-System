@@ -10,14 +10,25 @@ const Navbar = () => {
   };
   
   return (
-    <nav className=" bg-[#16638A] text-white p-4 shadow-md">
+    <nav className="bg-[#16638A] text-white p-4 shadow-md">
       <div className="max-w-screen-2xl mx-auto flex justify-between items-center">
-        {/* Left side - Logo only */}
+        {/* Left side - Logo */}
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#16638A] font-bold mr-2">
+          <img 
+            src="https://zemo.co.in/images/ZemoLogoNeon.svg" 
+            alt="Zemo Logo" 
+            className="h-8 w-auto"
+            onError={(e) => {
+              console.error('Logo failed to load:', e);
+              // Fallback to text logo if image fails
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+          {/* Fallback logo if image fails to load */}
+          <div className="w-8 h-8 bg-white rounded-full items-center justify-center text-[#16638A] font-bold hidden">
             CS
           </div>
-          <span className="text-xl font-bold hidden sm:block">CricketScorer</span>
         </div>
         
         {/* Right side - Navigation Links and Profile Icon */}
@@ -36,7 +47,8 @@ const Navbar = () => {
               </Link>
             </li>
             <li>
-              <Link to="/tournaments" className={`flex items-center ${isActive('/tournaments')}`}>
+              <Link to="/CompletedTournaments" className={`flex items-center ${isActive('/CompletedTournaments')}`}>
+
                 <FiAward className="mr-1" />
                 <span className="hidden sm:inline">Tournaments</span>
               </Link>

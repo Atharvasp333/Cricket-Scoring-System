@@ -11,6 +11,8 @@ import Scoring from './Screens/Scorer/Scoring'
 import InningsBreak from './Screens/Scorer/InningsBreak'
 import MatchSummary from './Screens/Scorer/MatchSummary'
 import CompletedMatches from './Screens/Scorer/CompletedMatches'
+import CompletedTournaments from './Screens/Scorer/CompletedTournaments'
+
 
 function App() {
   return (
@@ -23,6 +25,7 @@ function App() {
           {/* Scorer Routes */}
           <Route path="/scorer-home" element={<ScorerHome />} />
           <Route path='/CompletedMatches' element={<CompletedMatches />} />
+          <Route path='/CompletedTournaments' element={<CompletedTournaments />} />
 
           <Route path="/match-setup/:matchId" element={<MatchSetup />} />
           <Route path="/scoring/:matchId" element={<Scoring />} />
