@@ -703,7 +703,7 @@ const Scoring = () => {
           <h2 className="text-lg font-semibold mb-2 text-blue-900">Current Ball</h2>
           <div className="flex flex-wrap items-center">
             <div className="mr-4 text-black mb-2">
-              <span className="font-medium text-blue-900">Over:</span> {matchState.overs}.{matchState.balls}
+              <span className="font-medium text-blue-900">Over:</span> {matchState.overs}.{matchState.balls+1}
             </div>
             {uiState.runsScored !== null && (
               <div className="mr-4 mb-2">
