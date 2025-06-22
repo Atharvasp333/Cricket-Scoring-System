@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "cd frontend && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,9 +20,11 @@
   },
   "homepage": "https://github.com/Atharvasp333/Cricket-Scoring-System#readme",
   "dependencies": {
+    "@tailwindcss/postcss": "^4.1.10",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "mongoose": "^8.16.0"
+    "mongoose": "^8.16.0",
+    "react-router-dom": "^6.30.1"
   }
 }
