@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import Stepper from './components/Stepper';
-import Navbar from '../../Components/Navbar';
-import Footer from '../../Components/Footer';
-// Step components (to be implemented)
 import TournamentBasicInfo from './components/TournamentBasicInfo';
 import TournamentTeams from './components/TournamentTeams';
 import TournamentPlayerPool from './components/TournamentPlayerPool';
@@ -52,15 +49,15 @@ const CreateTournamentPage = () => {
   };
 
   return (
-    <>
-      <div className="max-w-3xl mx-auto py-10 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-lg w-full max-w-3xl  p-6 border border-gray-100">
         <Stepper currentStep={currentStep} steps={steps} />
-        <div className="mt-8">
+        <div className="mt-6 text-black">
           {renderStep()}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
-export default CreateTournamentPage; 
+export default CreateTournamentPage;

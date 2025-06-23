@@ -54,7 +54,7 @@ const Footer = () => {
           </div>
         </div>
         
-        <div className="border-t border-gray-600 mt-8 pt-6 text-center">
+        <div className="border-t border-white mt-8 pt-6 text-center">
           <p>© 2025 Futurasport Catalyst Private Limited</p>
         </div>
       </div>

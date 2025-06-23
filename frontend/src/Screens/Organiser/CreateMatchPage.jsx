@@ -66,7 +66,7 @@ const CreateMatchPage = () => {
                 throw new Error(errorMsg);
             }
             alert('Match created successfully!');
-            navigate('/organiser/home');
+            navigate('/organiser-homepage');
         } catch (err) {
             alert('Failed to create match. ' + (err.message || 'Please try again.'));
         }
