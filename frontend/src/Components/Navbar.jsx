@@ -53,6 +53,18 @@ const Navbar = () => {
               </Link>
             </li>
             <li>
+              <Link to="/match-details/:matchId" className={`flex items-center ${isActive('/match-details/:matchId')}`}>
+                <FiHome className="mr-1" />
+                <span className="hidden sm:inline">Match Details</span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/viewer-home" className={`flex items-center ${isActive('/viewer-home')}`}>
+                <FiHome className="mr-1" />
+                <span className="hidden sm:inline">Viewer-Home</span>
+              </Link>
+            </li>
+            <li>
               <Link to="/scorer-home" className={`flex items-center ${isActive('/scorer-home')}`}>
                 <FiHome className="mr-1" />
                 <span className="hidden sm:inline">Home</span>
