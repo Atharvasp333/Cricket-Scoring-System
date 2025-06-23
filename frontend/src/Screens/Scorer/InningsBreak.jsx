@@ -31,21 +31,22 @@ const InningsBreak = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Innings Break</h1>
+    <div className=" mx-auto px-10 text-black font-semibold bg-gray-300 py-8">
+      <h1 className="text-3xl text-black font-bold mb-8 text-center">Innings Break</h1>
       
       {/* First Innings Summary */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-2xl font-semibold mb-4 text-center">{firstInningsData.battingTeam} - {firstInningsData.score}/{firstInningsData.wickets}</h2>
-        <p className="text-center text-lg mb-6">
-          <span className="font-medium">Overs:</span> {firstInningsData.overs} | 
-          <span className="font-medium">Run Rate:</span> {firstInningsData.runRate}
+        <h2 className="text-2xl font-bold mb-4 text-blue-700 text-center">{firstInningsData.battingTeam} - {firstInningsData.score}/{firstInningsData.wickets}</h2>
+        <p className="text-center text-blue text-lg mb-5">
+          <span className="font-medium text-red-600 ">Overs:</span> {firstInningsData.overs} 
+          <span className="text-xl font-bold text-black"> | </span> 
+          <span className="font-medium text-red-600">Run Rate:</span> {firstInningsData.runRate}
         </p>
         
-        <div className="bg-blue-50 p-4 rounded-lg mb-6">
-          <h3 className="text-xl font-semibold mb-2 text-center text-blue-800">Target: {firstInningsData.target} runs</h3>
-          <p className="text-center text-blue-700">
-            Required Run Rate: {firstInningsData.requiredRunRate} runs per over
+        <div className="bg-blue-100 border-blue-800 p-4 rounded-lg mb-6">
+          <h3 className="text-xl font-bold mb-2 text-center text-blue-800">Target: {firstInningsData.target} runs</h3>
+          <p className="text-center text-black">
+            Required Run Rate:  {firstInningsData.requiredRunRate}
           </p>
         </div>
       </div>
@@ -58,7 +59,7 @@ const InningsBreak = () => {
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr className="bg-gray-100">
+                <tr className="bg-gray-300">
                   <th className="py-2 px-4 text-left">Batsman</th>
                   <th className="py-2 px-4 text-right">Runs</th>
                   <th className="py-2 px-4 text-right">Balls</th>
@@ -89,7 +90,7 @@ const InningsBreak = () => {
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr className="bg-gray-100">
+                <tr className="bg-gray-300">
                   <th className="py-2 px-4 text-left">Bowler</th>
                   <th className="py-2 px-4 text-right">O</th>
                   <th className="py-2 px-4 text-right">M</th>

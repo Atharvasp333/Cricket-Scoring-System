@@ -672,7 +672,7 @@ const Scoring = () => {
         <span className=" font-bold text-5xl mb-2 text-blue-900">
           {matchState.battingTeam.name} vs {matchState.bowlingTeam.name}
         </span>
-        <p className="text-gray-600 py-2 text-xl mb-2">
+        <p className="text-black text-xl mb-2">
           <span className="font-medium text-green-900">Venue:</span> {matchData.venue} <space></space>
           <span className="text-xl font-bold text-black"> | </span>
           <span className="font-medium font-bold text-green-900"> Date: </span> {matchData.date}
@@ -834,14 +834,14 @@ const Scoring = () => {
         {/* Runs Buttons */}
         <div className="mb-4">
           <h3 className="text-md font-medium mb-2 text-blue-900">Runs</h3>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex justify-center flex-wrap gap-2">
             {[0, 1, 2, 3, 4, 6].map(runs => (
               <button
                 key={runs}
                 className={`w-12 h-12 rounded-full font-bold ${uiState.runsScored === runs && !uiState.isWicket && !uiState.isExtra ?
                   runs === 4 ? 'bg-green-500' :
                     runs === 6 ? 'bg-purple-500' : 'bg-blue-500' :
-                  'bg-gray-200'
+                  'bg-black'
                   } text-white hover:brightness-110`}
                 onClick={() => handleRunsClick(runs)}
               >
@@ -856,7 +856,7 @@ const Scoring = () => {
           <div>
             <h3 className="text-md font-medium mb-2 text-blue-900">Wicket</h3>
             <button
-              className={`w-full py-2 px-4 rounded font-bold ${uiState.isWicket ? 'bg-red-500' : 'bg-gray-200'
+              className={`w-full py-2 px-4 rounded font-bold ${uiState.isWicket ? 'bg-red-500' : 'bg-black'
                 } text-white hover:brightness-110`}
               onClick={handleWicketClick}
             >
@@ -866,7 +866,7 @@ const Scoring = () => {
           <div>
             <h3 className="text-md font-medium mb-2 text-blue-900">Extras</h3>
             <button
-              className={`w-full py-2 px-4 rounded font-bold ${uiState.isExtra ? 'bg-yellow-500' : 'bg-gray-200'
+              className={`w-full py-2 px-4 rounded font-bold ${uiState.isExtra ? 'bg-yellow-500' : 'bg-black'
                 } text-white hover:brightness-110`}
               onClick={handleExtraClick}
             >
@@ -879,7 +879,7 @@ const Scoring = () => {
         <div className="mb-4">
           <h3 className="text-md font-medium mb-2 text-blue-900">Ball Type</h3>
           <button
-            className={`w-full py-2 px-4 rounded font-bold ${uiState.ballType ? 'bg-blue-500' : 'bg-gray-200'
+            className={`w-full py-2 px-4 rounded font-bold ${uiState.ballType ? 'bg-blue-500' : 'bg-black'
               } text-white hover:brightness-110`}
             onClick={handleBallTypeClick}
           >
@@ -890,14 +890,14 @@ const Scoring = () => {
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-4">
           <button
-            className="py-2 px-4 rounded bg-green-600 text-white font-bold hover:bg-green-700"
+            className="py-2 px-4 rounded bg-green-600 text-white font-bold hover:bg-green-900"
             onClick={handleSubmitBall}
             disabled={uiState.runsScored === null && !uiState.isWicket && !uiState.isExtra}
           >
             Submit
           </button>
           <button
-            className="py-2 px-4 rounded bg-red-500 text-white font-bold hover:bg-red-600"
+            className="py-2 px-4 rounded bg-red-500 text-white font-bold hover:bg-red-700"
             onClick={handleUndoLastBall}
             disabled={matchState.currentOver.length === 0 && matchState.previousOvers.length === 0}
           >
@@ -934,7 +934,7 @@ const Scoring = () => {
               {['bowled', 'caught', 'lbw', 'run-out', 'stumped', 'hit-wicket'].map(type => (
                 <button
                   key={type}
-                  className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                  className="py-2 px-4 rounded bg-black hover:bg-red-700 font-medium"
                   onClick={() => handleWicketTypeSelect(type)}
                 >
                   {type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
@@ -942,7 +942,7 @@ const Scoring = () => {
               ))}
             </div>
             <button
-              className="mt-4 w-full py-2 px-4 rounded bg-gray-500 text-white font-bold hover:bg-gray-600"
+              className="mt-4 w-full py-2 px-4 rounded bg-gray-400 text-black font-bold hover:bg-gray-600"
               onClick={() => setUiState(prev => ({ ...prev, showWicketModal: false }))}
             >
               Cancel
@@ -960,7 +960,7 @@ const Scoring = () => {
               {['wide', 'no-ball', 'leg-bye', 'bye'].map(type => (
                 <button
                   key={type}
-                  className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                  className="py-2 px-4 rounded bg-black hover:bg-yellow-500 hover:text-black font-medium"
                   onClick={() => handleExtraTypeSelect(type)}
                 >
                   {type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
@@ -968,7 +968,7 @@ const Scoring = () => {
               ))}
             </div>
             <button
-              className="mt-4 w-full py-2 px-4 rounded bg-gray-500 text-white font-bold hover:bg-gray-600"
+              className="mt-4 w-full py-2 px-4 rounded bg-gray-400 text-black font-bold hover:bg-gray-600"
               onClick={() => setUiState(prev => ({ ...prev, showExtraModal: false }))}
             >
               Cancel
@@ -990,7 +990,7 @@ const Scoring = () => {
                   {['Yorker', 'Bouncer', 'Full Toss', 'Length Ball', 'Short Ball', 'Slower Ball'].map(type => (
                     <button
                       key={type}
-                      className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                      className="py-2 px-4 rounded bg-black hover:bg-blue-600 font-medium"
                       onClick={() => handleBallTypeSelect(type)}
                     >
                       {type}
@@ -1006,7 +1006,7 @@ const Scoring = () => {
                   {['Off Spin', 'Leg Spin', 'Googly', 'Doosra', 'Carrom Ball', 'Arm Ball'].map(type => (
                     <button
                       key={type}
-                      className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                      className="py-2 px-4 rounded bg-black hover:bg-blue-600 font-medium"
                       onClick={() => handleBallTypeSelect(type)}
                     >
                       {type}
@@ -1022,7 +1022,7 @@ const Scoring = () => {
                   {['Outswinger', 'Inswinger', 'Reverse Swing', 'Cutter', 'Off Cutter', 'Leg Cutter'].map(type => (
                     <button
                       key={type}
-                      className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium"
+                      className="py-2 px-4 rounded bg-black hover:bg-blue-600 font-medium"
                       onClick={() => handleBallTypeSelect(type)}
                     >
                       {type}
@@ -1032,7 +1032,7 @@ const Scoring = () => {
               </div>
             </div>
             <button
-              className="mt-4 w-full py-2 px-4 rounded bg-gray-500 text-white font-bold hover:bg-gray-600"
+              className="mt-4 w-full py-2 px-4 rounded bg-gray-400 text-black font-bold hover:bg-gray-600"
               onClick={() => setUiState(prev => ({ ...prev, showBallTypeModal: false }))}
             >
               Cancel
@@ -1060,7 +1060,7 @@ const Scoring = () => {
               ))}
             </div>
             <button
-              className="mt-4 w-full py-2 px-4 rounded bg-gray-500 text-white font-bold hover:bg-gray-600"
+              className="mt-4 w-full py-2 px-4 rounded bg-gray-400 text-black font-bold hover:bg-gray-600"
               onClick={() => setUiState(prev => ({ ...prev, showChangeBowlerModal: false }))}
             >
               Cancel
@@ -1092,7 +1092,7 @@ const Scoring = () => {
                 ))}
             </div>
             <button
-              className="mt-4 w-full py-2 px-4 rounded bg-gray-500 text-white font-bold hover:bg-gray-600"
+              className="mt-4 w-full py-2 px-4 rounded bg-gray-400 text-black font-bold hover:bg-gray-600"
               onClick={() => setUiState(prev => ({ ...prev, showNewBatsmanModal: false }))}
             >
               Cancel
