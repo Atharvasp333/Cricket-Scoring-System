@@ -14,9 +14,9 @@ const Navbar = () => {
       <div className="max-w-screen-2xl mx-auto flex justify-between items-center">
         {/* Left side - Logo */}
         <div className="flex items-center">
-          <img 
-            src="https://zemo.co.in/images/ZemoLogoNeon.svg" 
-            alt="Zemo Logo" 
+          <img
+            src="https://zemo.co.in/images/ZemoLogoNeon.svg"
+            alt="Zemo Logo"
             className="h-8 w-auto"
             onError={(e) => {
               console.error('Logo failed to load:', e);
@@ -30,7 +30,7 @@ const Navbar = () => {
             CS
           </div>
         </div>
-        
+
         {/* Right side - Navigation Links and Profile Icon */}
         <div className="flex items-center space-x-4 md:space-x-6">
           <ul className="flex space-x-4 md:space-x-6">
@@ -38,18 +38,6 @@ const Navbar = () => {
               <Link to="/organiser-homepage" className={`flex items-center ${isActive('/organiser-homepage')}`}>
                 <FiHome className="mr-1" />
                 <span className="hidden sm:inline">Organiser-Home</span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/match-details/:matchId" className={`flex items-center ${isActive('/match-details/:matchId')}`}>
-                <FiHome className="mr-1" />
-                <span className="hidden sm:inline">Match Details</span>
-              </Link>
-            </li>
-            <li>
-              <Link to="/viewer-home" className={`flex items-center ${isActive('/viewer-home')}`}>
-                <FiHome className="mr-1" />
-                <span className="hidden sm:inline">Viewer-Home</span>
               </Link>
             </li>
             <li>
