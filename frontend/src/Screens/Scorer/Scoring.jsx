@@ -734,7 +734,7 @@ const Scoring = () => {
         <div className="bg-white/90 p-4 rounded-lg shadow-lg">
           <h2 className="text-lg font-semibold mb-2 text-blue-900">Batsmen</h2>
           <div className="grid grid-cols-2 gap-2">
-            <div className={`p-2 rounded ${matchState.striker ? 'bg-blue-400' : 'bg-gray-700'}`}>
+            <div className={`p-2 rounded ${matchState.striker ? 'bg-blue-700' : 'bg-gray-700'}`}>
               <div className="font-medium">{matchState.striker.name} *</div>
               <div className="text-sm">
                 {matchState.striker.runs} ({matchState.striker.balls}) |
@@ -742,7 +742,7 @@ const Scoring = () => {
                 SR: {matchState.striker.strikeRate}
               </div>
             </div>
-            <div className={`p-2 rounded ${!matchState.striker ? 'bg-blue-400' : 'bg-gray-700'}`}>
+            <div className={`p-2 rounded ${!matchState.striker ? 'bg-blue-700' : 'bg-gray-700'}`}>
               <div className="font-medium">{matchState.nonStriker.name}</div>
               <div className="text-sm">
                 {matchState.nonStriker.runs} ({matchState.nonStriker.balls}) |
