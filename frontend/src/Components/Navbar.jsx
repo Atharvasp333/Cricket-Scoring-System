@@ -10,8 +10,8 @@ const Navbar = () => {
   };
   
   return (
-    <nav className=" bg-[#16638A] text-white p-3.5 shadow-md">
-      <div className="max-w-screen-2xl mx-auto flex justify-between items-center">
+    <nav className=" w-full bg-[#16638A] text-white text-[1.35rem] p-4 shadow-md">
+      <div className="mx-auto flex gap-10 justify-between items-center">
         {/* Left side - Logo */}
         <div className="flex items-center">
           <img 
@@ -32,8 +32,9 @@ const Navbar = () => {
         </div>
         
         {/* Right side - Navigation Links and Profile Icon */}
-        <div className="flex items-center space-x-4 md:space-x-6">
-          <ul className="flex space-x-4 md:space-x-6">
+        <div className="flex items-center space-x-4 md:space-x-10">
+          <ul className="flex space-x-6 md:space-x-7">
+          {/* <ul className="flex space-x-6 md:space-x-10"> for final jab navbar pe 4 hi items honge on the right */}
             <li>
               <Link to="/match-details/:matchId" className={`flex items-center ${isActive('/match-details/:matchId')}`}>
                 <FiHome className="mr-1" />
