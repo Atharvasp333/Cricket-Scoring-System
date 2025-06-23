@@ -67,7 +67,6 @@ const OrganiserHomepage = () => {
 
     return (
         <>
-            <Navbar />
             <div className="container mx-auto p-8">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12">
                     <div>
@@ -76,10 +75,10 @@ const OrganiserHomepage = () => {
                     </div>
                     <div className="flex space-x-4 mt-4 md:mt-0">
                         <Link to="/organiser/create-tournament">
-                        <button className="flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
-                            <PlusIcon />
-                            Create Tournament
-                        </button>
+                            <button className="flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
+                                <PlusIcon />
+                                Create Tournament
+                            </button>
                         </Link>
                         <Link to="/organiser/create-match">
                             <button className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
@@ -104,7 +103,6 @@ const OrganiserHomepage = () => {
                     </>
                 )}
             </div>
-            <Footer />
         </>
     );
 };

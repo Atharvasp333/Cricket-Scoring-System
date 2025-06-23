@@ -91,7 +91,6 @@ const CreateMatchPage = () => {
 
     return (
         <>
-            <Navbar />
             <div className="container mx-auto p-4 sm:p-8">
                 <div className="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
                     <Stepper currentStep={step} />
@@ -100,7 +99,6 @@ const CreateMatchPage = () => {
                     </div>
                 </div>
             </div>
-            <Footer />
         </>
     );
 };

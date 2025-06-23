@@ -1,21 +1,57 @@
+import React from 'react'
 import { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './Components/Navbar'
-import Header from './Components/Header'
+import Footer from './Components/Footer'
 import './App.css'
+
+// Import Pages
+import ScorerHome from './Screens/Scorer/ScorerHome'
+import MatchSetup from './Screens/Scorer/MatchSetup'
+import Scoring from './Screens/Scorer/Scoring'
+import InningsBreak from './Screens/Scorer/InningsBreak'
+import MatchSummary from './Screens/Scorer/MatchSummary'
+import CompletedMatches from './Screens/Scorer/CompletedMatches'
+import CompletedTournaments from './Screens/Scorer/CompletedTournaments'
+
+import MatchDetails from './Screens/Viewer/MatchDetails'
+import ViewerHome from './Screens/Viewer/ViewerHome'
+import OrganiserHomepage from './Screens/Organiser/OrganiserHomepage'
+import CreateTournamentPage from './Screens/Organiser/CreateTournamentPage'
+import CreateMatchPage from './Screens/Organiser/CreateMatchPage'
 
 function App() {
   return (
-    <>
+    <Router>
       <Navbar />
-      <Header />
-      <main className="container">
         <div className="content">
-          <h2>Welcome to Cricket Scoring System</h2>
-          <p>Start managing your cricket matches with our comprehensive scoring system</p>
+          <Routes>
+            {/* Redirect root to scorer home for now */}
+            <Route path="/" element={<Navigate to="/scorer-home" />} />
+
+            {/* Scorer Routes */}
+            <Route path="/scorer-home" element={<ScorerHome />} />
+            <Route path='/CompletedMatches' element={<CompletedMatches />} />
+            <Route path='/CompletedTournaments' element={<CompletedTournaments />} />
+
+            <Route path="/match-setup/:matchId" element={<MatchSetup />} />
+            <Route path="/scoring/:matchId" element={<Scoring />} />
+            <Route path="/innings-break/:matchId" element={<InningsBreak />} />
+            <Route path="/match-summary/:matchId" element={<MatchSummary />} />
+            
+            {/* Viewer Routes */}
+            <Route path="/match-details/:matchId" element={<MatchDetails />} />
+            <Route path="/viewer-home" element={<ViewerHome />} />
+
+            {/* Organiser Routes */}
+            <Route path="/organiser-homepage" element={<OrganiserHomepage />} />
+            <Route path="/organiser/create-tournament" element={<CreateTournamentPage />} />
+            <Route path="/organiser/create-match" element={<CreateMatchPage />} />
+          </Routes>
+          <Footer />
         </div>
-      </main>
-    </>
+    </Router>
   )
 }
 
-export default App;
+export default App

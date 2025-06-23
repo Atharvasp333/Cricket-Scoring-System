@@ -53,14 +53,12 @@ const CreateTournamentPage = () => {
 
   return (
     <>
-      <Navbar />
       <div className="max-w-3xl mx-auto py-10 px-4">
         <Stepper currentStep={currentStep} steps={steps} />
         <div className="mt-8">
           {renderStep()}
         </div>
       </div>
-      <Footer />
     </>
   );
 };

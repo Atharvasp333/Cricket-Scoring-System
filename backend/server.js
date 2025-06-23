@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const uri = "mongodb+srv://CricketZ:sQDCJ1o5VVJ31eSo@cluster0.s2bbf6d.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = process.env.MONGODB_URI;
 
 app.use(cors());
 app.use(express.json());
