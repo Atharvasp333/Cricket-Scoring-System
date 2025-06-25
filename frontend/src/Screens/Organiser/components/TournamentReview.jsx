@@ -18,7 +18,7 @@ const TournamentReview = ({ data, prevStep }) => {
       if (!response.ok) throw new Error('Failed to create tournament');
       // Show toast (replace with your toast system)
       alert('Tournament created successfully!');
-      navigate('/organiser/home');
+      navigate('/organiser-homepage');
     } catch (err) {
       setError('Failed to create tournament. Please try again.');
     } finally {
