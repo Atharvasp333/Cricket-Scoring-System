@@ -46,7 +46,7 @@ const OrganiserHomepage = () => {
         fetchData();
     }, []);
 
-    const MatchCard = ({ name, tournament, date }) => (
+    const MatchCard = ({ _id, name, tournament, date }) => (
         <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 ease-in-out p-4 border border-blue-200 hover:border-blue-300">
             <div className="flex items-center mb-2">
                 <CalendarIcon />
@@ -60,14 +60,17 @@ const OrganiserHomepage = () => {
                 <p className="text-xs font-semibold text-indigo-700">
                     {new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
-                <button className="p-1 text-blue-600 hover:text-blue-800 text-xs font-medium">
-                    View Details →
-                </button>
+                <Link 
+                    to={`/organiser/match/${_id}`} 
+                    className="px-3 py-1 bg-black text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors duration-200"
+                >
+                    View Details
+                </Link>
             </div>
         </div>
     );
 
-    const TournamentCard = ({ name, teams, createdAt }) => (
+    const TournamentCard = ({ _id, name, teams, createdAt }) => (
         <div className="bg-gradient-to-br from-emerald-50 to-green-100 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 ease-in-out p-4 border border-emerald-200 hover:border-emerald-300">
             <div className="flex items-center mb-2">
                 <TrophyIcon />
@@ -80,9 +83,12 @@ const OrganiserHomepage = () => {
                 <div className="text-xs text-gray-600">
                     <span className="font-semibold text-emerald-700">{teams?.length || 0}</span> Teams
                 </div>
-                <button className="p-1 text-emerald-600 hover:text-emerald-800 text-xs font-medium">
-                    Manage →
-                </button>
+                <Link 
+                    to={`/organiser/tournament/${_id}`} 
+                    className="px-3 py-1 bg-black text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors duration-200"
+                >
+                    Manage
+                </Link>
             </div>
         </div>
     );

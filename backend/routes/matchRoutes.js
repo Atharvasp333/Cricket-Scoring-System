@@ -24,4 +24,34 @@ router.get('/', async (req, res) => {
   }
 });
 
-export default router; 
+// Get a specific match by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const match = await Match.findById(req.params.id);
+    if (!match) {
+      return res.status(404).json({ error: 'Match not found' });
+    }
+    res.json(match);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update a match
+router.put('/:id', async (req, res) => {
+  try {
+    const match = await Match.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!match) {
+      return res.status(404).json({ error: 'Match not found' });
+    }
+    res.json(match);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+export default router;

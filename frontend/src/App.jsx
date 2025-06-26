@@ -26,6 +26,8 @@ import CreateTournamentPage from './Screens/Organiser/CreateTournamentPage'
 import CreateMatchPage from './Screens/Organiser/CreateMatchPage'
 import NewsDetail from './Screens/Viewer/NewsDetail'
 import OldNews from './Screens/Viewer/OldNews'
+import MatchDetailPage from './Screens/Organiser/MatchDetailPage'
+import TournamentDetailPage from './Screens/Organiser/TournamentDetailPage'
 
 function App() {
   return (
@@ -93,6 +95,8 @@ function App() {
                 <CreateMatchPage />
               </ProtectedRoute>
             } />
+            <Route path="/organiser/match/:id" element={<MatchDetailPage />} />
+            <Route path="/organiser/tournament/:id" element={<TournamentDetailPage />} />
           </Routes>
         </div>
         <Footer />
