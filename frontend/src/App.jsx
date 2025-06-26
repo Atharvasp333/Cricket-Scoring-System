@@ -24,6 +24,8 @@ import ViewerHome from './Screens/Viewer/ViewerHome'
 import OrganiserHomepage from './Screens/Organiser/OrganiserHomepage'
 import CreateTournamentPage from './Screens/Organiser/CreateTournamentPage'
 import CreateMatchPage from './Screens/Organiser/CreateMatchPage'
+import NewsDetail from './Screens/Viewer/NewsDetail'
+import OldNews from './Screens/Viewer/OldNews'
 
 function App() {
   return (
@@ -72,6 +74,8 @@ function App() {
             {/* Viewer Routes */}
             <Route path="/match-details/:matchId" element={<MatchDetails />} />
             <Route path="/viewer-home" element={<ViewerHome />} />
+            <Route path="/news/:id" element={<NewsDetail />} />
+            <Route path="/old-news" element={<OldNews />} />
 
             {/* Organiser Routes - Protected */}
             <Route path="/organiser-homepage" element={

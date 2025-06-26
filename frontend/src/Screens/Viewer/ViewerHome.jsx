@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const ViewerHome = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [newsData, setNewsData] = useState([]);
+  const [loadingNews, setLoadingNews] = useState(true);
+  const [newsError, setNewsError] = useState(null);
+  const navigate = useNavigate();
 
   // Mock data for live matches
   const liveMatches = [
@@ -114,41 +119,24 @@ const ViewerHome = () => {
     }
   ];
 
-  // Mock data for news
-  const news = [
-    {
-      id: 1,
-      title: 'Rohit Sharma becomes fastest to 5000 T20 runs',
-      summary: 'Mumbai Indians captain achieves milestone in just 192 innings',
-      image: '📰',
-      date: '2023-10-15',
-      category: 'Records'
-    },
-    {
-      id: 2,
-      title: 'ICC announces schedule for T20 World Cup 2024',
-      summary: 'Tournament to be held in West Indies and USA from June 4 to June 30',
-      image: '📰',
-      date: '2023-10-14',
-      category: 'Tournaments'
-    },
-    {
-      id: 3,
-      title: 'Virat Kohli announces retirement from T20 internationals',
-      summary: 'Will continue to play Tests and ODIs for India',
-      image: '📰',
-      date: '2023-10-12',
-      category: 'International'
-    },
-    {
-      id: 4,
-      title: 'England wins ODI series against Australia 3-2',
-      summary: 'Jos Buttler named Player of the Series for his outstanding performance',
-      image: '📰',
-      date: '2023-10-10',
-      category: 'International'
-    }
-  ];
+  // Fetch cricket news from GNews API
+  useEffect(() => {
+    const fetchNews = async () => {
+      setLoadingNews(true);
+      setNewsError(null);
+      try {
+        const response = await fetch('https://gnews.io/api/v4/search?q=cricket&apikey=9914b00bb34f7028b046b8586de86393');
+        if (!response.ok) throw new Error('Failed to fetch news');
+        const data = await response.json();
+        setNewsData(data.articles || []);
+      } catch (err) {
+        setNewsError('Could not load news. Please try again later.');
+      } finally {
+        setLoadingNews(false);
+      }
+    };
+    fetchNews();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -324,45 +312,58 @@ const ViewerHome = () => {
       </section>
 
       {/* Enhanced News Section */}
-      {/* Enhanced News Section */}
       <section className="py-8 px-4 bg-white">
         <div className="container mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-[#16638A]">Cricket News</h2>
-            <button className="bg-gray-200 px-2 flex items-center text-[#16638A] hover:text-[#0F4C75] font-medium">
-              View All <ChevronRight className="ml-1" size={16} />
+            <button className="bg-gray-200 px-2 flex items-center text-[#16638A] hover:text-[#0F4C75] font-medium" onClick={() => navigate('/old-news')}>
+              Previous News <ChevronRight className="ml-1" size={16} />
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {news.map((item, index) => (
-              <div
-                key={item.id}
-                className={`bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer ${index === 0 ? 'md:col-span-2 lg:col-span-2' : ''
-                  }`}
-              >
-                <div className={`bg-gradient-to-br from-[#16638A] to-[#0F4C75] flex items-center justify-center text-white ${index === 0 ? 'h-48' : 'h-32'
-                  }`}>
-                  <span className="text-5xl">{item.image}</span>
-                </div>
-                <div className="p-5">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-xs px-2 py-1 bg-[#74D341] text-white rounded-full font-medium">
-                      {item.category}
-                    </span>
-                    <span className="text-xs text-gray-500 font-medium">{item.date}</span>
+          {loadingNews ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#16638A]"></div>
+              <span className="ml-4 text-[#16638A] font-medium">Loading news...</span>
+            </div>
+          ) : newsError ? (
+            <div className="text-center text-red-600 font-semibold py-8">{newsError}</div>
+          ) : newsData.length === 0 ? (
+            <div className="text-center text-gray-500 font-medium py-8">No news available at the moment.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {newsData.slice(0, 7).map((item, index) => (
+                <div
+                  key={item.url || item.title}
+                  className={`bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer fade-in ${index === 0 ? 'md:col-span-2 lg:col-span-2' : ''}`}
+                  onClick={() => navigate(`/news/${index}`)}
+                  style={{ animationDelay: `${index * 60}ms` }}
+                >
+                  <div className={`bg-gradient-to-br from-[#16638A] to-[#0F4C75] flex items-center justify-center text-white ${index === 0 ? 'h-48' : 'h-32'}`}>
+                    {item.image ? (
+                      <img src={item.image} alt={item.title} className="object-cover w-full h-full" style={{ maxHeight: index === 0 ? '12rem' : '8rem' }} />
+                    ) : (
+                      <span className="text-5xl">📰</span>
+                    )}
                   </div>
-                  <h3 className={`font-bold text-gray-900 mb-3 leading-tight ${index === 0 ? 'text-xl' : 'text-lg'
-                    }`}>{item.title}</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed mb-4">{item.summary}</p>
-                  <div className="flex justify-end">
-                    <span className="text-[#16638A] text-sm font-semibold hover:text-[#0F4C75] transition-colors">
-                      Read More →
-                    </span>
+                  <div className="p-5">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-xs px-2 py-1 bg-[#74D341] text-white rounded-full font-medium">
+                        {item.source?.name || 'News'}
+                      </span>
+                      <span className="text-xs text-gray-500 font-medium">{item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : ''}</span>
+                    </div>
+                    <h3 className={`font-bold text-gray-900 mb-3 leading-tight ${index === 0 ? 'text-xl' : 'text-lg'}`}>{item.title}</h3>
+                    {item.description && <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">{item.description}</p>}
+                    <div className="flex justify-end">
+                      <span className="text-[#16638A] text-sm font-semibold hover:text-[#0F4C75] transition-colors">
+                        Read More →
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>
