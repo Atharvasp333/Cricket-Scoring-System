@@ -111,7 +111,7 @@ const Navbar = () => {
             
             {/* Dropdown Menu */}
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+              <div className="absolute right-0 mt-2 w-48 text-blue-800 bg-white rounded-md shadow-lg py-1 z-10">
                 {currentUser ? (
                   <>
                     <div className="px-4 py-2 text-sm text-gray-700 border-b">
@@ -130,14 +130,14 @@ const Navbar = () => {
                   <>
                     <Link
                       to="/login"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm text-blue-900 hover:bg-gray-100"
                       onClick={() => setShowDropdown(false)}
                     >
                       Sign in
                     </Link>
                     <Link
                       to="/signup"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm text-blue-900 hover:bg-gray-100"
                       onClick={() => setShowDropdown(false)}
                     >
                       Sign up
