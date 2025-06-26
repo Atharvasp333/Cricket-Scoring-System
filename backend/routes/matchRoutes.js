@@ -24,6 +24,16 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get completed matches
+router.get('/completed', async (req, res) => {
+  try {
+    const completedMatches = await Match.find({ status: 'completed' }).sort({ date: -1 });
+    res.json(completedMatches);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get a specific match by ID
 router.get('/:id', async (req, res) => {
   try {

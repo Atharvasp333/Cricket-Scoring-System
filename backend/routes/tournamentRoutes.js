@@ -24,6 +24,16 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get completed tournaments
+router.get('/completed', async (req, res) => {
+  try {
+    const completedTournaments = await Tournament.find({ status: 'completed' }).sort({ endDate: -1 });
+    res.json(completedTournaments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get a specific tournament by ID
 router.get('/:id', async (req, res) => {
   try {

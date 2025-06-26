@@ -77,13 +77,19 @@ const Navbar = () => {
               </Link>
             </li>
             <li>
-              <Link to="/CompletedMatches" className={`flex items-center ${isActive('/CompletedMatches')}`}>
+              <Link 
+                to={userRole === 'organiser' ? '/organiser/completed-matches' : '/CompletedMatches'} 
+                className={`flex items-center ${isActive('/CompletedMatches') || isActive('/organiser/completed-matches')}`}
+              >
                 <FiCalendar className="mr-1" />
                 <span className="hidden sm:inline">Matches</span>
               </Link>
             </li>
             <li>
-              <Link to="/CompletedTournaments" className={`flex items-center ${isActive('/CompletedTournaments')}`}>
+              <Link 
+                to={userRole === 'organiser' ? '/organiser/completed-tournaments' : '/CompletedTournaments'} 
+                className={`flex items-center ${isActive('/CompletedTournaments') || isActive('/organiser/completed-tournaments')}`}
+              >
                 <FiAward className="mr-1" />
                 <span className="hidden sm:inline">Tournaments</span>
               </Link>

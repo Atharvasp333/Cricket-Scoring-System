@@ -28,6 +28,8 @@ import NewsDetail from './Screens/Viewer/NewsDetail'
 import OldNews from './Screens/Viewer/OldNews'
 import MatchDetailPage from './Screens/Organiser/MatchDetailPage'
 import TournamentDetailPage from './Screens/Organiser/TournamentDetailPage'
+import OrganiserCompletedMatches from './Screens/Organiser/OrganiserCompletedMatches'
+import OrganiserCompletedTournaments from './Screens/Organiser/OrganiserCompletedTournaments'
 
 function App() {
   return (
@@ -97,6 +99,16 @@ function App() {
             } />
             <Route path="/organiser/match/:id" element={<MatchDetailPage />} />
             <Route path="/organiser/tournament/:id" element={<TournamentDetailPage />} />
+            <Route path="/organiser/completed-matches" element={
+              <ProtectedRoute allowedRoles={['organiser']}>
+                <OrganiserCompletedMatches />
+              </ProtectedRoute>
+            } />
+            <Route path="/organiser/completed-tournaments" element={
+              <ProtectedRoute allowedRoles={['organiser']}>
+                <OrganiserCompletedTournaments />
+              </ProtectedRoute>
+            } />
           </Routes>
         </div>
         <Footer />

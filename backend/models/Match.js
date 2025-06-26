@@ -6,7 +6,7 @@ const MatchSchema = new mongoose.Schema({
   date: { type: String, required: true },
   time: { type: String, required: true },
   teams: [{ type: String, required: true }],
-  status: { type: String, default: 'Upcoming' },
+  status: { type: String, enum: ['Upcoming', 'Live', 'completed'], default: 'Upcoming' },
   venue: { type: String, required: true },
   team1: {
     name: { type: String, required: true },
@@ -39,4 +39,4 @@ const MatchSchema = new mongoose.Schema({
   // You can add more fields here as needed (e.g., venue, scorers, etc.)
 }, { timestamps: true });
 
-export default mongoose.model('Match', MatchSchema); 
+export default mongoose.model('Match', MatchSchema);
