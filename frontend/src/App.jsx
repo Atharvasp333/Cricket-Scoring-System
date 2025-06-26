@@ -1,9 +1,14 @@
 import React from 'react'
-import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './Components/Navbar'
 import Footer from './Components/Footer'
+import ProtectedRoute from './Components/ProtectedRoute'
+import { AuthProvider } from './contexts/AuthContext'
 import './App.css'
+
+// Auth Screens
+import Login from './Screens/Auth/Login'
+import Signup from './Screens/Auth/Signup'
 
 // Import Pages
 import ScorerHome from './Screens/Scorer/ScorerHome'
@@ -23,33 +28,71 @@ import CreateMatchPage from './Screens/Organiser/CreateMatchPage'
 function App() {
   return (
     <Router>
-      <Navbar />
+      <AuthProvider>
+        <Navbar />
         <div className="content">
           <Routes>
-            {/* Redirect root to scorer home for now */}
-            <Route path="/" element={<Navigate to="/scorer-home" />} />
+            {/* Redirect root to viewer home for now */}
+            <Route path="/" element={<Navigate to="/viewer-home" />} />
+            
+            {/* Auth Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
 
-            {/* Scorer Routes */}
-            <Route path="/scorer-home" element={<ScorerHome />} />
+            {/* Scorer Routes - Protected */}
+            <Route path="/scorer-home" element={
+              <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                <ScorerHome />
+              </ProtectedRoute>
+            } />
             <Route path='/CompletedMatches' element={<CompletedMatches />} />
             <Route path='/CompletedTournaments' element={<CompletedTournaments />} />
 
-            <Route path="/match-setup/:matchId" element={<MatchSetup />} />
-            <Route path="/scoring/:matchId" element={<Scoring />} />
-            <Route path="/innings-break/:matchId" element={<InningsBreak />} />
-            <Route path="/match-summary/:matchId" element={<MatchSummary />} />
+            <Route path="/match-setup/:matchId" element={
+              <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                <MatchSetup />
+              </ProtectedRoute>
+            } />
+            <Route path="/scoring/:matchId" element={
+              <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                <Scoring />
+              </ProtectedRoute>
+            } />
+            <Route path="/innings-break/:matchId" element={
+              <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                <InningsBreak />
+              </ProtectedRoute>
+            } />
+            <Route path="/match-summary/:matchId" element={
+              <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                <MatchSummary />
+              </ProtectedRoute>
+            } />
             
             {/* Viewer Routes */}
             <Route path="/match-details/:matchId" element={<MatchDetails />} />
             <Route path="/viewer-home" element={<ViewerHome />} />
 
-            {/* Organiser Routes */}
-            <Route path="/organiser-homepage" element={<OrganiserHomepage />} />
-            <Route path="/organiser/create-tournament" element={<CreateTournamentPage />} />
-            <Route path="/organiser/create-match" element={<CreateMatchPage />} />
+            {/* Organiser Routes - Protected */}
+            <Route path="/organiser-homepage" element={
+              <ProtectedRoute allowedRoles={['organiser']}>
+                <OrganiserHomepage />
+              </ProtectedRoute>
+            } />
+            <Route path="/organiser/create-tournament" element={
+              <ProtectedRoute allowedRoles={['organiser']}>
+                <CreateTournamentPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/organiser/create-match" element={
+              <ProtectedRoute allowedRoles={['organiser']}>
+                <CreateMatchPage />
+              </ProtectedRoute>
+            } />
           </Routes>
-          <Footer />
         </div>
+        <Footer />
+      </AuthProvider>
     </Router>
   )
 }
