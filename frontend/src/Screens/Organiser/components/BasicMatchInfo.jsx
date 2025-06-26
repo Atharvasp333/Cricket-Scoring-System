@@ -4,8 +4,8 @@ const BasicMatchInfo = ({ data, setData, nextStep }) => {
     const [isFormValid, setIsFormValid] = useState(false);
 
     useEffect(() => {
-        const { match_name, team1, team2, venue, dateTime } = data;
-        setIsFormValid(!!(match_name && team1 && team2 && venue && dateTime));
+        const { match_name, match_type, team1, team2, venue, date, time } = data;
+        setIsFormValid(!!(match_name && match_type && team1 && team2 && venue && date && time));
     }, [data]);
 
     const handleChange = (e) => {
@@ -52,8 +52,15 @@ const BasicMatchInfo = ({ data, setData, nextStep }) => {
                             type="text"
                             name="team1"
                             id="team1"
-                            value={data.team1}
-                            onChange={handleChange}
+                            value={data.team1?.name || data.team1 || ''}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                setData(prev => ({
+                                    ...prev,
+                                    team1: typeof prev.team1 === 'object' ? 
+                                        { ...prev.team1, name: value } : value
+                                }));
+                            }}
                             placeholder="Enter Team 1 Name"
                             className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                         />
@@ -65,8 +72,15 @@ const BasicMatchInfo = ({ data, setData, nextStep }) => {
                             type="text"
                             name="team2"
                             id="team2"
-                            value={data.team2}
-                            onChange={handleChange}
+                            value={data.team2?.name || data.team2 || ''}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                setData(prev => ({
+                                    ...prev,
+                                    team2: typeof prev.team2 === 'object' ? 
+                                        { ...prev.team2, name: value } : value
+                                }));
+                            }}
                             placeholder="Enter Team 2 Name"
                             className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                         />
@@ -94,7 +108,18 @@ const BasicMatchInfo = ({ data, setData, nextStep }) => {
                             type="datetime-local"
                             name="dateTime"
                             id="dateTime"
-                            value={data.dateTime}
+                            value={data.dateTime || (() => {
+                                if (data.date) {
+                                    const dateObj = new Date(data.date);
+                                    if (data.time) {
+                                        const [hours, minutes] = data.time.split(':');
+                                        dateObj.setHours(parseInt(hours, 10));
+                                        dateObj.setMinutes(parseInt(minutes, 10));
+                                    }
+                                    return dateObj.toISOString().slice(0, 16);
+                                }
+                                return '';
+                            })()}
                             onChange={handleChange}
                             min={new Date().toISOString().slice(0, 16)} // Prevent past date/time
                             className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
@@ -115,4 +140,4 @@ const BasicMatchInfo = ({ data, setData, nextStep }) => {
     );
 };
 
-export default BasicMatchInfo; 
+export default BasicMatchInfo;

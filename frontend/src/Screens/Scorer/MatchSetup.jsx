@@ -1,33 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import api from '../../utils/api';
 
 const MatchSetup = () => {
   const { matchId } = useParams();
   const navigate = useNavigate();
   
-  // Mock match data
-  const matchData = {
-    id: matchId,
-    team1: {
-      name: 'Team A',
-      players: [
-        'Player A1', 'Player A2', 'Player A3', 'Player A4', 'Player A5',
-        'Player A6', 'Player A7', 'Player A8', 'Player A9', 'Player A10',
-        'Player A11', 'Player A12', 'Player A13', 'Player A14', 'Player A15'
-      ]
-    },
-    team2: {
-      name: 'Team B',
-      players: [
-        'Player B1', 'Player B2', 'Player B3', 'Player B4', 'Player B5',
-        'Player B6', 'Player B7', 'Player B8', 'Player B9', 'Player B10',
-        'Player B11', 'Player B12', 'Player B13', 'Player B14', 'Player B15'
-      ]
-    },
-    venue: 'Stadium 1',
-    date: '2023-10-15',
-    time: '14:00'
-  };
+  // State for match data
+  const [matchData, setMatchData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Fetch match data
+  useEffect(() => {
+    const fetchMatchData = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/api/matches/${matchId}`);
+        
+        // Transform the data to match the expected format
+        const match = response.data;
+        setMatchData({
+          id: match._id,
+          team1: {
+            name: match.team1.name,
+            players: match.team1.players.map(player => player.name)
+          },
+          team2: {
+            name: match.team2.name,
+            players: match.team2.players.map(player => player.name)
+          },
+          venue: match.venue,
+          date: match.date,
+          time: match.time
+        });
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching match data:', err);
+        setError('Failed to load match data. Please try again.');
+        setLoading(false);
+      }
+    };
+    
+    fetchMatchData();
+  }, [matchId]);
 
   // State for toss
   const [tossWinner, setTossWinner] = useState('');
@@ -88,12 +104,25 @@ const MatchSetup = () => {
   };
 
   // Handle batting setup submission
-  const handleBattingSetupSubmit = (e) => {
+  const handleBattingSetupSubmit = async (e) => {
     e.preventDefault();
     if (striker && nonStriker && bowler) {
-      setSetupCompleted(true);
-      // Navigate to scoring page
-      navigate(`/scoring/${matchId}`);
+      try {
+        setLoading(true);
+        // Update match status to Live
+        await api.put(`/api/matches/${matchId}`, {
+          status: 'Live'
+        });
+        
+        setSetupCompleted(true);
+        // Navigate to scoring page
+        navigate(`/scoring/${matchId}`);
+      } catch (err) {
+        console.error('Error updating match status:', err);
+        alert('Failed to start scoring. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     } else {
       alert('Please select striker, non-striker, and bowler');
     }
@@ -117,15 +146,25 @@ const MatchSetup = () => {
       <main className="w-full max-w-screen-2xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-8 text-[#16638A]">Match Setup</h1>
         
-        {/* Match Info */}
-        <div className="bg-[#16638A] p-6 text-white rounded-lg shadow-md mb-8">
-          <h2 className="text-3xl text-center font-bold mb-4">{matchData.team1.name} vs {matchData.team2.name}</h2>
-          <div className="flex flex-wrap justify-center text-xl gap-x-4 gap-y-2 text-white">
-            <p><span className="font-medium">Venue:</span> {matchData.venue}</p>
-            <p><span className="font-medium">Date:</span> {matchData.date}</p>
-            <p><span className="font-medium">Time:</span> {matchData.time}</p>
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#16638A]"></div>
           </div>
-        </div>
+        ) : error ? (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
+            <span className="block sm:inline">{error}</span>
+          </div>
+        ) : matchData ? (
+          <>
+            {/* Match Info */}
+            <div className="bg-[#16638A] p-6 text-white rounded-lg shadow-md mb-8">
+              <h2 className="text-3xl text-center font-bold mb-4">{matchData.team1.name} vs {matchData.team2.name}</h2>
+              <div className="flex flex-wrap justify-center text-xl gap-x-4 gap-y-2 text-white">
+                <p><span className="font-medium">Venue:</span> {matchData.venue}</p>
+                <p><span className="font-medium">Date:</span> {matchData.date}</p>
+                <p><span className="font-medium">Time:</span> {matchData.time}</p>
+              </div>
+            </div>
         
         {/* Toss Section */}
         {!tossCompleted ? (
@@ -322,6 +361,12 @@ const MatchSetup = () => {
               </button>
             </form>
           </section>
+        )}
+          </>
+        ) : (
+          <div className="bg-white p-6 rounded-lg shadow-md text-center border border-gray-200">
+            <p className="text-gray-600">Match data not found. Please go back and try again.</p>
+          </div>
         )}
       </main>
     </div>

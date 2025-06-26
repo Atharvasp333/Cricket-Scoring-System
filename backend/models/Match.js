@@ -33,10 +33,7 @@ const MatchSchema = new mongoose.Schema({
   total_overs: { type: Number, required: true },
   powerplay_overs: { type: Number, required: true },
   drs_enabled: { type: Boolean, default: false },
-  drs_enabled: { type: Boolean, default: false },
   scorers: [{ type: String, required: true }],
-
-  // You can add more fields here as needed (e.g., venue, scorers, etc.)
 }, { timestamps: true });
 
 export default mongoose.model('Match', MatchSchema);

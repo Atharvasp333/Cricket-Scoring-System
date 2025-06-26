@@ -24,6 +24,17 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get matches by scorer email
+router.get('/scorer/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const matches = await Match.find({ scorers: email }).sort({ date: 1, time: 1 });
+    res.json(matches);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get completed matches
 router.get('/completed', async (req, res) => {
   try {
