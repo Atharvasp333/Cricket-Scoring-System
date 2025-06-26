@@ -684,10 +684,10 @@ const Scoring = () => {
           </div>
           <div>
             <span className="font-medium text-lg text-blue-900">CRR:</span> {matchState.crr.toFixed(2)}
-            </div>
-            <div>
+          </div>
+          <div>
             <span className="font-medium text-lg text-blue-900">Overs:</span> {matchState.overs}.{matchState.balls} / {matchData.overs}
-          
+
             {matchState.innings === 2 && matchState.target && (
               <span className="ml-4">
                 <span className="font-medium text-blue-900">Target:</span> {matchState.target} |
@@ -705,7 +705,7 @@ const Scoring = () => {
           <h2 className="text-lg font-semibold mb-2 text-blue-900">Current Ball</h2>
           <div className="flex flex-wrap text-lg items-center">
             <div className="mr-4 text-black mb-2">
-              <span className="font-medium text-blue-900">Over:</span> {matchState.overs}.{matchState.balls+1}
+              <span className="font-medium text-blue-900">Over:</span> {matchState.overs}.{matchState.balls + 1}
             </div>
             {uiState.runsScored !== null && (
               <div className="mr-4 text-black mb-2">
@@ -921,6 +921,13 @@ const Scoring = () => {
             onClick={handleSwapBatsmen}
           >
             Swap Batsmen
+          </button>
+          {/* Add this new button */}
+          <button
+            className="py-2 px-4 rounded bg-purple-600 text-white font-bold hover:bg-purple-700"
+            onClick={() => navigate(`/postmatch/${matchId}`)}
+          >
+            Go to Post-Match
           </button>
         </div>
       </div>

@@ -139,6 +139,7 @@ import MatchDetailPage from './Screens/Organiser/MatchDetailPage'
 import TournamentDetailPage from './Screens/Organiser/TournamentDetailPage'
 import OrganiserCompletedMatches from './Screens/Organiser/OrganiserCompletedMatches'
 import OrganiserCompletedTournaments from './Screens/Organiser/OrganiserCompletedTournaments'
+import PostMatch from './Screens/Scorer/PostMatch'
 
 function App() {
   return (
@@ -149,7 +150,7 @@ function App() {
           <Routes>
             {/* Redirect root to viewer home for now */}
             <Route path="/" element={<Navigate to="/viewer-home" />} />
-            
+
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
@@ -191,7 +192,15 @@ function App() {
                 <MatchSummary />
               </ProtectedRoute>
             } />
-            
+            <Route
+              path="/postmatch/:matchId"
+              element={
+                <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                  <PostMatch />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Viewer Routes */}
             <Route path="/match-details/:matchId" element={<MatchDetails />} />
             <Route path="/viewer-home" element={<ViewerHome />} />
