@@ -34,15 +34,29 @@ const CreateMatchPage = () => {
 
     const submitMatch = async () => {
         // Validate required fields
-        if (!matchData.matchName || !matchData.team1 || !matchData.team2 || !matchData.dateTime) {
-            alert('Please fill in all required fields: Match Name, Team 1, Team 2, and Date/Time.');
+        if (!matchData.match_name || !matchData.team1 || !matchData.team2 || !matchData.dateTime || !matchData.venue) {
+            alert('Please fill in all required fields: Match Name, Team 1, Team 2, Venue, and Date/Time.');
             return;
         }
         const payload = {
-            name: matchData.matchName || `${matchData.team1} vs ${matchData.team2}`,
-            date: matchData.dateTime,
+            match_name: matchData.match_name,
+            match_type: matchData.match_type,
+            date: matchData.dateTime.split('T')[0],
+            time: matchData.dateTime.split('T')[1] || '',
             teams: [matchData.team1, matchData.team2],
-            tournament: matchData.matchType,
+            venue: matchData.venue,
+            team1: {
+                name: matchData.team1,
+                players: matchData.team1Players
+            },
+            team2: {
+                name: matchData.team2,
+                players: matchData.team2Players
+            },
+            total_overs: matchData.overs,
+            powerplay_overs: matchData.powerplayOvers,
+            drs_enabled: matchData.drsEnabled,
+            scorers: matchData.scorers.map(s => s.email),
             status: 'Upcoming',
         };
         try {

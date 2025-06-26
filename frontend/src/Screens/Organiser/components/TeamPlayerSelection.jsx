@@ -16,7 +16,6 @@ const PlayerInputRow = ({ player, index, updatePlayer, removePlayer, teamName })
                     <option>Batsman</option>
                     <option>Bowler</option>
                     <option>All-Rounder</option>
-                    <option>Wicket-Keeper</option>
                 </select>
             </div>
             <div className="md:col-span-2 flex items-center">

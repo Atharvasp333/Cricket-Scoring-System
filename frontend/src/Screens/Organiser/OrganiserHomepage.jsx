@@ -46,7 +46,7 @@ const OrganiserHomepage = () => {
         fetchData();
     }, []);
 
-    const MatchCard = ({ _id, name, tournament, date }) => (
+    const MatchCard = ({ _id, match_name, match_type, date }) => (
         <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 ease-in-out p-4 border border-blue-200 hover:border-blue-300">
             <div className="flex items-center mb-2">
                 <CalendarIcon />
@@ -54,8 +54,8 @@ const OrganiserHomepage = () => {
                     {new Date(date).toLocaleDateString()}
                 </span>
             </div>
-            <h3 className="text-lg font-bold text-gray-800 mb-1">{name}</h3>
-            <p className="text-xs text-gray-600 mb-2">{tournament}</p>
+            <h3 className="text-lg font-bold text-gray-800 mb-1">{match_name}</h3>
+            <p className="text-xs text-gray-600 mb-2">{match_type}</p>
             <div className="flex justify-between items-center">
                 <p className="text-xs font-semibold text-indigo-700">
                     {new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

@@ -16,17 +16,18 @@ const MatchDetailPage = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [step, setStep] = useState(1);
     const [matchData, setMatchData] = useState({
-        matchType: 'T20',
-        team1: '',
-        team2: '',
+        match_type: '',
         venue: '',
-        dateTime: '',
-        team1Players: [],
-        team2Players: [],
-        overs: 20,
-        powerplayOvers: 6,
-        drsEnabled: false,
-        drsReviews: 2,
+        date: '',
+        time: '',
+        team1: {
+            name: '',
+            players: [],
+        },
+        team2: {
+            name: '',
+            players: [],
+        },
         scorers: [],
     });
 
@@ -42,18 +43,17 @@ const MatchDetailPage = () => {
                 setMatch(data);
                 
                 setMatchData({
-                    matchName: data.name,
-                    matchType: data.tournament || 'T20',
-                    team1: data.teams[0] || '',
-                    team2: data.teams[1] || '',
+                    match_name: data.match_name,
+                    match_type: data.match_type,
+                    date: data.date || '',
+                    time: data.time || '',
                     venue: data.venue || '',
-                    dateTime: data.date || '',
-                    team1Players: data.team1Players || [],
-                    team2Players: data.team2Players || [],
-                    overs: data.overs || 20,
-                    powerplayOvers: data.powerplayOvers || 6,
-                    drsEnabled: data.drsEnabled || false,
-                    drsReviews: data.drsReviews || 2,
+                    team1: data.team1 || [],
+                    team2: data.team2 || [],
+                    total_overs: data.total_overs,
+                    powerplay_overs: data.powerplay_overs,
+                    drs_enabled: data.drs_enabled,
+                    drs_reviews: data.drs_reviews,
                     scorers: data.scorers || [],
                 });
             } catch (err) {
@@ -81,17 +81,18 @@ const MatchDetailPage = () => {
     const submitMatch = async () => {
         try {
             const payload = {
-                name: matchData.matchName || `${matchData.team1} vs ${matchData.team2}`,
-                date: matchData.dateTime,
-                teams: [matchData.team1, matchData.team2],
-                tournament: matchData.matchType,
+                match_name: matchData.match_name,
+                match_type: matchData.match_type,
+                date: matchData.date,
+                time: matchData.time,
+                teams: [matchData.team1.name, matchData.team2.name],
                 venue: matchData.venue,
-                team1Players: matchData.team1Players,
-                team2Players: matchData.team2Players,
-                overs: matchData.overs,
-                powerplayOvers: matchData.powerplayOvers,
-                drsEnabled: matchData.drsEnabled,
-                drsReviews: matchData.drsReviews,
+                team1: matchData.team1,
+                team2: matchData.team2,
+                total_overs: matchData.total_overs,
+                powerplay_overs: matchData.powerplay_overs,
+                drs_enabled: matchData.drs_enabled,
+                drs_reviews: matchData.drs_reviews,
                 scorers: matchData.scorers,
             };
 
@@ -191,7 +192,7 @@ const MatchDetailPage = () => {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             <div className="bg-gray-50 rounded p-2 border border-gray-100">
                                 <p className="text-xs font-medium text-gray-600">Match Type</p>
-                                <p className="text-sm font-semibold text-gray-800">{match.tournament}</p>
+                                <p className="text-sm font-semibold text-gray-800">{match.match_type}</p>
                             </div>
                             <div className="bg-gray-50 rounded p-2 border border-gray-100">
                                 <p className="text-xs font-medium text-gray-600">Date</p>
