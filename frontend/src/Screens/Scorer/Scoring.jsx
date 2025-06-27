@@ -107,53 +107,62 @@ const Scoring = () => {
       console.error('Failed to load match state:', err);
       
       // If match state doesn't exist yet, initialize it
-      if (err.response && err.response.status === 404 && matchData) {
+      if (err.response && err.response.status === 404) {
         console.log('Match state not found, initializing new state');
-        // Initialize a new match state
-        const newMatchState = {
-          matchId,
-          innings: 1,
-          battingTeam: null,
-          bowlingTeam: null,
-          score: 0,
-          wickets: 0,
-          overs: 0,
-          balls: 0,
-          currentOver: [],
-          previousOvers: [],
-          crr: 0,
-          target: null,
-          rrr: null,
-          striker: null,
-          nonStriker: null,
-          currentBowler: null,
-          lastBowler: '',
-          bowlers: [],
-          batsmen: [],
-          extras: {
-            wides: 0,
-            noBalls: 0,
-            byes: 0,
-            legByes: 0,
-            total: 0
-          },
-          matchStatus: 'Live'
-        };
         
         try {
-          console.log('Creating new match state');
-          try {
-            const savedState = await saveMatchState(newMatchState);
-            console.log('New match state created successfully:', savedState);
-            setMatchState(savedState);
-          } catch (saveErr) {
-            console.error('Error saving new match state:', saveErr);
-            // Still update the local state even if saving fails
-            setMatchState(newMatchState);
+          // First update the match status to Live if needed
+          if (matchData && matchData.status !== 'Live') {
+            console.log('Updating match status to Live');
+            await updateMatchStatus('Live');
           }
+          
+          // Initialize a new match state
+          const newMatchState = {
+            matchId,
+            innings: 1,
+            battingTeam: null,
+            bowlingTeam: null,
+            score: 0,
+            wickets: 0,
+            overs: 0,
+            balls: 0,
+            currentOver: [],
+            previousOvers: [],
+            crr: 0,
+            target: null,
+            rrr: null,
+            striker: null,
+            nonStriker: null,
+            currentBowler: null,
+            lastBowler: '',
+            bowlers: [],
+            batsmen: [],
+            extras: {
+              wides: 0,
+              noBalls: 0,
+              byes: 0,
+              legByes: 0,
+              total: 0
+            },
+            matchStatus: 'Live'
+          };
+          
+          console.log('Creating new match state');
+          const savedState = await saveMatchState(newMatchState);
+          console.log('New match state created successfully:', savedState);
+          setMatchState(savedState);
+          
+          // Show the start innings modal since this is a new match state
+          setUiState(prev => ({ ...prev, showStartInningsModal: true }));
         } catch (createErr) {
           console.error('Failed to create new match state:', createErr);
+          // Show the start innings modal even if creation fails
+          setUiState(prev => ({ ...prev, showStartInningsModal: true }));
         }
+      } else {
+        // For other errors, show the start innings modal
+        setUiState(prev => ({ ...prev, showStartInningsModal: true }));
       }
     }
   };
@@ -299,6 +308,14 @@ const Scoring = () => {
 
     // Update match status in database
     await updateMatchStatus('Live');
+
+    // Also update the main match status in the matches collection
+    try {
+      await api.put(`/api/matches/${matchId}`, { status: 'Live' });
+      console.log('Main match status set to Live');
+    } catch (err) {
+      console.error('Failed to update main match status:', err);
+    }
 
     // Explicitly save the initial match state to the database
     try {

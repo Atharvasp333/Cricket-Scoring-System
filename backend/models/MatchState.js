@@ -3,8 +3,7 @@ import mongoose from 'mongoose';
 // Define the MatchState schema
 const MatchStateSchema = new mongoose.Schema({
   matchId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Match',
+    type: String,
     required: true
   },
   innings: {
