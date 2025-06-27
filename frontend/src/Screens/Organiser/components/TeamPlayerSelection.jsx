@@ -9,10 +9,10 @@ const PlayerInputRow = ({ player, index, updatePlayer, removePlayer, teamName })
     return (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 gap-y-2 items-center p-2 rounded-lg hover:bg-gray-50">
             <div className="md:col-span-4">
-                <input type="text" name="name" value={player.name} onChange={handleChange} placeholder="Player Name" className="w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                <input type="text" name="name" value={player.name} onChange={handleChange} placeholder="Player Name" className="px-3 py-2 text-gray-700 w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
             </div>
             <div className="md:col-span-3">
-                <select name="role" value={player.role} onChange={handleChange} className="w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                <select name="role" value={player.role} onChange={handleChange} className="px-3 py-2 text-gray-700 w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                     <option>Batsman</option>
                     <option>Bowler</option>
                     <option>All-Rounder</option>

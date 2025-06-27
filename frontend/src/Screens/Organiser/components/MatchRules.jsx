@@ -14,11 +14,12 @@ const MatchRules = ({ data, setData, nextStep, prevStep }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                         <label htmlFor="overs" className="block text-sm font-medium text-gray-700">Total Overs</label>
-                        <input type="number" name="overs" id="overs" value={data.overs} onChange={handleChange} className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                        <input type="number" name="overs" id="overs" value={data.overs} onChange={handleChange} className="mt-1 block w-full text-gray-700 shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
                     </div>
                     <div>
                         <label htmlFor="powerplayOvers" className="block text-sm font-medium text-gray-700">Powerplay Overs</label>
-                        <input type="number" name="powerplayOvers" id="powerplayOvers" value={data.powerplayOvers} onChange={handleChange} className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                        <input type="number" name="powerplayOvers" id="powerplayOvers" value={data.powerplayOvers} onChange={handleChange} className="mt-1 block w-full text-gray-700 shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+
                     </div>
                 </div>
                 
@@ -34,7 +35,8 @@ const MatchRules = ({ data, setData, nextStep, prevStep }) => {
                     {data.drsEnabled && (
                         <div className="mt-4">
                             <label htmlFor="drsReviews" className="block text-sm font-medium text-gray-700">DRS Reviews per Team</label>
-                            <input type="number" name="drsReviews" id="drsReviews" value={data.drsReviews} onChange={handleChange} className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                            <input type="number" name="drsReviews" id="drsReviews" value={data.drsReviews} onChange={handleChange} className="mt-1 block w-full text-gray-700 shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+
                         </div>
                     )}
                 </div>

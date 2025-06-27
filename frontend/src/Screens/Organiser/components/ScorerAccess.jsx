@@ -36,11 +36,11 @@ const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
                     <h3 className="text-lg font-semibold text-gray-900">Invite Scorer</h3>
                     <div>
                         <label htmlFor="scorerName" className="block text-sm font-medium text-gray-700">Name (Optional)</label>
-                        <input type="text" id="scorerName" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. John Doe" className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                        <input type="text" id="scorerName" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. John Doe" className="mt-1 block text-gray-700 w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
                     </div>
                     <div>
                         <label htmlFor="scorerEmail" className="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" id="scorerEmail" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g. john.doe@example.com" className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                        <input type="email" id="scorerEmail" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g. john.doe@example.com" className="mt-1 block text-gray-700 w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
                         {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
                     </div>
                     <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
