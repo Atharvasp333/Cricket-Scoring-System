@@ -8,6 +8,9 @@ router.post('/', async (req, res) => {
   try {
     const tournament = new Tournament(req.body);
     await tournament.save();
+    // Emit socket event for new tournament
+    const io = req.app.get('io');
+    if (io) io.emit('tournamentAdded', tournament);
     res.status(201).json(tournament);
   } catch (err) {
     res.status(400).json({ error: err.message });

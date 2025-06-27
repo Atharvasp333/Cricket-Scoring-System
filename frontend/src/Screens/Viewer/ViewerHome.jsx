@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
+import api from '../../utils/api';
 
 const ViewerHome = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -9,115 +11,129 @@ const ViewerHome = () => {
   const [newsError, setNewsError] = useState(null);
   const navigate = useNavigate();
 
-  // Mock data for live matches
-  const liveMatches = [
-    {
-      id: 1,
-      team1: { name: 'Mumbai Indians', logo: '🏏', score: '189/4', overs: '18.2' },
-      team2: { name: 'Chennai Super Kings', logo: '🏏', score: '185/7', overs: '20.0' },
-      status: 'MI needs 24 runs in 10 balls',
-      venue: 'Wankhede Stadium',
-      date: '2023-10-15'
-    },
-    {
-      id: 2,
-      team1: { name: 'Royal Challengers Bangalore', logo: '🏏', score: '56/2', overs: '7.0' },
-      team2: { name: 'Kolkata Knight Riders', logo: '🏏', score: '210/6', overs: '20.0' },
-      status: 'RCB needs 155 runs in 78 balls',
-      venue: 'Chinnaswamy Stadium',
-      date: '2023-10-15'
-    },
-    {
-      id: 3,
-      team1: { name: 'Delhi Capitals', logo: '🏏', score: '145/8', overs: '16.4' },
-      team2: { name: 'Punjab Kings', logo: '🏏', score: '180/5', overs: '20.0' },
-      status: 'DC needs 36 runs in 20 balls',
-      venue: 'Arun Jaitley Stadium',
-      date: '2023-10-15'
-    }
-  ];
+  // --- MATCHES & TOURNAMENTS STATE ---
+  const [matches, setMatches] = useState([]);
+  const [tournaments, setTournaments] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [dataError, setDataError] = useState(null);
 
-  // Mock data for all matches
-  const allMatches = [
-    // Live matches
-    ...liveMatches,
-    // Upcoming matches
-    {
-      id: 4,
-      team1: { name: 'Rajasthan Royals', logo: '🏏' },
-      team2: { name: 'Sunrisers Hyderabad', logo: '🏏' },
-      status: 'Upcoming',
-      venue: 'Sawai Mansingh Stadium',
-      date: '2023-10-20',
-      time: '19:30'
-    },
-    {
-      id: 5,
-      team1: { name: 'Gujarat Titans', logo: '🏏' },
-      team2: { name: 'Lucknow Super Giants', logo: '🏏' },
-      status: 'Upcoming',
-      venue: 'Narendra Modi Stadium',
-      date: '2023-10-22',
-      time: '15:30'
-    },
-    // Recent matches
-    {
-      id: 6,
-      team1: { name: 'Mumbai Indians', logo: '🏏', score: '210/5', overs: '20.0' },
-      team2: { name: 'Punjab Kings', logo: '🏏', score: '189/8', overs: '20.0' },
-      status: 'Mumbai Indians won by 21 runs',
-      venue: 'Wankhede Stadium',
-      date: '2023-10-10'
-    },
-    {
-      id: 7,
-      team1: { name: 'Chennai Super Kings', logo: '🏏', score: '175/8', overs: '20.0' },
-      team2: { name: 'Royal Challengers Bangalore', logo: '🏏', score: '176/4', overs: '19.2' },
-      status: 'Royal Challengers Bangalore won by 6 wickets',
-      venue: 'M. A. Chidambaram Stadium',
-      date: '2023-10-08'
-    }
-  ];
+  // --- SOCKET.IO INTEGRATION START ---
+  const SOCKET_URL = 'http://localhost:5000'; // Change port if needed
+  const [socket] = useState(() => io(SOCKET_URL, { autoConnect: true }));
+  // --- SOCKET.IO INTEGRATION END ---
 
-  // Mock data for tournaments
-  const tournaments = [
-    {
-      id: 1,
-      name: 'Indian Premier League 2023',
-      status: 'Live',
-      teams: 10,
-      matches: 74,
-      startDate: '2023-09-15',
-      endDate: '2023-11-20'
-    },
-    {
-      id: 2,
-      name: 'T20 World Cup 2023',
-      status: 'Upcoming',
-      teams: 16,
-      matches: 45,
-      startDate: '2023-12-01',
-      endDate: '2023-12-28'
-    },
-    {
-      id: 3,
-      name: 'Big Bash League 2023',
-      status: 'Upcoming',
-      teams: 8,
-      matches: 61,
-      startDate: '2023-12-10',
-      endDate: '2024-02-05'
-    },
-    {
-      id: 4,
-      name: 'The Hundred 2023',
-      status: 'Concluded',
-      teams: 8,
-      matches: 34,
-      startDate: '2023-08-01',
-      endDate: '2023-08-27'
-    }
-  ];
+  // --- DATA NORMALIZATION HELPERS ---
+  function normalizeMatch(match) {
+    return {
+      ...match,
+      team1: {
+        name: match.team1_name || match.team1?.name || 'Team 1',
+        logo: '🏏',
+        score: match.team1_score || match.team1?.score || '-',
+        overs: match.team1_overs || match.team1?.overs || '-',
+      },
+      team2: {
+        name: match.team2_name || match.team2?.name || 'Team 2',
+        logo: '🏏',
+        score: match.team2_score || match.team2?.score || '-',
+        overs: match.team2_overs || match.team2?.overs || '-',
+      },
+      status: match.status,
+      venue: match.venue,
+      date: match.date,
+      time: match.time,
+      _id: match._id,
+    };
+  }
+
+  function normalizeTournament(tournament) {
+    return {
+      ...tournament,
+      name: tournament.name,
+      status: tournament.status,
+      teams: tournament.teams?.length || tournament.teams || 0,
+      matches: tournament.matches?.length || tournament.matches || 0,
+      startDate: tournament.startDate,
+      endDate: tournament.endDate,
+      _id: tournament._id,
+    };
+  }
+
+  // --- FETCH INITIAL DATA ---
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoadingData(true);
+      setDataError(null);
+      try {
+        const [matchRes, tournamentRes] = await Promise.all([
+          api.get('/api/matches'),
+          api.get('/api/tournaments'),
+        ]);
+        setMatches((matchRes.data || []).map(normalizeMatch));
+        setTournaments((tournamentRes.data || []).map(normalizeTournament));
+      } catch (err) {
+        setDataError('Could not load matches/tournaments.');
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // --- SOCKET EVENT HANDLERS ---
+  useEffect(() => {
+    if (!socket) return;
+    // Matches
+    socket.on('matchUpdated', (updatedMatch) => {
+      setMatches((prev) => {
+        const filtered = prev.filter((m) => m._id !== updatedMatch._id);
+        return [...filtered, normalizeMatch(updatedMatch)];
+      });
+    });
+    socket.on('matchAdded', (newMatch) => {
+      setMatches((prev) => [...prev, normalizeMatch(newMatch)]);
+    });
+    socket.on('matchRemoved', (id) => {
+      setMatches((prev) => prev.filter((m) => m._id !== id));
+    });
+    // Tournaments
+    socket.on('tournamentUpdated', (updatedTournament) => {
+      setTournaments((prev) => {
+        const filtered = prev.filter((t) => t._id !== updatedTournament._id);
+        return [...filtered, normalizeTournament(updatedTournament)];
+      });
+    });
+    socket.on('tournamentAdded', (newTournament) => {
+      setTournaments((prev) => [...prev, normalizeTournament(newTournament)]);
+    });
+    socket.on('tournamentRemoved', (id) => {
+      setTournaments((prev) => prev.filter((t) => t._id !== id));
+    });
+    return () => {
+      socket.off('matchUpdated');
+      socket.off('matchAdded');
+      socket.off('matchRemoved');
+      socket.off('tournamentUpdated');
+      socket.off('tournamentAdded');
+      socket.off('tournamentRemoved');
+    };
+  }, [socket]);
+
+  // --- ORGANIZE BY STATUS ---
+  const organizeMatches = (status) =>
+    matches.filter((m) => {
+      if (status === 'Live') return m.status === 'Live';
+      if (status === 'Upcoming') return m.status === 'Upcoming';
+      if (status === 'Completed') return m.status === 'Completed' || m.status === 'Concluded';
+      return false;
+    });
+  const organizeTournaments = (status) =>
+    tournaments.filter((t) => {
+      if (status === 'Live') return t.status === 'Live';
+      if (status === 'Upcoming') return t.status === 'Upcoming';
+      if (status === 'Completed') return t.status === 'Completed' || t.status === 'Concluded';
+      return false;
+    });
 
   // Fetch cricket news from GNews API
   useEffect(() => {
@@ -169,9 +185,9 @@ const ViewerHome = () => {
             </button>
           </div>
           <div className="flex overflow-x-auto pb-4 space-x-4 scrollbar-hide">
-            {liveMatches.map((match) => (
+            {organizeMatches('Live').map((match) => (
               <div
-                key={match.id}
+                key={match._id}
                 className="min-w-[320px] bg-white rounded-xl shadow-lg p-5 border border-gray-200 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
               >
                 <div className="flex justify-between items-center mb-4">
@@ -181,17 +197,17 @@ const ViewerHome = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
-                      <span className="mr-3 text-lg">{match.team1.logo}</span>
-                      <span className="font-semibold text-gray-800">{match.team1.name}</span>
+                      <span className="mr-3 text-lg">{match.team1?.logo || "🏏"}</span>
+                      <span className="font-semibold text-gray-800">{match.team1?.name || "Team 1"}</span>
                     </div>
-                    <span className="font-bold text-lg text-gray-900">{match.team1.score} <span className="text-sm text-gray-600">({match.team1.overs})</span></span>
+                    <span className="font-bold text-lg text-gray-900">{match.team1?.score || "-"} <span className="text-sm text-gray-600">({match.team1?.overs || "-"})</span></span>
                   </div>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
-                      <span className="mr-3 text-lg">{match.team2.logo}</span>
-                      <span className="font-semibold text-gray-800">{match.team2.name}</span>
+                      <span className="mr-3 text-lg">{match.team2?.logo || "🏏"}</span>
+                      <span className="font-semibold text-gray-800">{match.team2?.name || "Team 2"}</span>
                     </div>
-                    <span className="font-bold text-lg text-gray-900">{match.team2.score} <span className="text-sm text-gray-600">({match.team2.overs})</span></span>
+                    <span className="font-bold text-lg text-gray-900">{match.team2?.score || "-"} <span className="text-sm text-gray-600">({match.team2?.overs || "-"})</span></span>
                   </div>
                 </div>
                 <div className="mt-4 pt-3 border-t border-gray-100">
@@ -208,86 +224,125 @@ const ViewerHome = () => {
       <section className="py-8 px-4 bg-gray-50 border-b-2 border-gray-100">
         <div className="container mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* All Matches */}
+            {/* Matches Section */}
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-[#16638A]">Recent Matches</h2>
-                <button to="/viewer/matches" className="bg-gray-200 px-2 flex items-center text-[#16638A] hover:text-[#0F4C75] font-medium">
-                  View All <ChevronRight className="ml-1" size={16} />
-                </button>
-              </div>
-              <div className="flex overflow-x-auto pb-4 space-x-4 scrollbar-hide">
-                {allMatches.slice(0, 6).map((match) => (
-                  <div
-                    key={match.id}
-                    className="min-w-[280px] bg-gray-50 rounded-lg p-4 border border-gray-200 hover:bg-gray-100 transition-colors flex-shrink-0 cursor-pointer"
-                  >
+              <h2 className="text-2xl font-bold text-[#16638A] mb-6">Matches</h2>
+              {/* Live Matches */}
+              <h3 className="text-xl font-semibold text-red-600 mb-2">Live</h3>
+              <div className="flex overflow-x-auto pb-4 space-x-4 scrollbar-hide mb-6">
+                {organizeMatches('Live').length === 0 && <div className="text-gray-500">No live matches</div>}
+                {organizeMatches('Live').map((match) => (
+                  <div key={match._id} className="min-w-[280px] bg-white rounded-lg p-4 border border-gray-200 hover:bg-gray-100 transition-colors flex-shrink-0 cursor-pointer">
                     <div className="flex justify-between items-center mb-3">
-                      <span className={
-                        `text-xs px-2 py-1 rounded-full font-medium ${match.status === 'Upcoming' ? 'bg-blue-100 text-blue-800' :
-                          match.status.includes('won') ? 'bg-green-100 text-green-800' :
-                            'bg-red-100 text-red-800'
-                        }`
-                      }>
-                        {match.status === 'Upcoming' ? 'UPCOMING' :
-                          match.status.includes('won') ? 'COMPLETED' : 'LIVE'}
-                      </span>
+                      <span className="text-xs px-2 py-1 rounded-full font-medium bg-red-100 text-red-800">LIVE</span>
                       <span className="text-sm text-gray-600 font-medium">{match.date} {match.time ? `| ${match.time}` : ''}</span>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center">
-                          <span className="mr-2">{match.team1.logo}</span>
-                          <span className="font-medium text-gray-800">{match.team1.name}</span>
+                          <span className="mr-2">{match.team1?.logo || "🏏"}</span>
+                          <span className="font-medium text-gray-800">{match.team1?.name || "Team 1"}</span>
                         </div>
-                        {match.team1.score && (
-                          <span className="font-bold text-gray-900">{match.team1.score}</span>
+                        {match.team1?.score && (
+                          <span className="font-bold text-gray-900">{match.team1?.score}</span>
                         )}
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center">
-                          <span className="mr-2">{match.team2.logo}</span>
-                          <span className="font-medium text-gray-800">{match.team2.name}</span>
+                          <span className="mr-2">{match.team2?.logo || "🏏"}</span>
+                          <span className="font-medium text-gray-800">{match.team2?.name || "Team 2"}</span>
                         </div>
-                        {match.team2.score && (
-                          <span className="font-bold text-gray-900">{match.team2.score}</span>
+                        {match.team2?.score && (
+                          <span className="font-bold text-gray-900">{match.team2?.score}</span>
                         )}
                       </div>
                     </div>
                     <div className="mt-3 pt-2 border-t border-gray-200">
                       <div className="text-sm text-center text-gray-600 font-medium">{match.venue}</div>
-                      {match.status !== 'Upcoming' && !match.status.includes('needs') && (
-                        <div className="text-xs text-center mt-1 font-semibold text-gray-800">{match.status}</div>
-                      )}
+                      <div className="text-xs text-center mt-1 font-semibold text-gray-800">{match.status}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Upcoming Matches */}
+              <h3 className="text-xl font-semibold text-blue-600 mb-2">Upcoming</h3>
+              <div className="flex overflow-x-auto pb-4 space-x-4 scrollbar-hide mb-6">
+                {organizeMatches('Upcoming').length === 0 && <div className="text-gray-500">No upcoming matches</div>}
+                {organizeMatches('Upcoming').map((match) => (
+                  <div key={match._id} className="min-w-[280px] bg-blue-50 rounded-lg p-4 border border-blue-200 hover:bg-blue-100 transition-colors flex-shrink-0 cursor-pointer">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800">UPCOMING</span>
+                      <span className="text-sm text-gray-600 font-medium">{match.date} {match.time ? `| ${match.time}` : ''}</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <span className="mr-2">{match.team1?.logo || "🏏"}</span>
+                          <span className="font-medium text-gray-800">{match.team1?.name || "Team 1"}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <span className="mr-2">{match.team2?.logo || "🏏"}</span>
+                          <span className="font-medium text-gray-800">{match.team2?.name || "Team 2"}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-gray-200">
+                      <div className="text-sm text-center text-gray-600 font-medium">{match.venue}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Completed Matches */}
+              <h3 className="text-xl font-semibold text-green-600 mb-2">Completed</h3>
+              <div className="flex overflow-x-auto pb-4 space-x-4 scrollbar-hide">
+                {organizeMatches('Completed').length === 0 && <div className="text-gray-500">No completed matches</div>}
+                {organizeMatches('Completed').map((match) => (
+                  <div key={match._id} className="min-w-[280px] bg-green-50 rounded-lg p-4 border border-green-200 hover:bg-green-100 transition-colors flex-shrink-0 cursor-pointer">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-100 text-green-800">COMPLETED</span>
+                      <span className="text-sm text-gray-600 font-medium">{match.date} {match.time ? `| ${match.time}` : ''}</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <span className="mr-2">{match.team1?.logo || "🏏"}</span>
+                          <span className="font-medium text-gray-800">{match.team1?.name || "Team 1"}</span>
+                        </div>
+                        {match.team1?.score && (
+                          <span className="font-bold text-gray-900">{match.team1?.score}</span>
+                        )}
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <span className="mr-2">{match.team2?.logo || "🏏"}</span>
+                          <span className="font-medium text-gray-800">{match.team2?.name || "Team 2"}</span>
+                        </div>
+                        {match.team2?.score && (
+                          <span className="font-bold text-gray-900">{match.team2?.score}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-gray-200">
+                      <div className="text-sm text-center text-gray-600 font-medium">{match.venue}</div>
+                      <div className="text-xs text-center mt-1 font-semibold text-gray-800">{match.status}</div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-
-            {/* Tournaments */}
+            {/* Tournaments Section */}
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-[#16638A]">Tournaments</h2>
-                <button className="bg-gray-200 px-2 flex items-center text-[#16638A] hover:text-[#0F4C75] font-medium">
-                  View All <ChevronRight className="ml-1" size={16} />
-                </button>
-              </div>
-              <div className="flex overflow-x-auto pb-4 space-x-4 scrollbar-hide">
-                {tournaments.map((tournament) => (
-                  <div
-                    key={tournament.id}
-                    className="min-w-[280px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200 hover:from-gray-100 hover:to-gray-200 transition-all duration-300 flex-shrink-0 cursor-pointer"
-                  >
+              <h2 className="text-2xl font-bold text-[#16638A] mb-6">Tournaments</h2>
+              {/* Live Tournaments */}
+              <h3 className="text-xl font-semibold text-red-600 mb-2">Live</h3>
+              <div className="flex overflow-x-auto pb-4 space-x-4 scrollbar-hide mb-6">
+                {organizeTournaments('Live').length === 0 && <div className="text-gray-500">No live tournaments</div>}
+                {organizeTournaments('Live').map((tournament) => (
+                  <div key={tournament._id} className="min-w-[280px] bg-white rounded-lg p-4 border border-gray-200 hover:bg-gray-100 transition-colors flex-shrink-0 cursor-pointer">
                     <div className="flex justify-between items-center mb-3">
-                      <span className={
-                        `text-xs px-3 py-1 rounded-full font-medium ${tournament.status === 'Live' ? 'bg-red-100 text-red-800' :
-                          tournament.status === 'Upcoming' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
-                        }`
-                      }>
-                        {tournament.status.toUpperCase()}
-                      </span>
+                      <span className="text-xs px-3 py-1 rounded-full font-medium bg-red-100 text-red-800">LIVE</span>
                     </div>
                     <h3 className="font-bold text-lg mb-3 text-gray-900 leading-tight">{tournament.name}</h3>
                     <div className="space-y-2">
@@ -300,6 +355,58 @@ const ViewerHome = () => {
                         <span className="font-semibold text-gray-800">{tournament.matches}</span>
                       </div>
                       <div className="text-xs text-gray-500 mt-3 pt-2 border-t border-gray-200">
+                        <div>{tournament.startDate} to {tournament.endDate}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Upcoming Tournaments */}
+              <h3 className="text-xl font-semibold text-blue-600 mb-2">Upcoming</h3>
+              <div className="flex overflow-x-auto pb-4 space-x-4 scrollbar-hide mb-6">
+                {organizeTournaments('Upcoming').length === 0 && <div className="text-gray-500">No upcoming tournaments</div>}
+                {organizeTournaments('Upcoming').map((tournament) => (
+                  <div key={tournament._id} className="min-w-[280px] bg-blue-50 rounded-lg p-4 border border-blue-200 hover:bg-blue-100 transition-colors flex-shrink-0 cursor-pointer">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-xs px-3 py-1 rounded-full font-medium bg-blue-100 text-blue-800">UPCOMING</span>
+                    </div>
+                    <h3 className="font-bold text-lg mb-3 text-gray-900 leading-tight">{tournament.name}</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Teams:</span>
+                        <span className="font-semibold text-gray-800">{tournament.teams}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Matches:</span>
+                        <span className="font-semibold text-gray-800">{tournament.matches}</span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-3 pt-2 border-t border-blue-200">
+                        <div>{tournament.startDate} to {tournament.endDate}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Completed Tournaments */}
+              <h3 className="text-xl font-semibold text-green-600 mb-2">Completed</h3>
+              <div className="flex overflow-x-auto pb-4 space-x-4 scrollbar-hide">
+                {organizeTournaments('Completed').length === 0 && <div className="text-gray-500">No completed tournaments</div>}
+                {organizeTournaments('Completed').map((tournament) => (
+                  <div key={tournament._id} className="min-w-[280px] bg-green-50 rounded-lg p-4 border border-green-200 hover:bg-green-100 transition-colors flex-shrink-0 cursor-pointer">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-xs px-3 py-1 rounded-full font-medium bg-green-100 text-green-800">COMPLETED</span>
+                    </div>
+                    <h3 className="font-bold text-lg mb-3 text-gray-900 leading-tight">{tournament.name}</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Teams:</span>
+                        <span className="font-semibold text-gray-800">{tournament.teams}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Matches:</span>
+                        <span className="font-semibold text-gray-800">{tournament.matches}</span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-3 pt-2 border-t border-green-200">
                         <div>{tournament.startDate} to {tournament.endDate}</div>
                       </div>
                     </div>

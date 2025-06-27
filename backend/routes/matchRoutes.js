@@ -8,6 +8,9 @@ router.post('/', async (req, res) => {
   try {
     const match = new Match(req.body);
     await match.save();
+    // Emit socket event for new match
+    const io = req.app.get('io');
+    if (io) io.emit('matchAdded', match);
     res.status(201).json(match);
   } catch (err) {
     res.status(400).json({ error: err.message });
