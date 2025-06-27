@@ -25,6 +25,9 @@ import OrganiserHomepage from './Screens/Organiser/OrganiserHomepage'
 import CreateTournamentPage from './Screens/Organiser/CreateTournamentPage'
 import CreateMatchPage from './Screens/Organiser/CreateMatchPage'
 
+import PlayerDetails from './Screens/PlayerStats/playerdetails'
+import PlayerSearchPage from './Screens/PlayerStats/playersearchpage'
+
 function App() {
   return (
     <Router>
@@ -89,6 +92,11 @@ function App() {
                 <CreateMatchPage />
               </ProtectedRoute>
             } />
+
+            {/* Player Stats Routes */}
+            <Route path="/players/:playerId" element={<PlayerDetails/>} />
+            <Route path="/player-stats" element={<PlayerSearchPage />} />
+            
           </Routes>
         </div>
         <Footer />

@@ -29,6 +29,7 @@ app.get('/', (req, res) => {
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/players', (await import('./routes/PstatsRoutes.js')).default);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
