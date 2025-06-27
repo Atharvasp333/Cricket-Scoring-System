@@ -111,6 +111,7 @@ import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './Components/Navbar'
 import Footer from './Components/Footer'
+import ScrollToTop from './Components/ScrollToTop'
 import ProtectedRoute from './Components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
 import './App.css'
@@ -145,6 +146,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        <ScrollToTop />
         <Navbar />
         <div className="content">
           <Routes>
