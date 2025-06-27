@@ -24,4 +24,44 @@ router.get('/', async (req, res) => {
   }
 });
 
-export default router; 
+// Get completed tournaments
+router.get('/completed', async (req, res) => {
+  try {
+    const completedTournaments = await Tournament.find({ status: 'completed' }).sort({ endDate: -1 });
+    res.json(completedTournaments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get a specific tournament by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const tournament = await Tournament.findById(req.params.id);
+    if (!tournament) {
+      return res.status(404).json({ error: 'Tournament not found' });
+    }
+    res.json(tournament);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update a tournament
+router.put('/:id', async (req, res) => {
+  try {
+    const tournament = await Tournament.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!tournament) {
+      return res.status(404).json({ error: 'Tournament not found' });
+    }
+    res.json(tournament);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+export default router;

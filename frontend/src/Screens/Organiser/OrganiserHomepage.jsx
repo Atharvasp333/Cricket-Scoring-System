@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const PlusIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -24,50 +24,82 @@ const OrganiserHomepage = () => {
     const [matches, setMatches] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             setError('');
             try {
-                const tRes = await fetch('/api/tournaments');
-                const mRes = await fetch('/api/matches');
-                if (!tRes.ok || !mRes.ok) throw new Error('Failed to fetch data');
-                const tournaments = await tRes.json();
-                const matches = await mRes.json();
-                setTournaments(tournaments);
-                setMatches(matches);
+                const [tRes, mRes] = await Promise.all([
+                    fetch('/api/tournaments'),
+                    fetch('/api/matches')
+                ]);
+                
+                if (!tRes.ok || !mRes.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                
+                const [tournamentsData, matchesData] = await Promise.all([
+                    tRes.json(),
+                    mRes.json()
+                ]);
+                
+                setTournaments(tournamentsData);
+                setMatches(matchesData);
             } catch (err) {
                 setError('Failed to load tournaments or matches.');
+                console.error('Fetch error:', err);
             } finally {
                 setLoading(false);
             }
         };
+        
         fetchData();
     }, []);
 
-    const MatchCard = ({ name, tournament, date }) => (
+    const MatchCard = ({ _id, match_name, match_type, date, time, team1_name, team2_name, status, venue }) => (
         <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 ease-in-out p-4 border border-blue-200 hover:border-blue-300">
-            <div className="flex items-center mb-2">
-                <CalendarIcon />
-                <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
-                    {new Date(date).toLocaleDateString()}
-                </span>
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                    <CalendarIcon />
+                    <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                        {date}
+                    </span>
+                </div>
+                {status && (
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        status === 'Live' ? 'bg-red-100 text-red-600' :
+                        status === 'completed' ? 'bg-green-100 text-green-600' :
+                        'bg-gray-100 text-gray-600'
+                    }`}>
+                        {status}
+                    </span>
+                )}
             </div>
-            <h3 className="text-lg font-bold text-gray-800 mb-1">{name}</h3>
-            <p className="text-xs text-gray-600 mb-2">{tournament}</p>
+            <h3 className="text-lg font-bold text-gray-800 mb-1">{match_name}</h3>
+            {match_type && <p className="text-xs text-gray-600 mb-2">{match_type}</p>}
+            <div className="text-xs text-gray-600 mb-2">
+                {team1_name && team2_name ?
+                    `${team1_name} vs ${team2_name}` :
+                    'Teams not specified'}
+            </div>
+            {venue && <p className="text-xs text-gray-500 mb-2">📍 {venue}</p>}
             <div className="flex justify-between items-center">
                 <p className="text-xs font-semibold text-indigo-700">
-                    {new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {time || 'Time TBD'}
                 </p>
-                <button className="p-1 text-blue-600 hover:text-blue-800 text-xs font-medium">
-                    View Details →
+                <button
+                    onClick={() => navigate(`/organiser/match/${_id}`)}
+                    className="px-3 py-1 bg-black text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors duration-200"
+                >
+                    View Details
                 </button>
             </div>
         </div>
     );
 
-    const TournamentCard = ({ name, teams, createdAt }) => (
+    const TournamentCard = ({ _id, name, teams, createdAt }) => (
         <div className="bg-gradient-to-br from-emerald-50 to-green-100 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 ease-in-out p-4 border border-emerald-200 hover:border-emerald-300">
             <div className="flex items-center mb-2">
                 <TrophyIcon />
@@ -80,8 +112,11 @@ const OrganiserHomepage = () => {
                 <div className="text-xs text-gray-600">
                     <span className="font-semibold text-emerald-700">{teams?.length || 0}</span> Teams
                 </div>
-                <button className="p-1 text-emerald-600 hover:text-emerald-800 text-xs font-medium">
-                    Manage →
+                <button
+                    onClick={() => navigate(`/organiser/tournament/${_id}`)}
+                    className="px-3 py-1 bg-black text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors duration-200"
+                >
+                    Manage
                 </button>
             </div>
         </div>
@@ -112,18 +147,20 @@ const OrganiserHomepage = () => {
                             <p className="text-gray-600 mt-1 text-sm">Manage your tournaments and matches</p>
                         </div>
                         <div className="flex space-x-2 mt-4 md:mt-0">
-                            <Link to="/organiser/create-tournament">
-                                <button className="flex items-center justify-center bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
-                                    <PlusIcon />
-                                    Create Tournament
-                                </button>
-                            </Link>
-                            <Link to="/organiser/create-match">
-                                <button className="flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
-                                    <PlusIcon />
-                                    Create Match
-                                </button>
-                            </Link>
+                            <button 
+                                onClick={() => navigate('/organiser/create-tournament')}
+                                className="flex items-center justify-center bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                            >
+                                <PlusIcon />
+                                Create Tournament
+                            </button>
+                            <button 
+                                onClick={() => navigate('/organiser/create-match')}
+                                className="flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                            >
+                                <PlusIcon />
+                                Create Match
+                            </button>
                         </div>
                     </div>
                 </header>
@@ -138,6 +175,12 @@ const OrganiserHomepage = () => {
                     <div className="text-center py-12">
                         <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md mx-auto">
                             <p className="text-red-600 font-medium text-sm">{error}</p>
+                            <button 
+                                onClick={() => window.location.reload()}
+                                className="mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                            >
+                                Try Again
+                            </button>
                         </div>
                     </div>
                 ) : (
@@ -153,10 +196,29 @@ const OrganiserHomepage = () => {
                                         <CalendarIcon />
                                         <p className="text-gray-500 text-sm">No matches scheduled yet</p>
                                         <p className="text-gray-400 text-xs mt-1">Create your first match to get started</p>
+                                        <button
+                                            onClick={() => navigate('/organiser/create-match')}
+                                            className="mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                                        >
+                                            Create Match
+                                        </button>
                                     </div>
                                 </div>
                             ) : (
-                                matches.map(match => <MatchCard key={match._id} {...match} />)
+                                matches.map(match => (
+                                    <MatchCard 
+                                        key={match._id} 
+                                        _id={match._id}
+                                        match_name={match.match_name}
+                                        match_type={match.match_type}
+                                        date={match.date}
+                                        time={match.time}
+                                        team1_name={match.team1_name}
+                                        team2_name={match.team2_name}
+                                        status={match.status}
+                                        venue={match.venue}
+                                    />
+                                ))
                             )}
                         </Section>
 
@@ -171,10 +233,24 @@ const OrganiserHomepage = () => {
                                         <TrophyIcon />
                                         <p className="text-gray-500 text-sm">No tournaments created yet</p>
                                         <p className="text-gray-400 text-xs mt-1">Create your first tournament to get started</p>
+                                        <button
+                                            onClick={() => navigate('/organiser/create-tournament')}
+                                            className="mt-2 bg-emerald-600 text-white px-3 py-1 rounded text-sm"
+                                        >
+                                            Create Tournament
+                                        </button>
                                     </div>
                                 </div>
                             ) : (
-                                tournaments.map(tournament => <TournamentCard key={tournament._id} {...tournament} />)
+                                tournaments.map(tournament => (
+                                    <TournamentCard 
+                                        key={tournament._id} 
+                                        _id={tournament._id}
+                                        name={tournament.name}
+                                        teams={tournament.teams}
+                                        createdAt={tournament.createdAt}
+                                    />
+                                ))
                             )}
                         </Section>
                     </>

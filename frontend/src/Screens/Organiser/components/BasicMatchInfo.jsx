@@ -4,8 +4,8 @@ const BasicMatchInfo = ({ data, setData, nextStep }) => {
     const [isFormValid, setIsFormValid] = useState(false);
 
     useEffect(() => {
-        const { matchName, team1, team2, venue, dateTime } = data;
-        setIsFormValid(!!(matchName && team1 && team2 && venue && dateTime));
+        const { match_name, match_type, team1_name, team2_name, venue, dateTime } = data;
+        setIsFormValid(!!(match_name && match_type && team1_name && team2_name && venue && dateTime));
     }, [data]);
 
     const handleChange = (e) => {
@@ -25,34 +25,42 @@ const BasicMatchInfo = ({ data, setData, nextStep }) => {
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Basic Match Information</h2>
             <div className="space-y-6">
                 <div className="flex flex-col">
-                    <label htmlFor="matchName" className="text-sm font-medium text-gray-700 mb-1">Match Name</label>
+                    <label htmlFor="match_name" className="text-sm font-medium text-gray-700 mb-1">Match Name</label>
                     <input
                         type="text"
-                        name="matchName"
-                        id="matchName"
-                        value={data.matchName || ''}
+                        name="match_name"
+                        id="match_name"
+                        value={data.match_name || ''}
                         onChange={handleChange}
                         placeholder="Enter Match Name"
                         className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                     />
                 </div>
 
-                <FormField id="matchType" label="Match Type">
-                    <select id="matchType" name="matchType" value={data.matchType} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
-                        <option>ODI</option>
-                        <option>Test</option>
-                        <option>T20</option>
-                        <option>Custom</option>
+                <FormField id="match_type" label="Match Type">
+                    <select 
+                        id="match_type" 
+                        name="match_type" 
+                        value={data.match_type || ''} 
+                        onChange={handleChange} 
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm"
+                    >
+                        <option value="">Select match type</option>
+                        <option value="ODI">ODI</option>
+                        <option value="Test">Test</option>
+                        <option value="T20">T20</option>
+                        <option value="Custom">Custom</option>
                     </select>
                 </FormField>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col">
-                        <label htmlFor="team1" className="text-sm font-medium text-gray-700 mb-1">Team 1</label>
+                        <label htmlFor="team1_name" className="text-sm font-medium text-gray-700 mb-1">Team 1</label>
                         <input
                             type="text"
-                            name="team1"
-                            id="team1"
-                            value={data.team1}
+                            name="team1_name"
+                            id="team1_name"
+                            value={data.team1_name || ''}
                             onChange={handleChange}
                             placeholder="Enter Team 1 Name"
                             className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
@@ -60,48 +68,48 @@ const BasicMatchInfo = ({ data, setData, nextStep }) => {
                     </div>
 
                     <div className="flex flex-col">
-                        <label htmlFor="team2" className="text-sm font-medium text-gray-700 mb-1">Team 2</label>
+                        <label htmlFor="team2_name" className="text-sm font-medium text-gray-700 mb-1">Team 2</label>
                         <input
                             type="text"
-                            name="team2"
-                            id="team2"
-                            value={data.team2}
+                            name="team2_name"
+                            id="team2_name"
+                            value={data.team2_name || ''}
                             onChange={handleChange}
                             placeholder="Enter Team 2 Name"
                             className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                         />
                     </div>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Venue Field */}
                     <div className="flex flex-col">
                         <label htmlFor="venue" className="text-sm font-medium text-gray-700 mb-1">Venue</label>
                         <input
                             type="text"
                             name="venue"
                             id="venue"
-                            value={data.venue}
+                            value={data.venue || ''}
                             onChange={handleChange}
                             placeholder="Enter venue name"
                             className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                         />
                     </div>
 
-                    {/* Date & Time Field */}
                     <div className="flex flex-col">
                         <label htmlFor="dateTime" className="text-sm font-medium text-gray-700 mb-1">Date & Time</label>
                         <input
                             type="datetime-local"
                             name="dateTime"
                             id="dateTime"
-                            value={data.dateTime}
+                            value={data.dateTime || ''}
                             onChange={handleChange}
-                            min={new Date().toISOString().slice(0, 16)} // Prevent past date/time
+                            min={new Date().toISOString().slice(0, 16)}
                             className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                         />
                     </div>
                 </div>
             </div>
+
             <div className="mt-8 flex justify-end">
                 <button
                     onClick={nextStep}
@@ -115,4 +123,4 @@ const BasicMatchInfo = ({ data, setData, nextStep }) => {
     );
 };
 
-export default BasicMatchInfo; 
+export default BasicMatchInfo;

@@ -16,7 +16,6 @@ const PlayerInputRow = ({ player, index, updatePlayer, removePlayer, teamName })
                     <option>Batsman</option>
                     <option>Bowler</option>
                     <option>All-Rounder</option>
-                    <option>Wicket-Keeper</option>
                 </select>
             </div>
             <div className="md:col-span-2 flex items-center">
@@ -38,16 +37,24 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
     const [isFormValid, setIsFormValid] = useState(false);
 
     useEffect(() => {
-        const { team1Players, team2Players } = data;
-        const team1HasCaptain = team1Players.some(p => p.isCaptain);
-        const team2HasCaptain = team2Players.some(p => p.isCaptain);
-        setIsFormValid(team1Players.length >= 1 && team2Players.length >= 1 && team1HasCaptain && team2HasCaptain);
+        const { team1_players, team2_players } = data;
+        const team1HasCaptain = team1_players.some(p => p.isCaptain);
+        const team2HasCaptain = team2_players.some(p => p.isCaptain);
+        setIsFormValid(team1_players.length >= 1 && team2_players.length >= 1 && team1HasCaptain && team2HasCaptain);
     }, [data]);
 
     const addPlayer = (teamName) => {
         const teamPlayers = data[teamName] || [];
         if (teamPlayers.length < 15) {
-            setData(prev => ({ ...prev, [teamName]: [...teamPlayers, { name: '', role: 'Batsman', isCaptain: false, isWicketKeeper: false }] }));
+            setData(prev => ({ 
+                ...prev, 
+                [teamName]: [...teamPlayers, { 
+                    name: '', 
+                    role: 'Batsman', 
+                    isCaptain: false, 
+                    isWicketKeeper: false 
+                }] 
+            }));
         }
     };
 
@@ -97,8 +104,8 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
         <div>
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Team Player Selection</h2>
             <div className="space-y-8">
-                {renderTeamInputs('team1Players', `Team 1: ${data.team1 || 'Team A'}`)}
-                {renderTeamInputs('team2Players', `Team 2: ${data.team2 || 'Team B'}`)}
+                {renderTeamInputs('team1_players', `Team 1: ${data.team1_name || 'Team A'}`)}
+                {renderTeamInputs('team2_players', `Team 2: ${data.team2_name || 'Team B'}`)}
             </div>
             <div className="mt-8 flex justify-between">
                 <button onClick={prevStep} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg transition-all duration-300">

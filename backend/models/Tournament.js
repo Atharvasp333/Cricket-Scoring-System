@@ -40,6 +40,8 @@ const TournamentSchema = new mongoose.Schema({
   days: [String],
   maxMatchesPerDay: Number,
   access: [AccessSchema],
+  status: { type: String, enum: ['Upcoming', 'Live', 'completed'], default: 'Upcoming' },
+  winner: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
 }, { timestamps: true });
 
-export default mongoose.model('Tournament', TournamentSchema); 
+export default mongoose.model('Tournament', TournamentSchema);

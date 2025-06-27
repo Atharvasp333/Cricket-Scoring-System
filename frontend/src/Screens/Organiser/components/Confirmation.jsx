@@ -37,33 +37,35 @@ const Confirmation = ({ data, prevStep, submit }) => {
                 <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
                     <dl className="sm:divide-y sm:divide-gray-200">
                         <div className="sm:px-6">
-                            <DetailItem label="Match Type" value={data.matchType} />
-                            <DetailItem label="Teams" value={`${data.team1} vs ${data.team2}`} />
+                            <DetailItem label="Match Name" value={data.match_name} />
+                            <DetailItem label="Match Type" value={data.match_type} />
+                            <DetailItem label="Teams" value={`${data.team1_name} vs ${data.team2_name}`} />
                             <DetailItem label="Venue" value={data.venue} />
-                            <DetailItem label="Date & Time" value={new Date(data.dateTime).toLocaleString()} />
+                            <DetailItem label="Date" value={data.date} />
+                            <DetailItem label="Time" value={data.time} />
+                            <DetailItem label="Status" value={data.status || 'Upcoming'} />
                         </div>
                         <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                            <dt className="text-sm font-medium text-gray-500">{data.team1} Players</dt>
+                            <dt className="text-sm font-medium text-gray-500">{data.team1_name} Players</dt>
                             <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                <PlayerList players={data.team1Players} />
+                                <PlayerList players={data.team1_players} />
                             </dd>
                         </div>
                          <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                            <dt className="text-sm font-medium text-gray-500">{data.team2} Players</dt>
+                            <dt className="text-sm font-medium text-gray-500">{data.team2_name} Players</dt>
                             <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                <PlayerList players={data.team2Players} />
+                                <PlayerList players={data.team2_players} />
                             </dd>
                         </div>
                         <div className="sm:px-6">
-                            <DetailItem label="Total Overs" value={data.overs} />
-                            <DetailItem label="Powerplay Overs" value={data.powerplayOvers} />
-                            <DetailItem label="DRS Enabled" value={data.drsEnabled ? 'Yes' : 'No'} />
-                            {data.drsEnabled && <DetailItem label="DRS Reviews" value={data.drsReviews} />}
+                            <DetailItem label="Total Overs" value={data.total_overs} />
+                            <DetailItem label="Powerplay Overs" value={data.powerplay_overs} />
+                            <DetailItem label="DRS Enabled" value={data.drs_enabled ? 'Yes' : 'No'} />
                         </div>
                         <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                             <dt className="text-sm font-medium text-gray-500">Invited Scorers</dt>
                             <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                {data.scorers.map(s => s.email).join(', ') || 'None'}
+                                {data.scorers && data.scorers.length > 0 ? data.scorers.join(', ') : 'None'}
                             </dd>
                         </div>
                     </dl>
@@ -81,4 +83,4 @@ const Confirmation = ({ data, prevStep, submit }) => {
     );
 };
 
-export default Confirmation; 
+export default Confirmation;

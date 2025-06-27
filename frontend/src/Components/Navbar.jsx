@@ -40,7 +40,7 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className=" w-full bg-[#16638A] text-white text-[1.35rem] p-4 shadow-md">
+    <nav className="w-full bg-[#16638A] text-white text-[1.35rem] p-4 shadow-md">
       <div className="mx-auto flex gap-10 justify-between items-center">
         {/* Left side - Logo */}
         <div className="flex items-center">
@@ -70,26 +70,57 @@ const Navbar = () => {
                 to={userRole === 'organiser' ? '/organiser-homepage' : 
                     userRole === 'scorer' ? '/scorer-home' : 
                     '/viewer-home'} 
-                className={`flex items-center ${isActive('/viewer-home') || isActive('/scorer-home') || isActive('/organiser-homepage') ? 'text-white font-medium' : 'text-white hover:text-gray-200'}`}
+                className={`flex items-center ${
+                  isActive('/viewer-home') || 
+                  isActive('/scorer-home') || 
+                  isActive('/organiser-homepage')
+                }`}
               >
                 <FiHome className="mr-1" />
                 <span className="hidden sm:inline">Home</span>
               </Link>
             </li>
+            
+            {/* Matches link based on user role */}
             <li>
-              <Link to="/CompletedMatches" className={`flex items-center ${isActive('/CompletedMatches')}`}>
+              <Link 
+                to={userRole === 'organiser' ? '/organiser/completed-matches' : 
+                    userRole === 'scorer' ? '/completed-matches' : 
+                    '/CompletedMatches'} 
+                className={`flex items-center ${
+                  isActive('/CompletedMatches') || 
+                  isActive('/completed-matches') || 
+                  isActive('/organiser/completed-matches')
+                }`}
+              >
                 <FiCalendar className="mr-1" />
                 <span className="hidden sm:inline">Matches</span>
               </Link>
             </li>
+            
+            {/* Tournaments link based on user role */}
             <li>
-              <Link to="/CompletedTournaments" className={`flex items-center ${isActive('/CompletedTournaments')}`}>
+              <Link 
+                to={userRole === 'organiser' ? '/organiser/completed-tournaments' : 
+                    userRole === 'scorer' ? '/completed-tournaments' : 
+                    '/CompletedTournaments'} 
+                className={`flex items-center ${
+                  isActive('/CompletedTournaments') || 
+                  isActive('/completed-tournaments') || 
+                  isActive('/organiser/completed-tournaments')
+                }`}
+              >
                 <FiAward className="mr-1" />
                 <span className="hidden sm:inline">Tournaments</span>
               </Link>
             </li>
+            
+            {/* Player Stats link - same for all roles */}
             <li>
-              <Link to="/player-stats" className={`flex items-center ${isActive('/player-stats')}`}>
+              <Link 
+                to="/player-stats" 
+                className={`flex items-center ${isActive('/player-stats')}`}
+              >
                 <FiAward className="mr-1" />
                 <span className="hidden sm:inline">Player Stats</span>
               </Link>
