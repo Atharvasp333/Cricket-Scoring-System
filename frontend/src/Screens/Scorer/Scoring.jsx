@@ -57,6 +57,36 @@ const Scoring = () => {
     showStartInningsModal: false
   });
 
+  // Initialize match state
+  useEffect(() => {
+    const initializeMatchState = async () => {
+      try {
+        // Try to load existing match state from database
+        const response = await fetch(`/api/matchStates/${matchId}/state`);
+        
+        if (response.ok) {
+          // Existing match state found
+          const existingState = await response.json();
+          setMatchState(existingState);
+          console.log('Loaded existing match state:', existingState);
+        } else {
+          // No existing match state, initialize new one
+          console.log('No existing match state found, initializing new one');
+          setUiState(prev => ({ ...prev, showStartInningsModal: true }));
+        }
+      } catch (err) {
+        console.error('Error initializing match state:', err);
+        setError('Failed to initialize match state');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (matchData) {
+      initializeMatchState();
+    }
+  }, [matchData, matchId]);
+  
   // Fetch match data from API
   const fetchMatchData = async () => {
     try {
@@ -238,9 +268,28 @@ const Scoring = () => {
       { name: matchData.team2_name, players: matchData.team2_players } :
       { name: matchData.team1_name, players: matchData.team1_players };
 
+    // Get the URL search params to check if we have striker, non-striker, and bowler from MatchSetup
+    const urlParams = new URLSearchParams(window.location.search);
+    const strikerName = urlParams.get('striker');
+    const nonStrikerName = urlParams.get('nonStriker');
+    const bowlerName = urlParams.get('bowler');
+
+    // Find the selected players or use defaults
+    const strikerPlayer = strikerName ? 
+      battingTeam.players.find(p => p.name === strikerName) || battingTeam.players[0] : 
+      battingTeam.players[0];
+    
+    const nonStrikerPlayer = nonStrikerName ? 
+      battingTeam.players.find(p => p.name === nonStrikerName) || battingTeam.players[1] : 
+      battingTeam.players[1];
+    
+    const bowlerPlayer = bowlerName ? 
+      bowlingTeam.players.find(p => p.name === bowlerName) || bowlingTeam.players[0] : 
+      bowlingTeam.players[0];
+
     // Initialize batsmen (first two players)
     const striker = {
-      name: battingTeam.players[0].name,
+      name: strikerPlayer.name,
       runs: 0,
       balls: 0,
       fours: 0,
@@ -250,7 +299,7 @@ const Scoring = () => {
     };
 
     const nonStriker = {
-      name: battingTeam.players[1].name,
+      name: nonStrikerPlayer.name,
       runs: 0,
       balls: 0,
       fours: 0,
@@ -271,7 +320,7 @@ const Scoring = () => {
     }));
 
     // Set first bowler
-    const currentBowler = bowlers[0];
+    const currentBowler = bowlers.find(b => b.name === bowlerPlayer.name) || bowlers[0];
 
     const newMatchState = {
       matchId,

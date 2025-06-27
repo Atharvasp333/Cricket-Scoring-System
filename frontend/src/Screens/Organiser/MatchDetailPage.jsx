@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Stepper from './components/Stepper';
-import BasicMatchInfo from './components/BasicMatchInfo';
-import TeamPlayerSelection from './components/TeamPlayerSelection';
-import MatchRules from './components/MatchRules';
-import ScorerAccess from './components/ScorerAccess';
-import Confirmation from './components/Confirmation';
+import api from '../../utils/api';
 
 const MatchDetailPage = () => {
     const { id } = useParams();
@@ -13,54 +8,17 @@ const MatchDetailPage = () => {
     const [match, setMatch] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [isEditing, setIsEditing] = useState(false);
-    const [step, setStep] = useState(1);
-    const [matchData, setMatchData] = useState({
-        match_name: '',
-        match_type: '',
-        venue: '',
-        dateTime: '',
-        team1_name: '',
-        team2_name: '',
-        team1_players: [],
-        team2_players: [],
-        total_overs: 20,
-        powerplay_overs: 6,
-        drs_enabled: false,
-        scorers: [],
-    });
 
     useEffect(() => {
         const fetchMatch = async () => {
-            setLoading(true);
             try {
-                const response = await fetch(`/api/matches/${id}`);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch match details');
-                }
-                const data = await response.json();
-                setMatch(data);
-                
-                // Format the data for the form
-                setMatchData({
-                    match_name: data.match_name,
-                    match_type: data.match_type,
-                    venue: data.venue,
-                    dateTime: data.date && data.time ? 
-                        `${data.date}T${data.time.padEnd(5, ':00').substring(0, 5)}` : '',
-                    team1_name: data.team1_name || data.team1?.name || data.teams?.[0] || '',
-                    team2_name: data.team2_name || data.team2?.name || data.teams?.[1] || '',
-                    team1_players: data.team1_players || data.team1?.players || [],
-                    team2_players: data.team2_players || data.team2?.players || [],
-                    total_overs: data.total_overs || 20,
-                    powerplay_overs: data.powerplay_overs || 6,
-                    drs_enabled: data.drs_enabled || false,
-                    scorers: data.scorers || [],
-                });
+                setLoading(true);
+                const response = await api.get(`/api/matches/${id}`);
+                setMatch(response.data);
+                setLoading(false);
             } catch (err) {
-                setError(err.message);
                 console.error('Error fetching match:', err);
-            } finally {
+                setError('Failed to load match details. Please try again later.');
                 setLoading(false);
             }
         };
@@ -68,331 +26,238 @@ const MatchDetailPage = () => {
         fetchMatch();
     }, [id]);
 
-    const nextStep = () => setStep(prev => prev + 1);
-    const prevStep = () => setStep(prev => prev - 1);
-
-    const handleEdit = () => {
-        setIsEditing(true);
+    const handleEditMatch = () => {
+        // Navigate to edit match page or implement inline editing
+        // This is a placeholder for future functionality
+        console.log('Edit match clicked');
     };
 
-    const handleCancel = () => {
-        setIsEditing(false);
-        setStep(1);
-    };
-
-    const submitMatch = async () => {
-        try {
-            // Format the data for submission
-            const payload = {
-                match_name: matchData.match_name,
-                match_type: matchData.match_type,
-                venue: matchData.venue,
-                team1_name: matchData.team1_name,
-                team2_name: matchData.team2_name,
-                team1_players: matchData.team1_players,
-                team2_players: matchData.team2_players,
-                total_overs: matchData.total_overs,
-                powerplay_overs: matchData.powerplay_overs,
-                drs_enabled: matchData.drs_enabled,
-                scorers: matchData.scorers,
-                status: match?.status || 'Upcoming',
-            };
-            
-            // Handle date and time
-            if (matchData.dateTime) {
-                const dateTimeObj = new Date(matchData.dateTime);
-                payload.date = dateTimeObj.toISOString().split('T')[0];
-                payload.time = dateTimeObj.toTimeString().split(' ')[0].substring(0, 5);
+    const handleDeleteMatch = async () => {
+        if (window.confirm('Are you sure you want to delete this match? This action cannot be undone.')) {
+            try {
+                await api.delete(`/api/matches/${id}`);
+                navigate('/organiser-homepage');
+            } catch (err) {
+                console.error('Error deleting match:', err);
+                setError('Failed to delete match. Please try again later.');
             }
-            
-            // Set teams array for backward compatibility
-            payload.teams = [payload.team1_name, payload.team2_name];
-
-            const response = await fetch(`/api/matches/${id}`, {
-                method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to update match');
-            }
-
-            const updatedMatch = await response.json();
-            setMatch(updatedMatch);
-            setIsEditing(false);
-            setStep(1);
-            alert('Match updated successfully!');
-        } catch (err) {
-            alert('Error updating match: ' + err.message);
-            console.error('Update error:', err);
         }
-    };
-
-    const renderStep = () => {
-        switch (step) {
-            case 1:
-                return <BasicMatchInfo data={matchData} setData={setMatchData} nextStep={nextStep} />;
-            case 2:
-                return <TeamPlayerSelection data={matchData} setData={setMatchData} nextStep={nextStep} prevStep={prevStep} />;
-            case 3:
-                return <MatchRules data={matchData} setData={setMatchData} nextStep={nextStep} prevStep={prevStep} />;
-            case 4:
-                return <ScorerAccess data={matchData} setData={setMatchData} nextStep={nextStep} prevStep={prevStep} />;
-            case 5:
-                return <Confirmation data={matchData} prevStep={prevStep} submit={submitMatch} />;
-            default:
-                return <div>Step not found</div>;
-        }
-    };
-
-    const renderMatchDetails = () => {
-        if (!match) return null;
-
-        return (
-            <div className="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
-                {/* Header with Edit Button */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-gray-200">
-                    <div className="flex justify-between items-center">
-                        <button 
-                            onClick={() => navigate('/organiser-homepage')}
-                            className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center px-2 py-1 rounded hover:bg-blue-50 transition-all duration-200"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                            </svg>
-                            Back to Dashboard
-                        </button>
-                        <button 
-                            onClick={handleEdit}
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-all duration-200 shadow-sm hover:shadow-md"
-                        >
-                            Edit Match
-                        </button>
-                    </div>
-                </div>
-
-                {/* Teams Section - Compact */}
-                <div className="px-4 py-4 border-b border-gray-200 bg-gray-50">
-                    <div className="flex items-center justify-center space-x-4">
-                        <div className="text-center">
-                            <div className="bg-white rounded border border-gray-200 p-3 min-w-[120px]">
-                                <h3 className="text-lg font-bold text-gray-800 mb-1">
-                                    {match.team1_name || match.team1?.name || match.teams?.[0] || 'Team 1'}
-                                </h3>
-                                {matchData.team1_players?.length > 0 && (
-                                    <p className="text-xs text-gray-600 bg-blue-50 px-2 py-0.5 rounded-full inline-block">
-                                        {matchData.team1_players.length} players
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                        
-                        <div className="text-center">
-                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full w-10 h-10 flex items-center justify-center shadow">
-                                <span className="text-sm font-bold">VS</span>
-                            </div>
-                        </div>
-                        
-                        <div className="text-center">
-                            <div className="bg-white rounded border border-gray-200 p-3 min-w-[120px]">
-                                <h3 className="text-lg font-bold text-gray-800 mb-1">
-                                    {match.team2_name || match.team2?.name || match.teams?.[1] || 'Team 2'}
-                                </h3>
-                                {matchData.team2_players?.length > 0 && (
-                                    <p className="text-xs text-gray-600 bg-blue-50 px-2 py-0.5 rounded-full inline-block">
-                                        {matchData.team2_players.length} players
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Match Details Section - Compact */}
-                <div className="px-4 py-4 border-b border-gray-200">
-                    <div className="bg-white rounded border border-gray-200 p-3">
-                        <h3 className="text-md font-semibold mb-2 text-gray-800 border-b border-gray-200 pb-1">
-                            Match Information
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            <div className="bg-gray-50 rounded p-2 border border-gray-100">
-                                <p className="text-xs font-medium text-gray-600">Match Type</p>
-                                <p className="text-sm font-semibold text-gray-800">{match.match_type}</p>
-                            </div>
-                            <div className="bg-gray-50 rounded p-2 border border-gray-100">
-                                <p className="text-xs font-medium text-gray-600">Date</p>
-                                <p className="text-sm font-semibold text-gray-800">
-                                    {match.date ? new Date(match.date).toLocaleDateString() : 'Not set'}
-                                </p>
-                            </div>
-                            <div className="bg-gray-50 rounded p-2 border border-gray-100">
-                                <p className="text-xs font-medium text-gray-600">Time</p>
-                                <p className="text-sm font-semibold text-gray-800">
-                                    {match.time ? match.time : 
-                                     match.date ? new Date(match.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 
-                                     'Not set'}
-                                </p>
-                            </div>
-                            <div className="bg-gray-50 rounded p-2 border border-gray-100">
-                                <p className="text-xs font-medium text-gray-600">Venue</p>
-                                <p className="text-sm font-semibold text-gray-800">{match.venue || 'Not specified'}</p>
-                            </div>
-                        </div>
-                        <div className="mt-2">
-                            <div className="bg-gray-50 rounded p-2 border border-gray-100 inline-block">
-                                <p className="text-xs font-medium text-gray-600">Status</p>
-                                <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                                    match.status === 'Completed' ? 'bg-green-100 text-green-800 border border-green-200' : 
-                                    match.status === 'Live' ? 'bg-red-100 text-red-800 border border-red-200' : 
-                                    'bg-blue-100 text-blue-800 border border-blue-200'
-                                }`}>
-                                    {match.status || 'Upcoming'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Match Rules Section - Compact */}
-                <div className="px-4 py-4 border-b border-gray-200">
-                    <div className="bg-white rounded border border-gray-200 p-3">
-                        <h3 className="text-md font-semibold mb-2 text-gray-800 border-b border-gray-200 pb-1">
-                            Match Rules
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded p-3 border border-blue-200 shadow-sm">
-                                <div className="flex items-center mb-1">
-                                    <div className="bg-blue-600 rounded-full p-1 mr-2">
-                                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-xs font-medium text-blue-700">Total Overs</p>
-                                </div>
-                                <p className="text-lg font-bold text-blue-900">{match.total_overs || 'Not set'}</p>
-                            </div>
-                            
-                            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded p-3 border border-green-200 shadow-sm">
-                                <div className="flex items-center mb-1">
-                                    <div className="bg-green-600 rounded-full p-1 mr-2">
-                                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-xs font-medium text-green-700">Powerplay Overs</p>
-                                </div>
-                                <p className="text-lg font-bold text-green-900">{match.powerplay_overs || 'Not set'}</p>
-                            </div>
-                            
-                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded p-3 border border-purple-200 shadow-sm">
-                                <div className="flex items-center mb-1">
-                                    <div className="bg-purple-600 rounded-full p-1 mr-2">
-                                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-xs font-medium text-purple-700">DRS System</p>
-                                </div>
-                                <p className="text-lg font-bold text-purple-900">
-                                    {match.drs_enabled ? 'Enabled' : 'Disabled'}
-                                </p>
-                                {match.drs_enabled && (
-                                    <p className="text-xs text-purple-600 mt-0.5">
-                                        {match.drs_reviews || '2'} reviews per team
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Scorers Section - Compact */}
-                {match.scorers && match.scorers.length > 0 && (
-                    <div className="px-4 py-4">
-                        <div className="bg-white rounded border border-gray-200 p-3">
-                            <h3 className="text-md font-semibold mb-2 text-gray-800 border-b border-gray-200 pb-1">
-                                Match Scorers
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                                {match.scorers.map((scorer, idx) => (
-                                    <div key={idx} className="bg-gray-50 rounded p-2 border border-gray-200 hover:shadow transition-shadow duration-200">
-                                        <div className="flex items-center">
-                                            <div className="bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-2">
-                                                <span className="text-white font-semibold text-xs">
-                                                    {typeof scorer === 'string' ? scorer.charAt(0).toUpperCase() : 
-                                                     scorer.name ? scorer.name.charAt(0).toUpperCase() : 'S'}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-800">
-                                                    {typeof scorer === 'string' ? scorer : scorer.name || 'Scorer'}
-                                                </p>
-                                                {typeof scorer === 'object' && (
-                                                    <p className="text-xs text-gray-600">{scorer.email}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-        );
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
-                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                <p className="ml-2 text-sm text-gray-700">Loading match details...</p>
+            <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center">
+                        <h2 className="text-xl font-semibold text-gray-900">Loading match details...</h2>
+                    </div>
+                </div>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
-                <div className="bg-red-50 border border-red-200 rounded p-4 max-w-md">
-                    <p className="text-sm text-red-700 font-medium">{error}</p>
-                    <button 
-                        onClick={() => navigate('/organiser-homepage')} 
-                        className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded transition-all duration-200"
-                    >
-                        Back to Dashboard
-                    </button>
+            <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center">
+                        <h2 className="text-xl font-semibold text-red-600">{error}</h2>
+                        <button
+                            onClick={() => navigate('/organiser-homepage')}
+                            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            Back to Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!match) {
+        return (
+            <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center">
+                        <h2 className="text-xl font-semibold text-gray-900">Match not found</h2>
+                        <button
+                            onClick={() => navigate('/organiser-homepage')}
+                            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            Back to Dashboard
+                        </button>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-            <div className="container mx-auto p-4">
-                {isEditing ? (
-                    <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-bold text-gray-800">Edit Match</h2>
-                            <button 
-                                onClick={handleCancel}
-                                className="text-gray-600 hover:text-gray-800 text-sm font-medium px-2 py-1 rounded hover:bg-gray-100 transition-all duration-200"
+        <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+                {/* Back button */}
+                <div className="mb-6">
+                    <button
+                        onClick={() => navigate('/organiser-homepage')}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                        &larr; Back to Dashboard
+                    </button>
+                </div>
+
+                {/* Match header */}
+                <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+                    <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+                        <div>
+                            <h3 className="text-lg leading-6 font-medium text-gray-900">{match.match_name}</h3>
+                            <p className="mt-1 max-w-2xl text-sm text-gray-500">{match.match_type}</p>
+                        </div>
+                        <div className="flex space-x-3">
+                            <button
+                                onClick={handleEditMatch}
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             >
-                                Cancel
+                                Edit Match
+                            </button>
+                            <button
+                                onClick={handleDeleteMatch}
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                            >
+                                Delete Match
                             </button>
                         </div>
-                        <Stepper currentStep={step} />
-                        <div className="mt-6">
-                            {renderStep()}
+                    </div>
+                    <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
+                        <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                            <div className="sm:col-span-1">
+                                <dt className="text-sm font-medium text-gray-500">Date & Time</dt>
+                                <dd className="mt-1 text-sm text-gray-900">{new Date(match.date).toLocaleDateString()} {match.time}</dd>
+                            </div>
+                            <div className="sm:col-span-1">
+                                <dt className="text-sm font-medium text-gray-500">Venue</dt>
+                                <dd className="mt-1 text-sm text-gray-900">{match.venue}</dd>
+                            </div>
+                            <div className="sm:col-span-1">
+                                <dt className="text-sm font-medium text-gray-500">Status</dt>
+                                <dd className="mt-1 text-sm text-gray-900">
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                        match.status === 'Live' ? 'bg-green-100 text-green-800' : 
+                                        match.status === 'Completed' ? 'bg-blue-100 text-blue-800' : 
+                                        'bg-yellow-100 text-yellow-800'
+                                    }`}>
+                                        {match.status}
+                                    </span>
+                                </dd>
+                            </div>
+                            <div className="sm:col-span-1">
+                                <dt className="text-sm font-medium text-gray-500">Total Overs</dt>
+                                <dd className="mt-1 text-sm text-gray-900">{match.total_overs}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+
+                {/* Teams section */}
+                <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+                    <div className="px-4 py-5 sm:px-6">
+                        <h3 className="text-lg leading-6 font-medium text-gray-900">Teams</h3>
+                    </div>
+                    <div className="border-t border-gray-200">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+                            {/* Team 1 */}
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <h4 className="text-md font-medium text-gray-900 mb-3">{match.team1_name}</h4>
+                                <ul className="divide-y divide-gray-200">
+                                    {match.team1_players && match.team1_players.map((player, index) => (
+                                        <li key={index} className="py-2 flex justify-between items-center">
+                                            <div className="flex items-center">
+                                                <span className="text-sm font-medium text-gray-900">{player.name}</span>
+                                                {player.isCaptain && (
+                                                    <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">C</span>
+                                                )}
+                                                {player.isWicketKeeper && (
+                                                    <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">WK</span>
+                                                )}
+                                            </div>
+                                            <span className="text-sm text-gray-500">{player.role}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            {/* Team 2 */}
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <h4 className="text-md font-medium text-gray-900 mb-3">{match.team2_name}</h4>
+                                <ul className="divide-y divide-gray-200">
+                                    {match.team2_players && match.team2_players.map((player, index) => (
+                                        <li key={index} className="py-2 flex justify-between items-center">
+                                            <div className="flex items-center">
+                                                <span className="text-sm font-medium text-gray-900">{player.name}</span>
+                                                {player.isCaptain && (
+                                                    <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">C</span>
+                                                )}
+                                                {player.isWicketKeeper && (
+                                                    <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">WK</span>
+                                                )}
+                                            </div>
+                                            <span className="text-sm text-gray-500">{player.role}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         </div>
                     </div>
-                ) : (
-                    renderMatchDetails()
-                )}
+                </div>
+
+                {/* Match Rules */}
+                <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+                    <div className="px-4 py-5 sm:px-6">
+                        <h3 className="text-lg leading-6 font-medium text-gray-900">Match Rules</h3>
+                    </div>
+                    <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
+                        <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                            <div className="sm:col-span-1">
+                                <dt className="text-sm font-medium text-gray-500">Powerplay Overs</dt>
+                                <dd className="mt-1 text-sm text-gray-900">{match.powerplay_overs}</dd>
+                            </div>
+                            <div className="sm:col-span-1">
+                                <dt className="text-sm font-medium text-gray-500">DRS Enabled</dt>
+                                <dd className="mt-1 text-sm text-gray-900">{match.drs_enabled ? 'Yes' : 'No'}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+
+                {/* Scorers */}
+                <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div className="px-4 py-5 sm:px-6">
+                        <h3 className="text-lg leading-6 font-medium text-gray-900">Scorers</h3>
+                    </div>
+                    <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
+                        <ul className="divide-y divide-gray-200">
+                            {match.scorers && match.scorers.map((scorer, index) => (
+                                <li key={index} className="py-3">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="flex-shrink-0">
+                                            <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-500">
+                                                <span className="text-xs font-medium leading-none text-white">
+                                                    {scorer.name.charAt(0)}
+                                                </span>
+                                            </span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 truncate">{scorer.name}</p>
+                                            <p className="text-sm text-gray-500 truncate">{scorer.email}</p>
+                                        </div>
+                                    </div>
+                                </li>
+                            ))}
+                            {(!match.scorers || match.scorers.length === 0) && (
+                                <li className="py-3 text-sm text-gray-500">No scorers assigned</li>
+                            )}
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     );

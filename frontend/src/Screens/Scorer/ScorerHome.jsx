@@ -83,7 +83,7 @@ const ScorerHome = () => {
                       </div>
                       <div className="p-4 text-center border-t border-gray-200">
                         <Link
-                          to={`/match-setup/${match._id}`}
+                          to={`/scoring/${match._id}`}
                           className="inline-block w-3/4 bg-[#16638A] hover:bg-[#1a7ca8] text-white font-bold py-2 px-4 rounded transition duration-200"
                         >
                           Score Now

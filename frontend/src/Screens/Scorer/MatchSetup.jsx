@@ -114,8 +114,8 @@ const MatchSetup = () => {
         });
 
         setSetupCompleted(true);
-        // Navigate to scoring page
-        navigate(`/scoring/${matchId}`);
+        // Navigate to scoring page with selected players as query parameters
+        navigate(`/scoring/${matchId}?striker=${encodeURIComponent(striker)}&nonStriker=${encodeURIComponent(nonStriker)}&bowler=${encodeURIComponent(bowler)}`);
       } catch (err) {
         console.error('Error updating match status:', err);
         alert('Failed to start scoring. Please try again.');

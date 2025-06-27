@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../../utils/api';
 
 const PlusIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -31,19 +32,13 @@ const OrganiserHomepage = () => {
             setLoading(true);
             setError('');
             try {
-                const [tRes, mRes] = await Promise.all([
-                    fetch('/api/tournaments'),
-                    fetch('/api/matches')
+                const [tournamentsResponse, matchesResponse] = await Promise.all([
+                    api.get('/api/tournaments'),
+                    api.get('/api/matches')
                 ]);
                 
-                if (!tRes.ok || !mRes.ok) {
-                    throw new Error('Failed to fetch data');
-                }
-                
-                const [tournamentsData, matchesData] = await Promise.all([
-                    tRes.json(),
-                    mRes.json()
-                ]);
+                const tournamentsData = tournamentsResponse.data;
+                const matchesData = matchesResponse.data;
                 
                 setTournaments(tournamentsData);
                 setMatches(matchesData);
