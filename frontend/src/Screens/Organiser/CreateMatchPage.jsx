@@ -13,13 +13,14 @@ import Footer from '../../Components/Footer';
 const CreateMatchPage = () => {
     const [step, setStep] = useState(1);
     const [matchData, setMatchData] = useState({
-        matchType: 'T20',
-        team1: '',
-        team2: '',
+        match_name: '',
+        match_type: '',
+        team1_name: '',
+        team2_name: '',
         venue: '',
         dateTime: '',
-        team1Players: [],
-        team2Players: [],
+        team1_players: [],
+        team2_players: [],
         overs: 20,
         powerplayOvers: 6,
         drsEnabled: false,
@@ -34,37 +35,36 @@ const CreateMatchPage = () => {
 
     const submitMatch = async () => {
         // Validate required fields
-        if (!matchData.match_name || !matchData.team1 || !matchData.team2 || !matchData.dateTime || !matchData.venue) {
+        if (!matchData.match_name || !matchData.team1_name || !matchData.team2_name || !matchData.dateTime || !matchData.venue) {
             alert('Please fill in all required fields: Match Name, Team 1, Team 2, Venue, and Date/Time.');
             return;
         }
+        
         const payload = {
             match_name: matchData.match_name,
             match_type: matchData.match_type,
             date: matchData.dateTime.split('T')[0],
             time: matchData.dateTime.split('T')[1] || '',
-            teams: [matchData.team1, matchData.team2],
+            teams: [matchData.team1_name, matchData.team2_name], // Array of team names
+            team1_name: matchData.team1_name, // Direct team name
+            team2_name: matchData.team2_name, // Direct team name
             venue: matchData.venue,
-            team1: {
-                name: matchData.team1,
-                players: matchData.team1Players
-            },
-            team2: {
-                name: matchData.team2,
-                players: matchData.team2Players
-            },
+            team1_players: matchData.team1_players,
+            team2_players: matchData.team2_players,
             total_overs: matchData.overs,
             powerplay_overs: matchData.powerplayOvers,
             drs_enabled: matchData.drsEnabled,
             scorers: matchData.scorers.map(s => s.email),
             status: 'Upcoming',
         };
+
         try {
             const response = await fetch('/api/matches', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
+            
             if (!response.ok) {
                 let errorMsg = 'Failed to create match';
                 try {
@@ -79,6 +79,7 @@ const CreateMatchPage = () => {
                 console.error('Backend error:', errorMsg);
                 throw new Error(errorMsg);
             }
+            
             alert('Match created successfully!');
             navigate('/organiser-homepage');
         } catch (err) {
@@ -117,4 +118,4 @@ const CreateMatchPage = () => {
     );
 };
 
-export default CreateMatchPage; 
+export default CreateMatchPage;

@@ -70,14 +70,16 @@ const ScorerHome = () => {
                       </div>
                       <div className="p-4 flex-grow">
                         <div className="flex justify-between items-center mb-2">
-                          <h3 className="font-bold text-lg text-gray-800">{match.team1.name}</h3>
+                          <h3 className="font-bold text-lg text-gray-800">{match.team1_name}</h3>
                           {/* Score would be added when match is live */}
                         </div>
                         <div className="flex justify-between items-center mb-4">
-                          <h3 className="font-bold text-lg text-gray-800">{match.team2.name}</h3>
+                          <h3 className="font-bold text-lg text-gray-800">{match.team2_name}</h3>
                           {/* Score would be added when match is live */}
                         </div>
-                        <p className="text-gray-500 text-sm mb-4">{match.venue}</p>
+                        <p className="text-gray-500 text-sm mb-2">{match.venue}</p>
+                        <p className="text-gray-600 text-sm mb-2">Match: {match.match_name}</p>
+                        {match.match_type && <p className="text-gray-600 text-sm">{match.match_type}</p>}
                       </div>
                       <div className="p-4 text-center border-t border-gray-200">
                         <Link
@@ -112,12 +114,17 @@ const ScorerHome = () => {
                           <span className="bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-semibold">UPCOMING</span>
                           <span className="text-gray-600 text-sm">{match.date} | {match.time}</span>
                         </div>
-                        <h3 className="text-xl font-bold mb-2 text-gray-800">{match.team1.name}</h3>
+                        <h3 className="text-xl font-bold mb-2 text-gray-800">{match.team1_name}</h3>
                         <h3 className="text-xl font-bold mb-2 text-gray-800 text-center">vs</h3>
-                        <h3 className="text-xl font-bold mb-2 text-gray-800">{match.team2.name}</h3>
-                        <p className="text-gray-600 mb-4">{match.venue}</p>
-                        <p className="text-gray-600 mb-4">Match Name: {match.match_name}</p>
-                        <p className="text-gray-600 mb-4">Type: {match.match_type}</p>
+                        <h3 className="text-xl font-bold mb-2 text-gray-800">{match.team2_name}</h3>
+                        <p className="text-gray-600 mb-2">{match.venue}</p>
+                        <p className="text-gray-600 mb-2">Match Name: {match.match_name}</p>
+                        {match.match_type && <p className="text-gray-600 mb-2">Type: {match.match_type}</p>}
+                        <div className="text-sm text-gray-500 mt-2">
+                          <p>Overs: {match.total_overs}</p>
+                          <p>Powerplay: {match.powerplay_overs}</p>
+                          {match.drs_enabled && <p>DRS Enabled</p>}
+                        </div>
                       </div>
                       <div className="p-4 text-center border-t border-gray-200">
                         <span className="text-sm text-gray-500 block mb-2">You are assigned as scorer</span>
