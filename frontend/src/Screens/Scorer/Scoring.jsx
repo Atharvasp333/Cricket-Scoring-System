@@ -1,31 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import api from '../../utils/api';
 
 const Scoring = () => {
   const { matchId } = useParams();
   const navigate = useNavigate();
 
-  // Match data - in a real app, this would come from an API
-  const matchData = {
-    id: matchId,
-    team1: {
-      name: 'Team A',
-      players: ['Player A1', 'Player A2', 'Player A3', 'Player A4', 'Player A5', 'Player A6', 'Player A7', 'Player A8', 'Player A9', 'Player A10', 'Player A11']
-    },
-    team2: {
-      name: 'Team B',
-      players: ['Player B1', 'Player B2', 'Player B3', 'Player B4', 'Player B5', 'Player B6', 'Player B7', 'Player B8', 'Player B9', 'Player B10', 'Player B11']
-    },
-    venue: 'Stadium 1',
-    date: '2023-10-15',
-    overs: 20.0
-  };
+  // Match data from database
+  const [matchData, setMatchData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Match state
   const [matchState, setMatchState] = useState({
     innings: 1,
-    battingTeam: matchData.team1,
-    bowlingTeam: matchData.team2,
+    battingTeam: null,
+    bowlingTeam: null,
     score: 0,
     wickets: 0,
     overs: 0,
@@ -35,46 +25,20 @@ const Scoring = () => {
     crr: 0,
     target: null,
     rrr: null,
-    striker: {
-      name: 'Player A1',
-      runs: 0,
-      balls: 0,
-      fours: 0,
-      sixes: 0,
-      strikeRate: 0,
-      isOut: false
-    },
-    nonStriker: {
-      name: 'Player A2',
-      runs: 0,
-      balls: 0,
-      fours: 0,
-      sixes: 0,
-      strikeRate: 0,
-      isOut: false
-    },
-    currentBowler: {
-      name: 'Player B1',
-      overs: 0,
-      balls: 0,
-      maidens: 0,
-      runs: 0,
-      wickets: 0,
-      economy: 0
-    },
+    striker: null,
+    nonStriker: null,
+    currentBowler: null,
     lastBowler: '',
     bowlers: [],
-    batsmen: [
-      { name: 'Player A1', runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0, isOut: false },
-      { name: 'Player A2', runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0, isOut: false }
-    ],
+    batsmen: [],
     extras: {
       wides: 0,
       noBalls: 0,
       byes: 0,
       legByes: 0,
       total: 0
-    }
+    },
+    matchStatus: 'Live'
   });
 
   // UI state
@@ -89,8 +53,274 @@ const Scoring = () => {
     showNewBatsmanModal: false,
     showExtraModal: false,
     showBallTypeModal: false,
-    showChangeBowlerModal: false
+    showChangeBowlerModal: false,
+    showStartInningsModal: false
   });
+
+  // Fetch match data from API
+  const fetchMatchData = async () => {
+    try {
+      setLoading(true);
+      console.log(`Fetching match data for match ID: ${matchId}`);
+      const response = await api.get(`/api/matches/${matchId}`);
+      if (response.status !== 200) {
+        throw new Error('Failed to fetch match data');
+      }
+      const data = response.data;
+      console.log('Match data fetched successfully:', data);
+      setMatchData(data);
+      
+      // Initialize match state if match is just starting
+      if (data.status === 'Upcoming') {
+        console.log('Match is upcoming, showing start innings modal');
+        setUiState(prev => ({ ...prev, showStartInningsModal: true }));
+      } else if (data.status === 'Live') {
+        console.log('Match is live, loading existing match state');
+        // Load existing match state
+        try {
+          await loadMatchState();
+        } catch (loadErr) {
+          console.error('Error loading match state:', loadErr);
+          // If loading fails, show the start innings modal
+          setUiState(prev => ({ ...prev, showStartInningsModal: true }));
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching match data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load existing match state from database
+  const loadMatchState = async () => {
+    try {
+      console.log(`Loading match state for match ID: ${matchId}`);
+      const response = await api.get(`/api/matchStates/${matchId}/state`);
+      if (response.status === 200) {
+        const state = response.data;
+        console.log('Loaded match state:', state);
+        setMatchState(state);
+      }
+    } catch (err) {
+      console.error('Failed to load match state:', err);
+      
+      // If match state doesn't exist yet, initialize it
+      if (err.response && err.response.status === 404 && matchData) {
+        console.log('Match state not found, initializing new state');
+        // Initialize a new match state
+        const newMatchState = {
+          matchId,
+          innings: 1,
+          battingTeam: null,
+          bowlingTeam: null,
+          score: 0,
+          wickets: 0,
+          overs: 0,
+          balls: 0,
+          currentOver: [],
+          previousOvers: [],
+          crr: 0,
+          target: null,
+          rrr: null,
+          striker: null,
+          nonStriker: null,
+          currentBowler: null,
+          lastBowler: '',
+          bowlers: [],
+          batsmen: [],
+          extras: {
+            wides: 0,
+            noBalls: 0,
+            byes: 0,
+            legByes: 0,
+            total: 0
+          },
+          matchStatus: 'Live'
+        };
+        
+        try {
+          console.log('Creating new match state');
+          try {
+            const savedState = await saveMatchState(newMatchState);
+            console.log('New match state created successfully:', savedState);
+            setMatchState(savedState);
+          } catch (saveErr) {
+            console.error('Error saving new match state:', saveErr);
+            // Still update the local state even if saving fails
+            setMatchState(newMatchState);
+          }
+        } catch (createErr) {
+          console.error('Failed to create new match state:', createErr);
+        }
+      }
+    }
+  };
+
+  // Save match state to database
+  const saveMatchState = async (state) => {
+    try {
+      console.log(`Saving match state for match ID: ${matchId}`);
+      // Ensure matchId is included in the state
+      const stateWithMatchId = { ...state, matchId };
+      const response = await api.post(`/api/matchStates/${matchId}/state`, stateWithMatchId);
+      console.log('Match state saved successfully:', response.data);
+      return response.data;
+    } catch (err) {
+      console.error('Failed to save match state:', err);
+      if (err.response) {
+        console.error('Error response:', err.response.data);
+      }
+      throw err;
+    }
+  };
+
+  // Update match status
+  const updateMatchStatus = async (status) => {
+    try {
+      console.log(`Updating match status to ${status} for match ID: ${matchId}`);
+      const response = await api.put(`/api/matchStates/${matchId}/status`, { status });
+      console.log('Match status updated successfully:', response.data);
+      return response.data;
+    } catch (err) {
+      console.error('Failed to update match status:', err);
+      if (err.response) {
+        console.error('Error response:', err.response.data);
+      }
+      throw err;
+    }
+  };
+
+  // Initialize match when component mounts
+  useEffect(() => {
+    if (matchId) {
+      fetchMatchData();
+    }
+  }, [matchId]);
+
+  // Save state whenever it changes
+  useEffect(() => {
+    const saveState = async () => {
+      if (matchData && matchState.battingTeam) {
+        try {
+          await saveMatchState(matchState);
+        } catch (err) {
+          console.error('Error in useEffect when saving match state:', err);
+        }
+      }
+    };
+    
+    // Use a debounce to avoid too many API calls
+    const timeoutId = setTimeout(() => {
+      saveState();
+    }, 500); // Wait 500ms before saving
+    
+    return () => clearTimeout(timeoutId);
+  }, [matchState, matchData]);
+
+  // Start innings
+  const handleStartInnings = async (battingTeamIndex) => {
+    const battingTeam = battingTeamIndex === 0 ? 
+      { name: matchData.team1_name, players: matchData.team1_players } :
+      { name: matchData.team2_name, players: matchData.team2_players };
+    
+    const bowlingTeam = battingTeamIndex === 0 ? 
+      { name: matchData.team2_name, players: matchData.team2_players } :
+      { name: matchData.team1_name, players: matchData.team1_players };
+
+    // Initialize batsmen (first two players)
+    const striker = {
+      name: battingTeam.players[0].name,
+      runs: 0,
+      balls: 0,
+      fours: 0,
+      sixes: 0,
+      strikeRate: 0,
+      isOut: false
+    };
+
+    const nonStriker = {
+      name: battingTeam.players[1].name,
+      runs: 0,
+      balls: 0,
+      fours: 0,
+      sixes: 0,
+      strikeRate: 0,
+      isOut: false
+    };
+
+    // Initialize bowlers
+    const bowlers = bowlingTeam.players.map(player => ({
+      name: player.name,
+      overs: 0,
+      balls: 0,
+      maidens: 0,
+      runs: 0,
+      wickets: 0,
+      economy: 0
+    }));
+
+    // Set first bowler
+    const currentBowler = bowlers[0];
+
+    const newMatchState = {
+      matchId,
+      innings: 1,
+      battingTeam,
+      bowlingTeam,
+      score: 0,
+      wickets: 0,
+      overs: 0,
+      balls: 0,
+      currentOver: [],
+      previousOvers: [],
+      crr: 0,
+      target: null,
+      rrr: null,
+      striker,
+      nonStriker,
+      currentBowler,
+      lastBowler: '',
+      bowlers,
+      batsmen: [striker, nonStriker],
+      extras: {
+        wides: 0,
+        noBalls: 0,
+        byes: 0,
+        legByes: 0,
+        total: 0
+      },
+      matchStatus: 'Live'
+    };
+
+    // Update state
+    setMatchState(newMatchState);
+
+    // Update match status in database
+    await updateMatchStatus('Live');
+
+    // Explicitly save the initial match state to the database
+    try {
+      console.log('Saving initial match state to database');
+      const savedState = await saveMatchState(newMatchState);
+      console.log('Initial match state saved successfully:', savedState);
+    } catch (err) {
+      console.error('Failed to save initial match state:', err);
+      // If there's an error, try one more time with a delay
+      setTimeout(async () => {
+        try {
+          console.log('Retrying saving initial match state...');
+          await saveMatchState(newMatchState);
+          console.log('Initial match state saved successfully on retry');
+        } catch (retryErr) {
+          console.error('Failed to save initial match state on retry:', retryErr);
+        }
+      }, 1000);
+    }
+
+    setUiState(prev => ({ ...prev, showStartInningsModal: false }));
+  };
 
   // Helper function to update batsman stats
   const updateBatsmanStats = useCallback((name, updates) => {
@@ -112,36 +342,22 @@ const Scoring = () => {
     }));
   }, []);
 
-  // Initialize bowlers
-  useEffect(() => {
-    if (matchState.bowlers.length === 0) {
-      const initialBowlers = matchState.bowlingTeam.players.map(player => ({
-        name: player,
-        overs: 0,
-        balls: 0,
-        maidens: 0,
-        runs: 0,
-        wickets: 0,
-        economy: 0
-      }));
-      setMatchState(prev => ({ ...prev, bowlers: initialBowlers }));
-    }
-  }, [matchState.bowlingTeam.players, matchState.bowlers.length]);
-
   // Calculate CRR and RRR
   useEffect(() => {
+    if (!matchData || !matchState.battingTeam) return;
+
     const totalOvers = matchState.overs + matchState.balls / 6;
     const crr = totalOvers > 0 ? matchState.score / totalOvers : 0;
 
     let rrr = null;
     if (matchState.innings === 2 && matchState.target) {
       const remainingRuns = matchState.target - matchState.score;
-      const remainingOvers = matchData.overs - totalOvers;
+      const remainingOvers = matchData.total_overs - totalOvers;
       rrr = remainingOvers > 0 ? remainingRuns / remainingOvers : 0;
     }
 
     setMatchState(prev => ({ ...prev, crr, rrr }));
-  }, [matchState.score, matchState.overs, matchState.balls, matchState.innings, matchState.target]);
+  }, [matchState.score, matchState.overs, matchState.balls, matchState.innings, matchState.target, matchData]);
 
   // Handle runs button click
   const handleRunsClick = (runs) => {
@@ -193,9 +409,9 @@ const Scoring = () => {
   };
 
   // Handle new batsman selection
-  const handleNewBatsmanSelect = (player) => {
+  const handleNewBatsmanSelect = (playerName) => {
     const newBatsman = {
-      name: player,
+      name: playerName,
       runs: 0,
       balls: 0,
       fours: 0,
@@ -284,8 +500,8 @@ const Scoring = () => {
   }, []);
 
   // Handle submit ball
-  const handleSubmitBall = () => {
-    // Check if ball type is selected for legal deliveries
+  const handleSubmitBall = async () => {
+    // Validation
     if (!uiState.isExtra && !uiState.ballType) {
       alert('Please select a ball type for legal deliveries');
       return;
@@ -304,7 +520,7 @@ const Scoring = () => {
     // Calculate runs to add to team score
     let runsToAdd = uiState.runsScored || 0;
     let isLegalDelivery = true;
-    let isBatsmanDelivery = true; // Does this delivery count against batsman stats
+    let isBatsmanDelivery = true;
 
     // Handle extras
     if (uiState.isExtra) {
@@ -325,7 +541,7 @@ const Scoring = () => {
         case 'no-ball':
           runsToAdd += 1;
           isLegalDelivery = false;
-          isBatsmanDelivery = true; // No-balls count against batsman
+          isBatsmanDelivery = true;
           setMatchState(prev => ({
             ...prev,
             extras: {
@@ -372,7 +588,8 @@ const Scoring = () => {
       ballType: uiState.ballType,
       bowler: matchState.currentBowler.name,
       batsman: matchState.striker.name,
-      displayText: getBallDisplayText(uiState.runsScored, uiState.isExtra, uiState.extraType, uiState.isWicket)
+      displayText: getBallDisplayText(uiState.runsScored, uiState.isExtra, uiState.extraType, uiState.isWicket),
+      timestamp: new Date().toISOString()
     };
 
     // Update current over
@@ -431,7 +648,7 @@ const Scoring = () => {
     // Update bowler stats
     const updatedBowler = { ...matchState.currentBowler };
 
-    // Increment balls bowled only for legal deliveries (not wides/no-balls)
+    // Increment balls bowled only for legal deliveries
     if (isLegalDelivery) {
       updatedBowler.balls += 1;
     }
@@ -444,16 +661,16 @@ const Scoring = () => {
       updatedBowler.wickets += 1;
     }
 
-    // Calculate overs (e.g., 1.3 means 1 over and 3 balls)
+    // Calculate overs
     updatedBowler.overs = parseFloat(
       (Math.floor(updatedBowler.balls / 6) + (updatedBowler.balls % 6) / 10)
     ).toFixed(1);
 
     // Calculate economy rate
     const oversBowled = updatedBowler.balls / 6;
-    updatedBowler.economy = parseFloat((updatedBowler.runs / oversBowled).toFixed(2));
+    updatedBowler.economy = oversBowled > 0 ? parseFloat((updatedBowler.runs / oversBowled).toFixed(2)) : 0;
 
-    // Check for maiden over (only if all 6 balls are legal deliveries)
+    // Check for maiden over
     if (isLegalDelivery && matchState.balls === 5 && updatedBowler.runs === 0) {
       updatedBowler.maidens += 1;
     }
@@ -474,14 +691,14 @@ const Scoring = () => {
       }));
     }
 
-    // Check if over is complete (6 legal deliveries) and end over automatically
+    // Check if over is complete and end over automatically
     if (isLegalDelivery && matchState.balls === 5) {
       handleEndOver();
     }
 
-    // Check if innings is over (all wickets or all overs)
+    // Check if innings is over
     if (matchState.wickets === 10 ||
-      (matchState.overs === matchData.overs - 1 && matchState.balls === 5 && isLegalDelivery)) {
+      (matchState.overs === matchData.total_overs - 1 && matchState.balls === 5 && isLegalDelivery)) {
       // End of innings
       if (matchState.innings === 1) {
         // Set target for second innings
@@ -489,15 +706,16 @@ const Scoring = () => {
           ...prev,
           target: prev.score + runsToAdd + 1
         }));
-        // Navigate to innings break page
+        // Navigate to innings break
         navigate(`/innings-break/${matchId}`);
       } else {
         // End of match
+        await updateMatchStatus('completed');
         navigate(`/match-summary/${matchId}`);
       }
     }
 
-    // Swap striker if odd runs (1 or 3) on a legal delivery that counts against batsman
+    // Swap striker if odd runs on legal delivery that counts against batsman
     if (uiState.runsScored && uiState.runsScored % 2 === 1 && isBatsmanDelivery) {
       setMatchState(prev => ({
         ...prev,
@@ -521,6 +739,19 @@ const Scoring = () => {
     if (uiState.isWicket) {
       setUiState(prev => ({ ...prev, showNewBatsmanModal: true }));
     }
+
+    // Save ball to database
+    try {
+      await fetch(`/api/matches/${matchId}/balls`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(ball),
+      });
+    } catch (err) {
+      console.error('Failed to save ball:', err);
+    }
   };
 
   // Helper function to get ball display text
@@ -539,7 +770,7 @@ const Scoring = () => {
   };
 
   // Handle undo last ball
-  const handleUndoLastBall = () => {
+  const handleUndoLastBall = async () => {
     if (matchState.currentOver.length === 0) {
       alert('No balls to undo in current over');
       return;
@@ -548,7 +779,7 @@ const Scoring = () => {
     const lastBall = matchState.currentOver[matchState.currentOver.length - 1];
 
     // Create a deep copy of match state to revert changes
-    const newState = JSON.parse(JSON.stringify(matchState));
+    const newState = { ...matchState };
 
     // Remove last ball from current over
     newState.currentOver = newState.currentOver.slice(0, -1);
@@ -584,76 +815,27 @@ const Scoring = () => {
     // Revert wickets
     if (lastBall.isWicket) {
       newState.wickets -= 1;
-      // Find the batsman and mark as not out
       const batsmanIndex = newState.batsmen.findIndex(b => b.name === lastBall.batsman);
       if (batsmanIndex !== -1) {
         newState.batsmen[batsmanIndex].isOut = false;
       }
     }
 
-    // Revert batsman stats if it was a legal delivery or no-ball
-    if (!lastBall.isExtra || lastBall.extraType === 'no-ball') {
-      const strikerIndex = newState.batsmen.findIndex(b => b.name === newState.striker.name);
-      if (strikerIndex !== -1) {
-        const batsman = newState.batsmen[strikerIndex];
-        if (!lastBall.isExtra) {
-          batsman.balls -= 1;
-          batsman.runs -= (lastBall.runs || 0);
-          if (lastBall.runs === 4) batsman.fours -= 1;
-          if (lastBall.runs === 6) batsman.sixes -= 1;
-        } else if (lastBall.extraType === 'no-ball') {
-          batsman.runs -= (lastBall.runs || 0);
-          if (lastBall.runs === 4) batsman.fours -= 1;
-          if (lastBall.runs === 6) batsman.sixes -= 1;
-        }
-        if (batsman.balls > 0) {
-          batsman.strikeRate = parseFloat(((batsman.runs / batsman.balls) * 100).toFixed(2));
-        } else {
-          batsman.strikeRate = 0;
-        }
-      }
-    }
-
-    // Revert bowler stats
-    const bowlerIndex = newState.bowlers.findIndex(b => b.name === lastBall.bowler);
-    if (bowlerIndex !== -1) {
-      const bowler = newState.bowlers[bowlerIndex];
-
-      // Decrement balls bowled for legal deliveries (not wides/no-balls)
-      if (!lastBall.isExtra || lastBall.extraType === 'no-ball') {
-        bowler.balls -= 1;
-      }
-
-      // Subtract runs conceded
-      bowler.runs -= runsToSubtract;
-
-      // Subtract wickets
-      if (lastBall.isWicket) {
-        bowler.wickets -= 1;
-      }
-
-      // Recalculate overs and economy
-      bowler.overs = parseFloat(
-        (Math.floor(bowler.balls / 6) + (bowler.balls % 6) / 10)
-      ).toFixed(1);
-
-      const oversBowled = bowler.balls / 6;
-      bowler.economy = oversBowled > 0 ?
-        parseFloat((bowler.runs / oversBowled).toFixed(2)) : 0;
-
-      // Revert maiden if needed
-      if (newState.balls === 6 && bowler.runs === 0) {
-        bowler.maidens -= 1;
-      }
-    }
-
-    // Revert balls count only for legal deliveries
-    if (!lastBall.isExtra || lastBall.extraType === 'no-ball') {
-      newState.balls -= 1;
-    }
-
     // Update state
     setMatchState(newState);
+
+    // Save undo action to database
+    try {
+      await fetch(`/api/matches/${matchId}/undo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ballId: lastBall.id }),
+      });
+    } catch (err) {
+      console.error('Failed to undo ball:', err);
+    }
   };
 
   // Handle swap batsmen
@@ -665,413 +847,310 @@ const Scoring = () => {
     }));
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="w-full bg-gradient-to-br from-teal-200 via-green-200 to-yellow-200 mx-auto px-4 py-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-2xl font-bold text-blue-900">Loading match data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="w-full bg-gradient-to-br from-teal-200 via-green-200 to-yellow-200 mx-auto px-4 py-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-2xl font-bold text-red-600">Error: {error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // No match data
+  if (!matchData) {
+    return (
+      <div className="w-full bg-gradient-to-br from-teal-200 via-green-200 to-yellow-200 mx-auto px-4 py-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-2xl font-bold text-red-600">Match not found</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-gradient-to-br from-teal-200 via-green-200 to-yellow-200 mx-auto px-4 py-6">
       {/* Match Info */}
       <div className="bg-white/90 p-4 shadow-lg mb-6 text-black">
-        <span className=" font-bold text-5xl mb-2 text-blue-900">
-          {matchState.battingTeam.name} vs {matchState.bowlingTeam.name}
+        <span className="font-bold text-5xl mb-2 text-blue-900">
+          {matchData.team1_name} vs {matchData.team2_name}
         </span>
         <p className="text-black text-xl mb-2">
-          <span className="font-medium text-green-900">Venue:</span> {matchData.venue} <space></space>
+          <span className="font-medium text-green-900">Venue:</span> {matchData.venue}
           <span className="text-xl font-bold text-black"> | </span>
-          <span className="font-medium font-bold text-green-900"> Date: </span> {matchData.date}
+          <span className="font-medium font-bold text-green-900">Date:</span> {matchData.date}
+          <span className="text-xl font-bold text-black"> | </span>
+          <span className="font-medium font-bold text-green-900">Status:</span> {matchData.status}
         </p>
-        <div className="flex flex-wrap justify-between items-center">
-          <div className="text-xl font-bold">
-            {matchState.battingTeam.name}: {matchState.score}/{matchState.wickets}
-            {matchState.extras.total > 0 && ` (${matchState.extras.total} extras)`}
+        
+        {matchState.battingTeam && (
+          <div className="flex flex-wrap justify-between items-center">
+            <div className="text-xl font-bold">
+              {matchState.battingTeam.name}: {matchState.score}/{matchState.wickets}
+              {matchState.extras.total > 0 && ` (${matchState.extras.total} extras)`}
+            </div>
+            <div>
+              <span className="font-medium text-lg text-blue-900">CRR:</span> {matchState.crr.toFixed(2)}
+            </div>
+            <div>
+              <span className="font-medium text-lg text-blue-900">Overs:</span> {matchState.overs}.{matchState.balls} / {matchData.total_overs}
+              {matchState.innings === 2 && matchState.target && (
+                <span className="ml-4">
+                  <span className="font-medium text-blue-900">Target:</span> {matchState.target} |
+                  <span className="font-medium text-blue-900">RRR:</span> {matchState.rrr?.toFixed(2) || 0}
+                </span>
+              )}
+            </div>
           </div>
-          <div>
-            <span className="font-medium text-lg text-blue-900">CRR:</span> {matchState.crr.toFixed(2)}
-          </div>
-          <div>
-            <span className="font-medium text-lg text-blue-900">Overs:</span> {matchState.overs}.{matchState.balls} / {matchData.overs}
-
-            {matchState.innings === 2 && matchState.target && (
-              <span className="ml-4">
-                <span className="font-medium text-blue-900">Target:</span> {matchState.target} |
-                <span className="font-medium text-blue-900">RRR:</span> {matchState.rrr.toFixed(2)}
-              </span>
-            )}
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Current Ball and Batsmen/Bowler Info */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Current Ball */}
-        <div className="bg-white/90 p-4 rounded-lg shadow-lg">
-          <h2 className="text-lg font-semibold mb-2 text-blue-900">Current Ball</h2>
-          <div className="flex flex-wrap text-lg items-center">
-            <div className="mr-4 text-black mb-2">
-              <span className="font-medium text-blue-900">Over:</span> {matchState.overs}.{matchState.balls + 1}
+      {/* Show scoring interface only if match has started */}
+      {matchState.battingTeam && (
+        <>
+          {/* Current Ball and Batsmen/Bowler Info */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* Current Ball */}
+            <div className="bg-white/90 p-4 rounded-lg shadow-lg">
+              <h2 className="text-lg font-semibold mb-2 text-blue-900">Current Ball</h2>
+              <div className="flex flex-wrap text-lg items-center">
+                <div className="mr-4 text-black mb-2">
+                  <span className="font-medium text-blue-900">Over:</span> {matchState.overs}.{matchState.balls + 1}
+                </div>
+                {uiState.runsScored !== null && (
+                  <div className="mr-4 text-black mb-2">
+                    <span className="font-medium text-blue-900">Runs:</span> {uiState.runsScored}
+                  </div>
+                )}
+                {uiState.isExtra && (
+                  <div className="mr-4 text-black mb-2">
+                    <span className="font-medium text-blue-900">Extra:</span> {uiState.extraType}
+                  </div>
+                )}
+                {uiState.isWicket && (
+                  <div className="mr-4 text-black mb-2">
+                    <span className="font-medium text-blue-900">Wicket:</span> {uiState.wicketType}
+                  </div>
+                )}
+                {uiState.ballType && (
+                  <div className="mr-4 text-black mb-2">
+                    <span className="font-medium text-blue-900">Ball Type:</span> {uiState.ballType}
+                  </div>
+                )}
+              </div>
             </div>
-            {uiState.runsScored !== null && (
-              <div className="mr-4 text-black mb-2">
-                <span className="font-medium text-blue-900">Runs:</span> {uiState.runsScored}
-              </div>
-            )}
-            {uiState.isExtra && (
-              <div className="mr-4 text-black mb-2">
-                <span className="font-medium text-blue-900">Extra:</span> {uiState.extraType}
-              </div>
-            )}
-            {uiState.isWicket && (
-              <div className="mr-4 text-black mb-2">
-                <span className="font-medium text-blue-900">Wicket:</span> {uiState.wicketType}
-              </div>
-            )}
-            {uiState.ballType && (
-              <div className="mr-4 text-black mb-2">
-                <span className="font-medium text-blue-900">Ball Type:</span> {uiState.ballType}
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Batsmen Info */}
-        <div className="bg-white/90 p-4 rounded-lg shadow-lg">
-          <h2 className="text-lg font-semibold mb-2 text-blue-900">Batsmen</h2>
-          <div className="grid grid-cols-2 gap-2">
-            <div className={`p-2 rounded ${matchState.striker ? 'bg-blue-700' : 'bg-gray-700'}`}>
-              <div className="font-medium">{matchState.striker.name} *</div>
-              <div className="text-sm">
-                {matchState.striker.runs} ({matchState.striker.balls}) |
-                {matchState.striker.fours}x4 | {matchState.striker.sixes}x6 |
-                SR: {matchState.striker.strikeRate}
+            {/* Batsmen Info */}
+            <div className="bg-white/90 p-4 rounded-lg shadow-lg">
+              <h2 className="text-lg font-semibold mb-2 text-blue-900">Batsmen</h2>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2 rounded bg-blue-700 text-white">
+                  <div className="font-medium">{matchState.striker?.name} *</div>
+                  <div className="text-sm">
+                    {matchState.striker?.runs} ({matchState.striker?.balls}) |
+                    {matchState.striker?.fours}x4 | {matchState.striker?.sixes}x6 |
+                    SR: {matchState.striker?.strikeRate}
+                  </div>
+                </div>
+                <div className="p-2 rounded bg-gray-700 text-white">
+                  <div className="font-medium">{matchState.nonStriker?.name}</div>
+                  <div className="text-sm">
+                    {matchState.nonStriker?.runs} ({matchState.nonStriker?.balls}) |
+                    {matchState.nonStriker?.fours}x
+                    4 | {matchState.nonStriker?.sixes}x6 |
+                    SR: {matchState.nonStriker?.strikeRate}
+                  </div>
+                </div>
               </div>
+              <button 
+                onClick={handleSwapBatsmen}
+                className="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm"
+              >
+                Swap Batsmen
+              </button>
             </div>
-            <div className={`p-2 rounded ${!matchState.striker ? 'bg-blue-700' : 'bg-gray-700'}`}>
-              <div className="font-medium">{matchState.nonStriker.name}</div>
-              <div className="text-sm">
-                {matchState.nonStriker.runs} ({matchState.nonStriker.balls}) |
-                {matchState.nonStriker.fours}x4 | {matchState.nonStriker.sixes}x6 |
-                SR: {matchState.nonStriker.strikeRate}
-              </div>
+
+            {/* Bowler Info */}
+            <div className="bg-white/90 p-4 rounded-lg shadow-lg">
+              <h2 className="text-lg font-semibold mb-2 text-blue-900">Bowler</h2>
+              {matchState.currentBowler && (
+                <div className="p-2 rounded bg-red-700 text-white">
+                  <div className="font-medium">{matchState.currentBowler.name}</div>
+                  <div className="text-sm">
+                    {matchState.currentBowler.overs} overs | {matchState.currentBowler.runs}/{matchState.currentBowler.wickets} | 
+                    Econ: {matchState.currentBowler.economy}
+                  </div>
+                </div>
+              )}
+              <button 
+                onClick={handleChangeBowler}
+                className="mt-2 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded text-sm"
+              >
+                Change Bowler
+              </button>
             </div>
           </div>
-        </div>
 
-        {/* Bowler Info */}
-        <div className="bg-white/90 p-4 rounded-lg shadow-lg">
-          <h2 className="text-lg font-semibold mb-2 text-blue-900">Bowler</h2>
-          <div className="p-2 rounded bg-red-500">
-            <div className="font-medium">{matchState.currentBowler.name}</div>
-            <div className="text-sm">
-              {matchState.currentBowler.overs} overs | {matchState.currentBowler.runs}R |
-              {matchState.currentBowler.wickets}W | Econ: {matchState.currentBowler.economy} |
-              Maidens: {matchState.currentBowler.maidens}
+          {/* Scoring Controls */}
+          <div className="bg-white/90 p-4 rounded-lg shadow-lg mb-6">
+            <h2 className="text-lg font-semibold mb-4 text-blue-900">Scoring Controls</h2>
+            
+            {/* Runs Buttons */}
+            <div className="mb-4">
+              <h3 className="font-medium mb-2 text-blue-900">Runs</h3>
+              <div className="flex flex-wrap gap-2">
+                {[0, 1, 2, 3, 4, 5, 6].map(runs => (
+                  <button
+                    key={runs}
+                    onClick={() => handleRunsClick(runs)}
+                    className={`py-2 px-4 rounded ${uiState.runsScored === runs ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+                  >
+                    {runs}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Extras and Wickets */}
+            <div className="flex flex-wrap gap-4 mb-4">
+              <button
+                onClick={handleExtraClick}
+                className={`py-2 px-4 rounded ${uiState.isExtra ? 'bg-green-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+              >
+                Extra
+              </button>
+              <button
+                onClick={handleWicketClick}
+                className={`py-2 px-4 rounded ${uiState.isWicket ? 'bg-red-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+              >
+                Wicket
+              </button>
+              <button
+                onClick={handleBallTypeClick}
+                className={`py-2 px-4 rounded ${uiState.ballType ? 'bg-purple-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+              >
+                Ball Type
+              </button>
+            </div>
+            
+            {/* Submit and Undo */}
+            <div className="flex flex-wrap gap-4">
+              <button
+                onClick={handleSubmitBall}
+                className="py-2 px-6 bg-green-600 hover:bg-green-700 text-white rounded font-medium"
+              >
+                Submit Ball
+              </button>
+              <button
+                onClick={handleUndoLastBall}
+                className="py-2 px-6 bg-yellow-600 hover:bg-yellow-700 text-white rounded font-medium"
+              >
+                Undo Last Ball
+              </button>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Over Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {/* Current Over */}
-        <div className="bg-white/90 p-4 rounded-lg shadow-lg">
-          <h2 className="text-lg font-semibold mb-2 text-blue-900">Current Over</h2>
-          <div className="flex flex-wrap">
-            {matchState.currentOver.length > 0 ? (
-              matchState.currentOver.map((ball, index) => (
-                <div
-                  key={index}
-                  className={`
-                    w-auto min-w-10 h-10 px-2 flex items-center justify-center rounded-full m-1 text-white font-bold
-                    ${ball.isWicket ? 'bg-red-500' :
-                      ball.isExtra ? 'bg-yellow-500' :
-                        ball.runs === 4 ? 'bg-green-500' :
-                          ball.runs === 6 ? 'bg-purple-500' : 'bg-blue-500'}
-                  `}
+          {/* Current Over */}
+          <div className="bg-white/90 p-4 rounded-lg shadow-lg mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-blue-900">Current Over</h2>
+            <div className="flex flex-wrap gap-2">
+              {matchState.currentOver.map((ball, index) => (
+                <div 
+                  key={index} 
+                  className={`w-8 h-8 flex items-center justify-center rounded-full ${
+                    ball.isWicket ? 'bg-red-500 text-white' : 
+                    ball.isExtra ? 'bg-yellow-500 text-black' : 
+                    ball.runs > 0 ? 'bg-green-500 text-white' : 'bg-gray-300 text-black'
+                  }`}
                 >
                   {ball.displayText}
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500">No balls bowled yet in this over</p>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Previous Overs */}
-        <div className="bg-white/90 p-4 rounded-lg shadow-lg">
-          <h2 className="text-lg font-semibold mb-2 text-blue-900">Previous Overs</h2>
-          <div className="max-h-32 overflow-y-auto">
-            {matchState.previousOvers.length > 0 ? (
-              matchState.previousOvers.map((over, overIndex) => (
+          {/* Previous Overs */}
+          <div className="bg-white/90 p-4 rounded-lg shadow-lg">
+            <h2 className="text-lg font-semibold mb-2 text-blue-900">Previous Overs</h2>
+            <div className="flex flex-wrap gap-4">
+              {matchState.previousOvers.map((over, overIndex) => (
                 <div key={overIndex} className="mb-2">
-                  <span className="font-medium text-blue-900">Over {overIndex + 1}:</span>
-                  <div className="flex flex-wrap">
+                  <div className="font-medium text-sm text-blue-900">
+                    Over {overIndex + 1} ({over[0]?.bowler})
+                  </div>
+                  <div className="flex flex-wrap gap-1">
                     {over.map((ball, ballIndex) => (
-                      <div
-                        key={ballIndex}
-                        className={`
-                          w-auto min-w-8 h-8 px-1 flex items-center justify-center rounded-full m-1 text-white font-bold text-sm
-                          ${ball.isWicket ? 'bg-red-500' :
-                            ball.isExtra ? 'bg-yellow-500' :
-                              ball.runs === 4 ? 'bg-green-500' :
-                                ball.runs === 6 ? 'bg-purple-500' : 'bg-blue-500'}
-                        `}
+                      <div 
+                        key={ballIndex} 
+                        className={`w-6 h-6 flex items-center justify-center rounded-full text-xs ${
+                          ball.isWicket ? 'bg-red-500 text-white' : 
+                          ball.isExtra ? 'bg-yellow-500 text-black' : 
+                          ball.runs > 0 ? 'bg-green-500 text-white' : 'bg-gray-300 text-black'
+                        }`}
                       >
                         {ball.displayText}
                       </div>
                     ))}
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500">No previous overs</p>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
-      {/* Scoring Controls */}
-      <div className="bg-white/90 p-4 rounded-lg shadow-lg mb-6">
-        <h2 className="text-lg font-semibold mb-4 text-blue-900">Scoring Controls</h2>
-
-        {/* Runs Buttons */}
-        <div className="mb-4">
-          <h3 className="text-md font-medium mb-2 text-blue-900">Runs</h3>
-          <div className="flex justify-center flex-wrap gap-2">
-            {[0, 1, 2, 3, 4, 6].map(runs => (
+      {/* Start Innings Modal */}
+      {uiState.showStartInningsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Start Innings</h2>
+            <p className="mb-4">Which team is batting first?</p>
+            <div className="flex flex-col gap-3">
               <button
-                key={runs}
-                className={`w-12 h-12 rounded-full font-bold ${uiState.runsScored === runs && !uiState.isWicket && !uiState.isExtra ?
-                  runs === 4 ? 'bg-green-500' :
-                    runs === 6 ? 'bg-purple-500' : 'bg-blue-500' :
-                  'bg-black'
-                  } text-white hover:brightness-110`}
-                onClick={() => handleRunsClick(runs)}
+                onClick={() => handleStartInnings(0)}
+                className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded"
               >
-                {runs}
+                {matchData.team1_name}
               </button>
-            ))}
+              <button
+                onClick={() => handleStartInnings(1)}
+                className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded"
+              >
+                {matchData.team2_name}
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* Wicket and Extras Buttons */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <h3 className="text-md font-medium mb-2 text-blue-900">Wicket</h3>
-            <button
-              className={`w-full py-2 px-4 rounded font-bold ${uiState.isWicket ? 'bg-red-500' : 'bg-black'
-                } text-white hover:brightness-110`}
-              onClick={handleWicketClick}
-            >
-              Wicket
-            </button>
-          </div>
-          <div>
-            <h3 className="text-md font-medium mb-2 text-blue-900">Extras</h3>
-            <button
-              className={`w-full py-2 px-4 rounded font-bold ${uiState.isExtra ? 'bg-yellow-500' : 'bg-black'
-                } text-white hover:brightness-110`}
-              onClick={handleExtraClick}
-            >
-              Extras
-            </button>
-          </div>
-        </div>
-
-        {/* Ball Type Button */}
-        <div className="mb-4">
-          <h3 className="text-md font-medium mb-2 text-blue-900">Ball Type</h3>
-          <button
-            className={`w-full py-2 px-4 rounded font-bold ${uiState.ballType ? 'bg-blue-500' : 'bg-black'
-              } text-white hover:brightness-110`}
-            onClick={handleBallTypeClick}
-          >
-            {uiState.ballType || 'Select Ball Type'}
-          </button>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            className="py-2 px-4 rounded bg-green-600 text-white font-bold hover:bg-green-900"
-            onClick={handleSubmitBall}
-            disabled={uiState.runsScored === null && !uiState.isWicket && !uiState.isExtra}
-          >
-            Submit
-          </button>
-          <button
-            className="py-2 px-4 rounded bg-red-500 text-white font-bold hover:bg-red-700"
-            onClick={handleUndoLastBall}
-            disabled={matchState.currentOver.length === 0 && matchState.previousOvers.length === 0}
-          >
-            Undo
-          </button>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white/90 p-4 rounded-lg shadow-lg">
-        <h2 className="text-lg font-semibold mb-4 text-blue-900">Quick Actions</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            className="py-2 px-4 rounded bg-blue-600 text-white font-bold hover:bg-blue-700"
-            onClick={handleChangeBowler}
-          >
-            Change Bowler
-          </button>
-          <button
-            className="py-2 px-4 rounded bg-gray-500 text-white font-bold hover:bg-gray-600"
-            onClick={handleSwapBatsmen}
-          >
-            Swap Batsmen
-          </button>
-          {/* Add this new button */}
-          <button
-            className="py-2 px-4 rounded bg-purple-600 text-white font-bold hover:bg-purple-700"
-            onClick={() => navigate(`/postmatch/${matchId}`)}
-          >
-            Go to Post-Match
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Wicket Modal */}
       {uiState.showWicketModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-pink-100 p-6 rounded-lg shadow-lg w-full max-w-md text-black">
-            <h2 className="text-xl font-bold mb-4 text-blue-900">Select Wicket Type</h2>
-            <div className="grid grid-cols-2 text-white gap-4">
-              {['bowled', 'caught', 'lbw', 'run-out', 'stumped', 'hit-wicket'].map(type => (
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Select Wicket Type</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {['Bowled', 'Caught', 'LBW', 'Run Out', 'Stumped', 'Hit Wicket'].map(type => (
                 <button
                   key={type}
-                  className="py-2 px-4 rounded bg-black hover:bg-red-700 font-medium"
                   onClick={() => handleWicketTypeSelect(type)}
+                  className="py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded"
                 >
-                  {type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  {type}
                 </button>
               ))}
             </div>
-            <button
-              className="mt-4 w-full py-2 px-4 rounded bg-gray-400 text-black font-bold hover:bg-gray-600"
-              onClick={() => setUiState(prev => ({ ...prev, showWicketModal: false }))}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Extra Modal */}
-      {uiState.showExtraModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-pink-100 p-6 rounded-lg shadow-lg w-full max-w-md text-black">
-            <h2 className="text-xl font-bold mb-4 text-blue-900">Select Extra Type</h2>
-            <div className="grid grid-cols-2 text-white gap-4">
-              {['wide', 'no-ball', 'leg-bye', 'bye'].map(type => (
-                <button
-                  key={type}
-                  className="py-2 px-4 rounded bg-black hover:bg-yellow-500 hover:text-black font-medium"
-                  onClick={() => handleExtraTypeSelect(type)}
-                >
-                  {type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                </button>
-              ))}
-            </div>
-            <button
-              className="mt-4 w-full py-2 px-4 rounded bg-gray-400 text-black font-bold hover:bg-gray-600"
-              onClick={() => setUiState(prev => ({ ...prev, showExtraModal: false }))}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Ball Type Modal */}
-      {uiState.showBallTypeModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-pink-100 p-6 rounded-lg shadow-lg w-full max-w-4xl text-black">
-            <h2 className="text-xl font-bold mb-4 text-blue-900">Select Ball Type</h2>
-            <div className="grid text-white grid-cols-3 gap-4">
-              {/* Pace Bowling */}
-              <div>
-                <h3 className="font-medium mb-2 text-blue-700">Pace</h3>
-                <div className="grid grid-cols-1 gap-2">
-                  {['Yorker', 'Bouncer', 'Full Toss', 'Length Ball', 'Short Ball', 'Slower Ball'].map(type => (
-                    <button
-                      key={type}
-                      className="py-2 px-4 rounded bg-black hover:bg-blue-600 font-medium"
-                      onClick={() => handleBallTypeSelect(type)}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Spin Bowling */}
-              <div>
-                <h3 className="font-medium mb-2 text-green-700">Spin</h3>
-                <div className="grid grid-cols-1 gap-2">
-                  {['Off Spin', 'Leg Spin', 'Googly', 'Doosra', 'Carrom Ball', 'Arm Ball'].map(type => (
-                    <button
-                      key={type}
-                      className="py-2 px-4 rounded bg-black hover:bg-blue-600 font-medium"
-                      onClick={() => handleBallTypeSelect(type)}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Seam Bowling */}
-              <div>
-                <h3 className="font-medium mb-2 text-red-700">Seam</h3>
-                <div className="grid grid-cols-1 gap-2">
-                  {['Outswinger', 'Inswinger', 'Reverse Swing', 'Cutter', 'Off Cutter', 'Leg Cutter'].map(type => (
-                    <button
-                      key={type}
-                      className="py-2 px-4 rounded bg-black hover:bg-blue-600 font-medium"
-                      onClick={() => handleBallTypeSelect(type)}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <button
-              className="mt-4 w-full py-2 px-4 rounded bg-gray-400 text-black font-bold hover:bg-gray-600"
-              onClick={() => setUiState(prev => ({ ...prev, showBallTypeModal: false }))}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Change Bowler Modal */}
-      {uiState.showChangeBowlerModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-pink-100 p-6 rounded-lg shadow-lg w-full max-w-md text-black">
-            <h2 className="text-xl font-bold mb-4 text-blue-900">Select Bowler</h2>
-            <div className="max-h-60 overflow-y-auto">
-              {matchState.bowlingTeam.players.map((player, index) => (
-                <button
-                  key={index}
-                  className={`w-full text-white py-2 px-4 rounded ${player === matchState.lastBowler ? 'bg-gray-300' : 'bg-gray-200 hover:bg-gray-300'
-                    } font-medium mb-2 text-left`}
-                  onClick={() => handleBowlerSelect(player)}
-                  disabled={player === matchState.lastBowler}
-                >
-                  {player} {player === matchState.lastBowler && "(bowled last over)"}
-                </button>
-              ))}
-            </div>
-            <button
-              className="mt-4 w-full py-2 px-4 rounded bg-gray-400 text-black font-bold hover:bg-gray-600"
-              onClick={() => setUiState(prev => ({ ...prev, showChangeBowlerModal: false }))}
-            >
-              Cancel
-            </button>
           </div>
         </div>
       )}
@@ -1079,31 +1158,85 @@ const Scoring = () => {
       {/* New Batsman Modal */}
       {uiState.showNewBatsmanModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-pink-100 p-6 rounded-lg shadow-lg w-full max-w-md text-black">
-            <h2 className="text-xl font-bold mb-4 text-blue-900">Select New Batsman</h2>
-            <div className="max-h-60 text-white overflow-y-auto">
-              {matchState.battingTeam.players
-                .filter(player =>
-                  player !== matchState.striker.name &&
-                  player !== matchState.nonStriker.name &&
-                  !matchState.batsmen.some(b => b.name === player && b.isOut)
-                )
-                .map((player, index) => (
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Select New Batsman</h2>
+            <div className="max-h-96 overflow-y-auto">
+              {matchState.battingTeam?.players
+                .filter(player => !matchState.batsmen.some(b => b.name === player.name) || b.isOut)
+                .map(player => (
                   <button
-                    key={index}
-                    className="w-full py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 font-medium mb-2 text-left"
-                    onClick={() => handleNewBatsmanSelect(player)}
+                    key={player.name}
+                    onClick={() => handleNewBatsmanSelect(player.name)}
+                    className="w-full py-2 px-4 mb-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-left"
                   >
-                    {player}
+                    {player.name}
                   </button>
                 ))}
             </div>
-            <button
-              className="mt-4 w-full py-2 px-4 rounded bg-gray-400 text-black font-bold hover:bg-gray-600"
-              onClick={() => setUiState(prev => ({ ...prev, showNewBatsmanModal: false }))}
-            >
-              Cancel
-            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Extra Modal */}
+      {uiState.showExtraModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Select Extra Type</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {['wide', 'no-ball', 'bye', 'leg-bye'].map(type => (
+                <button
+                  key={type}
+                  onClick={() => handleExtraTypeSelect(type)}
+                  className="py-2 px-4 bg-yellow-600 hover:bg-yellow-700 text-white rounded capitalize"
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ball Type Modal */}
+      {uiState.showBallTypeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Select Ball Type</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {['Normal', 'Bouncer', 'Yorker', 'Full', 'Good Length', 'Short'].map(type => (
+                <button
+                  key={type}
+                  onClick={() => handleBallTypeSelect(type)}
+                  className={`py-2 px-4 ${
+                    uiState.ballType === type ? 'bg-purple-700' : 'bg-purple-600 hover:bg-purple-700'
+                  } text-white rounded`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Bowler Modal */}
+      {uiState.showChangeBowlerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Select New Bowler</h2>
+            <div className="max-h-96 overflow-y-auto">
+              {matchState.bowlingTeam?.players
+                .filter(player => player.name !== matchState.lastBowler)
+                .map(player => (
+                  <button
+                    key={player.name}
+                    onClick={() => handleBowlerSelect(player.name)}
+                    className="w-full py-2 px-4 mb-2 bg-red-600 hover:bg-red-700 text-white rounded text-left"
+                  >
+                    {player.name}
+                  </button>
+                ))}
+            </div>
           </div>
         </div>
       )}
