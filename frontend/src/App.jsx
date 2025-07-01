@@ -114,6 +114,7 @@ import Footer from './Components/Footer'
 import ScrollToTop from './Components/ScrollToTop'
 import ProtectedRoute from './Components/ProtectedRoute'
 import { AuthProvider } from './contexts/AuthContext'
+import { SocketProvider } from './contexts/SocketContext'
 import './App.css'
 
 // Auth Screens
@@ -144,14 +145,16 @@ import PostMatch from './Screens/Scorer/PostMatch'
 
 import PlayerDetails from './Screens/PlayerStats/playerdetails'
 import PlayerSearchPage from './Screens/PlayerStats/playersearchpage'
+import PlayerHome from './Screens/Player/PlayerHome'
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <ScrollToTop />
-        <Navbar />
-        <div className="content">
+        <SocketProvider>
+          <ScrollToTop />
+          <Navbar />
+          <div className="content">
           <Routes>
             {/* Redirect root to viewer home for now */}
             <Route path="/" element={<Navigate to="/viewer-home" />} />
@@ -229,6 +232,13 @@ function App() {
               </ProtectedRoute>
             } />
 
+            {/* Player Routes - Protected */}
+            <Route path="/player-home" element={
+              <ProtectedRoute allowedRoles={['player']}>
+                <PlayerHome />
+              </ProtectedRoute>
+            } />
+            
             {/* Player Stats Routes */}
             <Route path="/players/:playerId" element={<PlayerDetails/>} />
             <Route path="/player-stats" element={<PlayerSearchPage />} />
@@ -254,8 +264,9 @@ function App() {
               </ProtectedRoute>
             } />
           </Routes>
-        </div>
-        <Footer />
+          </div>
+          <Footer />
+        </SocketProvider>
       </AuthProvider>
     </Router>
   )

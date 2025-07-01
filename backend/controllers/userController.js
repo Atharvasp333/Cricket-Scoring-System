@@ -17,7 +17,7 @@ export const createOrUpdateUser = async (req, res) => {
     console.log('Role received:', role, 'Type:', typeof role);
     
     // Validate role
-    const validRoles = ['viewer', 'scorer', 'organiser'];
+    const validRoles = ['viewer', 'scorer', 'organiser','player'];
     const validatedRole = validRoles.includes(role) ? role : 'viewer';
     console.log('Validated role:', validatedRole, '(original was:', role, ')');
 

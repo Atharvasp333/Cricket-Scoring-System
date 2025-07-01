@@ -161,6 +161,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     const redirectPath = 
       effectiveRole === 'scorer' ? '/scorer-home' :
       effectiveRole === 'organiser' ? '/organiser-homepage' :
+      effectiveRole === 'player' ? '/player-home' :
       '/viewer-home';
     
     return <Navigate to={redirectPath} replace />;

@@ -133,10 +133,12 @@ const Navbar = () => {
           <Link 
             to={userRole === 'organiser' ? '/organiser-homepage' : 
                 userRole === 'scorer' ? '/scorer-home' : 
+                userRole === 'player' ? '/player-home' :
                 '/viewer-home'} 
             className={`flex flex-col items-center p-2 ${isActive('/viewer-home') || 
               isActive('/scorer-home') || 
-              isActive('/organiser-homepage')}`}
+              isActive('/organiser-homepage') ||
+              isActive('/player-home')}`}
           >
             <FiHome className="text-xl" />
             <span className="text-xs mt-1">Home</span>
@@ -213,11 +215,13 @@ const Navbar = () => {
               <Link 
                 to={userRole === 'organiser' ? '/organiser-homepage' : 
                     userRole === 'scorer' ? '/scorer-home' : 
+                    userRole === 'player' ? '/player-home' :
                     '/viewer-home'} 
                 className={`flex items-center ${
                   isActive('/viewer-home') || 
                   isActive('/scorer-home') || 
-                  isActive('/organiser-homepage')
+                  isActive('/organiser-homepage') ||
+                  isActive('/player-home')
                 }`}
               >
                 <FiHome className="mr-1" />

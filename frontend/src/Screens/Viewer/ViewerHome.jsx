@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
+import { useSocket } from '../../contexts/SocketContext';
 import api from '../../utils/api';
 
 const ViewerHome = () => {
@@ -17,9 +17,8 @@ const ViewerHome = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [dataError, setDataError] = useState(null);
 
-  // --- SOCKET.IO INTEGRATION START ---
-  const SOCKET_URL = 'http://localhost:5000'; // Change port if needed
-  const [socket] = useState(() => io(SOCKET_URL, { autoConnect: true }));
+  // --- SOCKET.IO INTEGRATION ---
+  const socket = useSocket();
   // --- SOCKET.IO INTEGRATION END ---
 
   // --- DATA NORMALIZATION HELPERS ---

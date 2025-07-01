@@ -574,6 +574,9 @@
 //       case 'organiser':
 //         navigate('/organiser-homepage', { replace: true });
 //         break;
+//       case 'player':
+//         navigate('/player-home', { replace: true });
+//         break;
 //       case 'viewer':
 //       default:
 //         navigate('/viewer-home', { replace: true });
@@ -939,6 +942,9 @@ const Signup = () => {
       case 'organiser':
         window.location.href = '/organiser-homepage';
         break;
+      case 'player':
+        window.location.href = '/player-home';
+        break;
       case 'viewer':
       default:
         window.location.href = '/viewer-home';
@@ -972,10 +978,10 @@ const Signup = () => {
             <p className="text-sm font-medium text-gray-700">I want to:</p>
           </div>
 
-          <div className="flex rounded-md shadow-sm mb-6" role="group">
+          <div className="flex flex-wrap rounded-md shadow-sm mb-6" role="group">
             <button
               type="button"
-              className={`flex-1 py-2 px-4 text-sm font-medium rounded-l-md ${
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-tl-md md:rounded-l-md md:rounded-tr-none ${
                 activeTab === 'viewer'
                   ? 'bg-[#16638A] text-white'
                   : 'bg-white text-gray-700 border border-gray-300'
@@ -986,10 +992,10 @@ const Signup = () => {
             </button>
             <button
               type="button"
-              className={`flex-1 py-2 px-4 text-sm font-medium ${
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-tr-md md:rounded-tr-none ${
                 activeTab === 'scorer'
                   ? 'bg-[#16638A] text-white'
-                  : 'bg-white text-gray-700 border-t border-b border-gray-300'
+                  : 'bg-white text-gray-700 border-t border-r md:border-r-0 border-l md:border-l-0 border-gray-300'
               }`}
               onClick={() => setActiveTab('scorer')}
             >
@@ -997,7 +1003,18 @@ const Signup = () => {
             </button>
             <button
               type="button"
-              className={`flex-1 py-2 px-4 text-sm font-medium rounded-r-md ${
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-bl-md md:rounded-bl-none ${
+                activeTab === 'player'
+                  ? 'bg-[#16638A] text-white'
+                  : 'bg-white text-gray-700 border-b border-l border-r md:border-r-0 border-gray-300'
+              }`}
+              onClick={() => setActiveTab('player')}
+            >
+              Player Profile
+            </button>
+            <button
+              type="button"
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-br-md md:rounded-r-md ${
                 activeTab === 'organiser'
                   ? 'bg-[#16638A] text-white'
                   : 'bg-white text-gray-700 border border-gray-300'

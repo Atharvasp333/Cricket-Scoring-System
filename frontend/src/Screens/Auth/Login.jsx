@@ -299,10 +299,10 @@ const Login = () => {
 
   const redirectBasedOnRole = (role) => {
     // Validate role to ensure it's one of the expected values
-    const validRole = ['scorer', 'organiser', 'viewer'].includes(role) ? role : 'viewer';
+    const validRole = ['scorer', 'organiser', 'viewer', 'player'].includes(role) ? role : 'viewer';
     
-    // Store the role in sessionStorage for consistency
-    sessionStorage.setItem('userSignupRole', validRole);
+    // Store the role in localStorage for consistency
+    localStorage.setItem('userRole', validRole);
     
     // Redirect based on role with replace to prevent back navigation
     switch (validRole) {
@@ -311,6 +311,9 @@ const Login = () => {
         break;
       case 'organiser':
         navigate('/organiser-homepage', { replace: true });
+        break;
+      case 'player':
+        navigate('/player-home', { replace: true });
         break;
       case 'viewer':
       default:
