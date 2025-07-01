@@ -47,15 +47,15 @@ const Navbar = () => {
   }, [darkMode]);
 
   const isActive = (path) => {
-    return location.pathname === path 
-      ? darkMode 
-        ? 'text-primary-dark font-medium' 
-        : 'text-white font-medium' 
-      : darkMode 
-        ? 'text-text-primary-dark hover:text-primary-dark' 
+    return location.pathname === path
+      ? darkMode
+        ? 'text-primary-dark font-medium'
+        : 'text-white font-medium'
+      : darkMode
+        ? 'text-text-primary-dark hover:text-primary-dark'
         : 'text-white hover:text-gray-200';
   };
-  
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -64,13 +64,18 @@ const Navbar = () => {
       console.error('Error signing out:', error);
     }
   };
-  
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
+  };
+
+  const handleProfileClick = () => {
+    navigate('/player-profile');
+    setShowDropdown(false);
   };
 
   // Close dropdown when clicking outside
@@ -80,7 +85,7 @@ const Navbar = () => {
         setShowDropdown(false);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -101,10 +106,10 @@ const Navbar = () => {
   const MobileTopBar = () => (
     <>
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} darkMode={darkMode} />
-      
+
       <div className={`md:hidden w-full p-3 shadow-md flex justify-between items-center ${darkMode ? 'bg-neutral-dark' : 'bg-[#16638A]'}`}>
         {/* Menu Button */}
-        <button 
+        <button
           onClick={toggleSidebar}
           className={`p-1 rounded-md focus:outline-none ${darkMode ? 'text-text-primary-dark' : 'text-white'}`}
         >
@@ -122,7 +127,7 @@ const Navbar = () => {
 
         {/* Theme Toggle and Profile Icon */}
         <div className="flex items-center space-x-3">
-          <button 
+          <button
             onClick={toggleDarkMode}
             className={`p-1 rounded-md focus:outline-none ${darkMode ? 'text-text-primary-dark' : 'text-white'}`}
           >
@@ -130,7 +135,7 @@ const Navbar = () => {
           </button>
 
           <div className="relative" ref={dropdownRef}>
-            <div 
+            <div
               className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition ${darkMode ? 'bg-primary-dark text-neutral-dark' : 'bg-white text-[#16638A]'}`}
               onClick={() => setShowDropdown(!showDropdown)}
             >
@@ -140,13 +145,19 @@ const Navbar = () => {
                 <FiUser />
               )}
             </div>
-            
-            {/* Dropdown Menu */}
+
+            {/* Mobile Dropdown Menu */}
             {showDropdown && (
-              <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-50 ${darkMode ? 'bg-neutral-dark border border-border-dark' : 'bg-white border border-gray-200'}`}>
+              <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-10 ${darkMode ? 'bg-neutral-dark border border-border-dark' : 'bg-white border border-gray-200'}`}>
                 {currentUser ? (
                   <>
-                    <div className={`px-4 py-2 text-sm border-b ${darkMode ? 'border-border-dark' : 'border-gray-200'}`}>
+                    {/* User Info Section - Clickable for players */}
+                    <div 
+                      className={`px-4 py-2 text-sm border-b ${darkMode ? 'border-border-dark' : 'border-gray-200'} ${
+                        userRole === 'player' ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-800' : ''
+                      }`}
+                      onClick={userRole === 'player' ? handleProfileClick : undefined}
+                    >
                       <p className={`font-medium ${darkMode ? 'text-text-primary-dark' : 'text-gray-800'}`}>
                         {currentUser.displayName || 'User'}
                       </p>
@@ -156,7 +167,21 @@ const Navbar = () => {
                       <p className={`text-xs capitalize mt-1 ${darkMode ? 'text-text-muted-dark' : 'text-gray-500'}`}>
                         Role: {userRole || 'Viewer'}
                       </p>
+                      {userRole === 'player' && (
+                        <p className={`text-xs mt-1 ${darkMode ? 'text-primary-dark' : 'text-blue-600'}`}>
+                          Click to view profile
+                        </p>
+                      )}
                     </div>
+                    
+                    {/* View Profile Button for all users */}
+                    <button
+                      onClick={handleProfileClick}
+                      className={`block w-full text-left px-4 py-2 text-sm flex items-center ${darkMode ? 'text-text-primary-dark hover:bg-neutral-dark/50' : 'text-gray-700 hover:bg-gray-100'}`}
+                    >
+                      <FiUser className="mr-2" /> View Profile
+                    </button>
+
                     <button
                       onClick={handleLogout}
                       className={`block w-full text-left px-4 py-2 text-sm flex items-center ${darkMode ? 'text-text-primary-dark hover:bg-neutral-dark/50' : 'text-gray-700 hover:bg-gray-100'}`}
@@ -207,57 +232,55 @@ const Navbar = () => {
         <div className="flex items-center space-x-4 md:space-x-10">
           <ul className="flex space-x-6 md:space-x-7">
             <li>
-              <Link 
-                to={userRole === 'organiser' ? '/organiser-homepage' : 
-                    userRole === 'scorer' ? '/scorer-home' : 
+              <Link
+                to={userRole === 'organiser' ? '/organiser-homepage' :
+                  userRole === 'scorer' ? '/scorer-home' :
                     userRole === 'player' ? '/player-home' :
-                    '/viewer-home'} 
-                className={`flex items-center ${isActive('/viewer-home') || 
-                  isActive('/scorer-home') || 
+                      '/viewer-home'}
+                className={`flex items-center ${isActive('/viewer-home') ||
+                  isActive('/scorer-home') ||
                   isActive('/organiser-homepage') ||
                   isActive('/player-home')
-                }`}
+                  }`}
               >
                 <FiHome className="mr-1" />
                 <span className="hidden sm:inline">Home</span>
               </Link>
             </li>
-            
+
             <li>
-              <Link 
-                to={userRole === 'organiser' ? '/organiser/completed-matches' : 
-                    userRole === 'scorer' ? '/completed-matches' : 
-                    '/CompletedMatches'} 
-                className={`flex items-center ${
-                  isActive('/CompletedMatches') || 
-                  isActive('/completed-matches') || 
+              <Link
+                to={userRole === 'organiser' ? '/organiser/completed-matches' :
+                  userRole === 'scorer' ? '/completed-matches' :
+                    '/CompletedMatches'}
+                className={`flex items-center ${isActive('/CompletedMatches') ||
+                  isActive('/completed-matches') ||
                   isActive('/organiser/completed-matches')
-                }`}
+                  }`}
               >
                 <FiCalendar className="mr-1" />
                 <span className="hidden sm:inline">Matches</span>
               </Link>
             </li>
-            
+
             <li>
-              <Link 
-                to={userRole === 'organiser' ? '/organiser/completed-tournaments' : 
-                    userRole === 'scorer' ? '/completed-tournaments' : 
-                    '/CompletedTournaments'} 
-                className={`flex items-center ${
-                  isActive('/CompletedTournaments') || 
-                  isActive('/completed-tournaments') || 
+              <Link
+                to={userRole === 'organiser' ? '/organiser/completed-tournaments' :
+                  userRole === 'scorer' ? '/completed-tournaments' :
+                    '/CompletedTournaments'}
+                className={`flex items-center ${isActive('/CompletedTournaments') ||
+                  isActive('/completed-tournaments') ||
                   isActive('/organiser/completed-tournaments')
-                }`}
+                  }`}
               >
                 <FiAward className="mr-1" />
                 <span className="hidden sm:inline">Tournaments</span>
               </Link>
             </li>
-            
+
             <li>
-              <Link 
-                to="/player-stats" 
+              <Link
+                to="/player-stats"
                 className={`flex items-center ${isActive('/player-stats')}`}
               >
                 <FiAward className="mr-1" />
@@ -268,7 +291,7 @@ const Navbar = () => {
 
           {/* Theme Toggle and Profile Icon */}
           <div className="flex items-center space-x-4">
-            <button 
+            <button
               onClick={toggleDarkMode}
               className={`p-1 rounded-md focus:outline-none ${darkMode ? 'text-text-primary-dark' : 'text-white'}`}
             >
@@ -276,7 +299,7 @@ const Navbar = () => {
             </button>
 
             <div className="relative" ref={dropdownRef}>
-              <div 
+              <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition ${darkMode ? 'bg-primary-dark text-neutral-dark' : 'bg-white text-[#16638A]'}`}
                 onClick={() => setShowDropdown(!showDropdown)}
               >
@@ -286,13 +309,19 @@ const Navbar = () => {
                   <FiUser />
                 )}
               </div>
-              
-              {/* Dropdown Menu */}
+
+              {/* Desktop Dropdown Menu */}
               {showDropdown && (
                 <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-10 ${darkMode ? 'bg-neutral-dark border border-border-dark' : 'bg-white border border-gray-200'}`}>
                   {currentUser ? (
                     <>
-                      <div className={`px-4 py-2 text-sm border-b ${darkMode ? 'border-border-dark' : 'border-gray-200'}`}>
+                      {/* User Info Section - Clickable for players */}
+                      <div 
+                        className={`px-4 py-2 text-sm border-b ${darkMode ? 'border-border-dark' : 'border-gray-200'} ${
+                          userRole === 'player' ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-800' : ''
+                        }`}
+                        onClick={userRole === 'player' ? handleProfileClick : undefined}
+                      >
                         <p className={`font-medium ${darkMode ? 'text-text-primary-dark' : 'text-gray-800'}`}>
                           {currentUser.displayName || 'User'}
                         </p>
@@ -302,7 +331,21 @@ const Navbar = () => {
                         <p className={`text-xs capitalize mt-1 ${darkMode ? 'text-text-muted-dark' : 'text-gray-500'}`}>
                           Role: {userRole || 'Viewer'}
                         </p>
+                        {userRole === 'player' && (
+                          <p className={`text-xs mt-1 ${darkMode ? 'text-primary-dark' : 'text-blue-600'}`}>
+                            Click to view profile
+                          </p>
+                        )}
                       </div>
+                      
+                      {/* View Profile Button for all users */}
+                      <button
+                        onClick={handleProfileClick}
+                        className={`block w-full text-left px-4 py-2 text-sm flex items-center ${darkMode ? 'text-text-primary-dark hover:bg-neutral-dark/50' : 'text-gray-700 hover:bg-gray-100'}`}
+                      >
+                        <FiUser className="mr-2" /> View Profile
+                      </button>
+
                       <button
                         onClick={handleLogout}
                         className={`block w-full text-left px-4 py-2 text-sm flex items-center ${darkMode ? 'text-text-primary-dark hover:bg-neutral-dark/50' : 'text-gray-700 hover:bg-gray-100'}`}
@@ -342,13 +385,13 @@ const Navbar = () => {
     <div className={`md:hidden fixed bottom-0 left-0 right-0 shadow-lg z-40 ${darkMode ? 'bg-neutral-dark' : 'bg-[#16638A]'}`}>
       <ul className="flex justify-around items-center p-2">
         <li className="flex-1 text-center">
-          <Link 
-            to={userRole === 'organiser' ? '/organiser-homepage' : 
-                userRole === 'scorer' ? '/scorer-home' : 
+          <Link
+            to={userRole === 'organiser' ? '/organiser-homepage' :
+              userRole === 'scorer' ? '/scorer-home' :
                 userRole === 'player' ? '/player-home' :
-                '/viewer-home'} 
-            className={`flex flex-col items-center p-2 ${isActive('/viewer-home') || 
-              isActive('/scorer-home') || 
+                  '/viewer-home'}
+            className={`flex flex-col items-center p-2 ${isActive('/viewer-home') ||
+              isActive('/scorer-home') ||
               isActive('/organiser-homepage') ||
               isActive('/player-home')}`}
           >
@@ -356,38 +399,38 @@ const Navbar = () => {
             <span className="text-xs mt-1">Home</span>
           </Link>
         </li>
-        
+
         <li className="flex-1 text-center">
-          <Link 
-            to={userRole === 'organiser' ? '/organiser/completed-matches' : 
-                userRole === 'scorer' ? '/completed-matches' : 
-                '/CompletedMatches'} 
-            className={`flex flex-col items-center p-2 ${isActive('/CompletedMatches') || 
-              isActive('/completed-matches') || 
+          <Link
+            to={userRole === 'organiser' ? '/organiser/completed-matches' :
+              userRole === 'scorer' ? '/completed-matches' :
+                '/CompletedMatches'}
+            className={`flex flex-col items-center p-2 ${isActive('/CompletedMatches') ||
+              isActive('/completed-matches') ||
               isActive('/organiser/completed-matches')}`}
           >
             <FiCalendar className="text-xl" />
             <span className="text-xs mt-1">Matches</span>
           </Link>
         </li>
-        
+
         <li className="flex-1 text-center">
-          <Link 
-            to={userRole === 'organiser' ? '/organiser/completed-tournaments' : 
-                userRole === 'scorer' ? '/completed-tournaments' : 
-                '/CompletedTournaments'} 
-            className={`flex flex-col items-center p-2 ${isActive('/CompletedTournaments') || 
-              isActive('/completed-tournaments') || 
+          <Link
+            to={userRole === 'organiser' ? '/organiser/completed-tournaments' :
+              userRole === 'scorer' ? '/completed-tournaments' :
+                '/CompletedTournaments'}
+            className={`flex flex-col items-center p-2 ${isActive('/CompletedTournaments') ||
+              isActive('/completed-tournaments') ||
               isActive('/organiser/completed-tournaments')}`}
           >
             <FiAward className="text-xl" />
             <span className="text-xs mt-1">Tournaments</span>
           </Link>
         </li>
-        
+
         <li className="flex-1 text-center">
-          <Link 
-            to="/player-stats" 
+          <Link
+            to="/player-stats"
             className={`flex flex-col items-center p-2 ${isActive('/player-stats')}`}
           >
             <FiAward className="text-xl" />

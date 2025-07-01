@@ -38,7 +38,7 @@
 //           <Routes>
 //             {/* Redirect root to viewer home for now */}
 //             <Route path="/" element={<Navigate to="/viewer-home" />} />
-            
+
 //             {/* Auth Routes */}
 //             <Route path="/login" element={<Login />} />
 //             <Route path="/signup" element={<Signup />} />
@@ -72,7 +72,7 @@
 //                 <MatchSummary />
 //               </ProtectedRoute>
 //             } />
-            
+
 //             {/* Viewer Routes */}
 //             <Route path="/match-details/:matchId" element={<MatchDetails />} />
 //             <Route path="/viewer-home" element={<ViewerHome />} />
@@ -147,6 +147,7 @@ import PostMatch from './Screens/Scorer/PostMatch'
 import PlayerDetails from './Screens/PlayerStats/playerdetails'
 import PlayerSearchPage from './Screens/PlayerStats/playersearchpage'
 import PlayerHome from './Screens/Player/PlayerHome'
+import PlayerProfile from './Screens/Player/PlayerProfile'
 
 function App() {
   return (
@@ -156,120 +157,125 @@ function App() {
           <ScrollToTop />
           <Navbar />
           <div className="content">
-          <Routes>
-            {/* Redirect root to viewer home for now */}
-            <Route path="/" element={<Navigate to="/viewer-home" />} />
+            <Routes>
+              {/* Redirect root to viewer home for now */}
+              <Route path="/" element={<Navigate to="/viewer-home" />} />
 
-            {/* Auth Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+              {/* Auth Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
 
-            {/* Scorer Routes - Protected */}
-            <Route path="/scorer-home" element={
-              <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
-                <ScorerHome />
-              </ProtectedRoute>
-            } />
-            <Route path="/completed-matches" element={
-              <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
-                <CompletedMatches />
-              </ProtectedRoute>
-            } />
-            <Route path="/completed-tournaments" element={
-              <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
-                <CompletedTournaments />
-              </ProtectedRoute>
-            } />
-
-            <Route path="/match-setup/:matchId" element={
-              <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
-                <MatchSetup />
-              </ProtectedRoute>
-            } />
-            <Route path="/scoring/:matchId" element={
-              <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
-                <Scoring />
-              </ProtectedRoute>
-            } />
-            <Route path="/innings-break/:matchId" element={
-              <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
-                <InningsBreak />
-              </ProtectedRoute>
-            } />
-            <Route path="/match-summary/:matchId" element={
-              <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
-                <MatchSummary />
-              </ProtectedRoute>
-            } />
-            <Route
-              path="/postmatch/:matchId"
-              element={
+              {/* Scorer Routes - Protected */}
+              <Route path="/scorer-home" element={
                 <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
-                  <PostMatch />
+                  <ScorerHome />
                 </ProtectedRoute>
-              }
-            />
+              } />
+              <Route path="/completed-matches" element={
+                <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                  <CompletedMatches />
+                </ProtectedRoute>
+              } />
+              <Route path="/completed-tournaments" element={
+                <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                  <CompletedTournaments />
+                </ProtectedRoute>
+              } />
 
-            {/* Viewer Routes */}
-            <Route path="/match-details/:matchId" element={<MatchDetails />} />
-            <Route path="/viewer-home" element={<ViewerHome />} />
-            <Route path="/news/:id" element={<NewsDetail />} />
-            <Route path="/old-news" element={<OldNews />} />
+              <Route path="/match-setup/:matchId" element={
+                <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                  <MatchSetup />
+                </ProtectedRoute>
+              } />
+              <Route path="/scoring/:matchId" element={
+                <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                  <Scoring />
+                </ProtectedRoute>
+              } />
+              <Route path="/innings-break/:matchId" element={
+                <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                  <InningsBreak />
+                </ProtectedRoute>
+              } />
+              <Route path="/match-summary/:matchId" element={
+                <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                  <MatchSummary />
+                </ProtectedRoute>
+              } />
+              <Route
+                path="/postmatch/:matchId"
+                element={
+                  <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                    <PostMatch />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Organiser Routes - Protected */}
-            <Route path="/organiser-homepage" element={
-              <ProtectedRoute allowedRoles={['organiser']}>
-                <OrganiserHomepage />
-              </ProtectedRoute>
-            } />
-            <Route path="/organiser/create-tournament" element={
-              <ProtectedRoute allowedRoles={['organiser']}>
-                <CreateTournamentPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/organiser/create-match" element={
-              <ProtectedRoute allowedRoles={['organiser']}>
-                <CreateMatchPage />
-              </ProtectedRoute>
-            } />
+              {/* Viewer Routes */}
+              <Route path="/match-details/:matchId" element={<MatchDetails />} />
+              <Route path="/viewer-home" element={<ViewerHome />} />
+              <Route path="/news/:id" element={<NewsDetail />} />
+              <Route path="/old-news" element={<OldNews />} />
 
-            {/* Player Routes - Protected */}
-            <Route path="/player-home" element={
-              <ProtectedRoute allowedRoles={['player']}>
-                <PlayerHome />
-              </ProtectedRoute>
-            } />
-            
-            {/* Player Stats Routes */}
-            <Route path="/players/:playerId" element={<PlayerDetails/>} />
-            <Route path="/player-stats" element={<PlayerSearchPage />} />
-            
-            <Route path="/organiser/match/:id" element={
-              <ProtectedRoute allowedRoles={['organiser']}>
-                <MatchDetailPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/organiser/tournament/:id" element={
-              <ProtectedRoute allowedRoles={['organiser']}>
-                <TournamentDetailPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/organiser/completed-matches" element={
-              <ProtectedRoute allowedRoles={['organiser']}>
-                <OrganiserCompletedMatches />
-              </ProtectedRoute>
-            } />
-            <Route path="/organiser/completed-tournaments" element={
-              <ProtectedRoute allowedRoles={['organiser']}>
-                <OrganiserCompletedTournaments />
-              </ProtectedRoute>
-            } />
-            <Route path="/organiser/registrations" element={
-              <ProtectedRoute allowedRoles={['organiser']}>
-                <RegistrationManagementPage />
-              </ProtectedRoute>
-            } />
-          </Routes>
+              {/* Organiser Routes - Protected */}
+              <Route path="/organiser-homepage" element={
+                <ProtectedRoute allowedRoles={['organiser']}>
+                  <OrganiserHomepage />
+                </ProtectedRoute>
+              } />
+              <Route path="/organiser/create-tournament" element={
+                <ProtectedRoute allowedRoles={['organiser']}>
+                  <CreateTournamentPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/organiser/create-match" element={
+                <ProtectedRoute allowedRoles={['organiser']}>
+                  <CreateMatchPage />
+                </ProtectedRoute>
+              } />
+
+              {/* Player Routes - Protected */}
+              <Route path="/player-home" element={
+                <ProtectedRoute allowedRoles={['player']}>
+                  <PlayerHome />
+                </ProtectedRoute>
+              } />
+              <Route path="/player-profile" element={
+                <ProtectedRoute allowedRoles={['player']}>
+                  <PlayerProfile />
+                </ProtectedRoute>
+              } />
+
+              {/* Player Stats Routes */}
+              <Route path="/players/:playerId" element={<PlayerDetails />} />
+              <Route path="/player-stats" element={<PlayerSearchPage />} />
+
+              <Route path="/organiser/match/:id" element={
+                <ProtectedRoute allowedRoles={['organiser']}>
+                  <MatchDetailPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/organiser/tournament/:id" element={
+                <ProtectedRoute allowedRoles={['organiser']}>
+                  <TournamentDetailPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/organiser/completed-matches" element={
+                <ProtectedRoute allowedRoles={['organiser']}>
+                  <OrganiserCompletedMatches />
+                </ProtectedRoute>
+              } />
+              <Route path="/organiser/completed-tournaments" element={
+                <ProtectedRoute allowedRoles={['organiser']}>
+                  <OrganiserCompletedTournaments />
+                </ProtectedRoute>
+              } />
+              <Route path="/organiser/registrations" element={
+                <ProtectedRoute allowedRoles={['organiser']}>
+                  <RegistrationManagementPage />
+                </ProtectedRoute>
+              } />
+            </Routes>
           </div>
           <Footer />
         </SocketProvider>
