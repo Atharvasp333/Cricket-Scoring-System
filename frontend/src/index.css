@@ -5,24 +5,78 @@
 @tailwind utilities; */
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  width: 100%;
-  color-scheme: light dark;
-  /* color: rgba(255, 249, 249, 0.87); */
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Light Theme Defaults */
+  --primary: #8B485B;
+  --secondary: #94D82A;
+  --secondary-alt: #109968;
+  --neutral: #F7F7F7;
+  --text-primary: #800000;
+  --text-muted: #676767;
+  --error: #FF5340;
+  --success: #00C26B;
+  --warning: #FF5340;
+  --border: #B3AC9B;
 }
+
+/* Dark Theme Overrides */
+.dark {
+  --primary: #A8FD24;
+  --secondary: #D6F917;
+  --secondary-alt: #FFFFFF;
+  --neutral: #1E1E1E;
+  --text-primary: #FFFFFF;
+  --text-muted: #B3B3B3;
+  --error: #ED1515;
+  --success: #00C26B;
+  --warning: #ED1515;
+  --border: #B3AC9B;
+}
+
+/* Utility Classes */
+.bg-primary { background-color: var(--primary); }
+.bg-secondary { background-color: var(--secondary); }
+.bg-secondary-alt { background-color: var(--secondary-alt); }
+.bg-neutral { background-color: var(--neutral); }
+.bg-error { background-color: var(--error); }
+.bg-success { background-color: var(--success); }
+.bg-warning { background-color: var(--warning); }
+
+.text-primary { color: var(--primary); }
+.text-secondary { color: var(--secondary); }
+.text-secondary-alt { color: var(--secondary-alt); }
+.text-neutral { color: var(--neutral); }
+.text-text-primary { color: var(--text-primary); }
+.text-text-muted { color: var(--text-muted); }
+.text-error { color: var(--error); }
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+
+.border-primary { border-color: var(--primary); }
+.border-secondary { border-color: var(--secondary); }
+.border-neutral { border-color: var(--neutral); }
+.border-border { border-color: var(--border); }
+
+/* Dark/Light specific variants */
+.bg-primary-light { background-color: #8B485B; }
+.bg-primary-dark { background-color: #A8FD24; }
+.bg-neutral-light { background-color: #F7F7F7; }
+.bg-neutral-dark { background-color: #1E1E1E; }
+
+.text-primary-light { color: #8B485B; }
+.text-primary-dark { color: #A8FD24; }
+.text-text-primary-light { color: #800000; }
+.text-text-primary-dark { color: #FFFFFF; }
+.text-text-muted-light { color: #676767; }
+.text-text-muted-dark { color: #B3B3B3; }
+
+.border-border-light { border-color: #B3AC9B; }
+.border-border-dark { border-color: #B3AC9B; }
 
 a {
   font-weight: 500;
   text-decoration: inherit;
 }
+
 a:hover {
   /* color: #efe9e9; */
 }
@@ -51,18 +105,40 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* If you're not using Tailwind, add this to your CSS */
+.dark {
+  background-color: #1a202c;
+  color: #f7fafc;
+}
+
+.dark .bg-white {
+  background-color: #2d3748;
+}
+
+.dark .text-gray-700 {
+  color: #e2e8f0;
+}
+
+.dark .text-gray-900 {
+  color: #ffffff;
+}
+
+/* Add more dark mode styles as needed */
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
     background-color: #ffffff;
   }
- 
+
   button {
     /* background-color: #f9f9f9; */
   }
+
+
 }
