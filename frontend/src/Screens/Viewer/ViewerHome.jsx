@@ -50,8 +50,10 @@ const ViewerHome = () => {
       ...tournament,
       name: tournament.name,
       status: tournament.status,
-      teams: tournament.teams?.length || tournament.teams || 0,
-      matches: tournament.matches?.length || tournament.matches || 0,
+      teams: Array.isArray(tournament.teams) ? tournament.teams.length : 
+             (typeof tournament.teams === 'number' ? tournament.teams : 0),
+      matches: Array.isArray(tournament.matches) ? tournament.matches.length : 
+               (typeof tournament.matches === 'number' ? tournament.matches : 0),
       startDate: tournament.startDate,
       endDate: tournament.endDate,
       _id: tournament._id,

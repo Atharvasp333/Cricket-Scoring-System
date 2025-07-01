@@ -71,7 +71,10 @@ const OrganiserCompletedTournaments = () => {
             
             <div className="flex items-center text-xs text-gray-600 mb-3">
                 <TeamIcon />
-                <span>{teams?.length || 0} Teams</span>
+                <span>
+                    {Array.isArray(teams) ? teams.length : 
+                     (typeof teams === 'number' ? teams : 0)} Teams
+                </span>
             </div>
             
             {winner && (

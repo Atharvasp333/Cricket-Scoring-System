@@ -1,122 +1,95 @@
-import React, { useState, useEffect } from 'react';
-
-const PlayerInputRow = ({ player, index, updatePlayer, removePlayer, teamName }) => {
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        updatePlayer(teamName, index, { ...player, [name]: type === 'checkbox' ? checked : value });
-    };
-
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 gap-y-2 items-center p-2 rounded-lg hover:bg-gray-50">
-            <div className="md:col-span-4">
-                <input type="text" name="name" value={player.name} onChange={handleChange} placeholder="Player Name" className="px-3 py-2 text-gray-700 w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
-            </div>
-            <div className="md:col-span-3">
-                <select name="role" value={player.role} onChange={handleChange} className="px-3 py-2 text-gray-700 w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                    <option>Batsman</option>
-                    <option>Bowler</option>
-                    <option>All-Rounder</option>
-                </select>
-            </div>
-            <div className="md:col-span-2 flex items-center">
-                <input type="checkbox" name="isCaptain" checked={!!player.isCaptain} onChange={handleChange} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-                <label className="ml-2 text-sm text-gray-700">Captain</label>
-            </div>
-            <div className="md:col-span-2 flex items-center">
-                <input type="checkbox" name="isWicketKeeper" checked={!!player.isWicketKeeper} onChange={handleChange} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-                <label className="ml-2 text-sm text-gray-700">WK</label>
-            </div>
-            <div className="md:col-span-1 text-right">
-                <button onClick={() => removePlayer(teamName, index)} className="text-red-600 hover:text-red-800 font-semibold transition-colors duration-200">Remove</button>
-            </div>
-        </div>
-    );
-};
+import React from 'react';
+import { UserPlus, Users } from 'lucide-react';
 
 const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
-    const [isFormValid, setIsFormValid] = useState(false);
-
-    useEffect(() => {
-        const { team1_players, team2_players } = data;
-        const team1HasCaptain = team1_players.some(p => p.isCaptain);
-        const team2HasCaptain = team2_players.some(p => p.isCaptain);
-        setIsFormValid(team1_players.length >= 1 && team2_players.length >= 1 && team1HasCaptain && team2HasCaptain);
-    }, [data]);
-
-    const addPlayer = (teamName) => {
-        const teamPlayers = data[teamName] || [];
-        if (teamPlayers.length < 15) {
-            setData(prev => ({ 
-                ...prev, 
-                [teamName]: [...teamPlayers, { 
-                    name: '', 
-                    role: 'Batsman', 
-                    isCaptain: false, 
-                    isWicketKeeper: false 
-                }] 
-            }));
+    // Initialize empty player arrays if they don't exist
+    const handleContinue = () => {
+        if (!data.team1_players) {
+            setData(prev => ({ ...prev, team1_players: [] }));
         }
-    };
-
-    const updatePlayer = (teamName, index, player) => {
-        let teamPlayers = [...(data[teamName] || [])];
-        if (player.isCaptain) {
-            teamPlayers = teamPlayers.map(p => ({ ...p, isCaptain: false }));
+        if (!data.team2_players) {
+            setData(prev => ({ ...prev, team2_players: [] }));
         }
-        if (player.isWicketKeeper) {
-            teamPlayers = teamPlayers.map(p => ({...p, isWicketKeeper: false}));
-        }
-        teamPlayers[index] = player;
-        setData(prev => ({ ...prev, [teamName]: teamPlayers }));
+        nextStep();
     };
-
-    const removePlayer = (teamName, index) => {
-        setData(prev => ({
-            ...prev,
-            [teamName]: prev[teamName].filter((_, i) => i !== index)
-        }));
-    };
-
-    const renderTeamInputs = (teamName, teamLabel) => (
-        <div className="p-6 border border-gray-200 rounded-xl">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">{teamLabel}</h3>
-            <div className="space-y-2">
-                {(data[teamName] || []).map((player, index) => (
-                    <PlayerInputRow
-                        key={index}
-                        player={player}
-                        index={index}
-                        updatePlayer={updatePlayer}
-                        removePlayer={removePlayer}
-                        teamName={teamName}
-                    />
-                ))}
-            </div>
-            {(data[teamName] || []).length < 15 &&
-                <button onClick={() => addPlayer(teamName)} className="mt-4 text-indigo-600 hover:text-indigo-800 font-semibold transition-colors duration-200">
-                    + Add Player
-                </button>
-            }
-        </div>
-    );
 
     return (
         <div>
-            <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Team Player Selection</h2>
-            <div className="space-y-8">
-                {renderTeamInputs('team1_players', `Team 1: ${data.team1_name || 'Team A'}`)}
-                {renderTeamInputs('team2_players', `Team 2: ${data.team2_name || 'Team B'}`)}
+            <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Player Registration</h2>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+                <div className="flex items-start">
+                    <div className="bg-blue-100 p-2 rounded-full mr-4">
+                        <UserPlus className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-lg text-blue-800 mb-2">Self-Registration System</h3>
+                        <p className="text-blue-700 mb-4">
+                            Players can now register themselves for matches! Once your match is created, players will be able to:
+                        </p>
+                        <ul className="list-disc pl-5 text-blue-700 mb-4 space-y-2">
+                            <li>View your match on their dashboard</li>
+                            <li>Submit registration requests with their player details</li>
+                            <li>Specify their role, team preference, and special positions</li>
+                        </ul>
+                        <p className="text-blue-700 mb-2">
+                            You'll be able to review and approve player registrations from the match management page after creation.
+                        </p>
+                    </div>
+                </div>
             </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center mb-4">
+                        <div className="bg-indigo-100 p-2 rounded-full mr-3">
+                            <Users className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <h3 className="font-semibold text-lg text-gray-800">{data.team1_name || 'Team 1'}</h3>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                        Players will be able to register for this team after match creation.
+                    </p>
+                    <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500">
+                        Players will specify their role and position when registering.
+                    </div>
+                </div>
+                
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center mb-4">
+                        <div className="bg-indigo-100 p-2 rounded-full mr-3">
+                            <Users className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <h3 className="font-semibold text-lg text-gray-800">{data.team2_name || 'Team 2'}</h3>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                        Players will be able to register for this team after match creation.
+                    </p>
+                    <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500">
+                        Players will specify their role and position when registering.
+                    </div>
+                </div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-4 border border-blue-200 mt-4 mb-8">
+                <h4 className="font-semibold text-gray-800 mb-2">How it works:</h4>
+                <ol className="list-decimal pl-5 text-gray-700 space-y-1">
+                    <li>Create your match</li>
+                    <li>Players submit registration requests for their preferred team</li>
+                    <li>You review and approve/reject requests</li>
+                    <li>Approved players are automatically added to the match</li>
+                </ol>
+            </div>
+            
             <div className="mt-8 flex justify-between">
                 <button onClick={prevStep} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg transition-all duration-300">
                     Back
                 </button>
                 <button
-                    onClick={nextStep}
-                    disabled={!isFormValid}
-                    className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all duration-300 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    onClick={handleContinue}
+                    className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all duration-300 hover:bg-indigo-700"
                 >
-                    Save & Continue
+                    Continue
                 </button>
             </div>
         </div>

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronRight } from 'lucide-react';
+import { Search, ChevronRight, UserPlus, X } from 'lucide-react';
 import { useSocket } from '../../contexts/SocketContext';
+import { useAuth } from '../../contexts/AuthContext';
 import api from '../../utils/api';
 
 const PlayerHome = () => {
   const navigate = useNavigate();
   const socket = useSocket();
+  const { currentUser } = useAuth();
   
   // State for search and data
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,6 +20,24 @@ const PlayerHome = () => {
   const [newsData, setNewsData] = useState([]);
   const [loadingNews, setLoadingNews] = useState(true);
   const [newsError, setNewsError] = useState(null);
+  
+  // State for registration
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [registrationType, setRegistrationType] = useState(null); // 'tournament' or 'match'
+  const [registrationItem, setRegistrationItem] = useState(null);
+  const [registrationForm, setRegistrationForm] = useState({
+    playerName: '',
+    role: '',
+    team: '',
+    isCaptain: false,
+    isWicketKeeper: false
+  });
+  const [registrationStatus, setRegistrationStatus] = useState({
+    loading: false,
+    success: false,
+    error: null
+  });
+  const [userRegistrations, setUserRegistrations] = useState([]);
 
   // Helper functions for data normalization
   const normalizeMatch = (match) => ({
@@ -39,7 +59,14 @@ const PlayerHome = () => {
     ...tournament,
     startDate: new Date(tournament.startDate).toLocaleDateString(),
     endDate: new Date(tournament.endDate).toLocaleDateString(),
+    teams: Array.isArray(tournament.teams) ? tournament.teams.length : 
+           (typeof tournament.teams === 'number' ? tournament.teams : 0),
+    matches: Array.isArray(tournament.matches) ? tournament.matches.length : 
+             (typeof tournament.matches === 'number' ? tournament.matches : 0),
   });
+
+  // State to store the MongoDB user ID
+  const [mongoUserId, setMongoUserId] = useState(null);
 
   // Fetch initial data
   useEffect(() => {
@@ -53,14 +80,25 @@ const PlayerHome = () => {
         const tournamentsResponse = await api.get('/api/tournaments');
         setTournaments(tournamentsResponse.data.map(normalizeTournament));
         
-        // Fetch player stats (assuming we have the current user's ID)
+        // Fetch user data and player stats
         setLoadingStats(true);
-        const userResponse = await api.get('/api/users/current');
-        if (userResponse.data && userResponse.data.firebaseUID) {
+        if (currentUser && currentUser.uid) {
           try {
-            const statsResponse = await api.get(`/api/pstats/player/${userResponse.data._id}`);
-            setPlayerStats(statsResponse.data);
-            setStatsError(null);
+            // Get the MongoDB user document using Firebase UID
+            const userResponse = await api.get(`/api/users/${currentUser.uid}`);
+            if (userResponse.data && userResponse.data._id) {
+              // Store the MongoDB user ID for later use
+              setMongoUserId(userResponse.data._id);
+              
+              // Fetch player stats
+              const statsResponse = await api.get(`/api/pstats/player/${userResponse.data._id}`);
+              setPlayerStats(statsResponse.data);
+              setStatsError(null);
+              
+              // Fetch user's registrations
+              const registrationsResponse = await api.get(`/api/registrations/user/${userResponse.data._id}`);
+              setUserRegistrations(registrationsResponse.data);
+            }
           } catch (err) {
             console.error('Error fetching player stats:', err);
             setStatsError('Could not load your player statistics. Please try again later.');
@@ -103,6 +141,22 @@ const PlayerHome = () => {
     socket.on('tournamentRemoved', (id) => {
       setTournaments((prev) => prev.filter((t) => t._id !== id));
     });
+    socket.on('registrationAdded', (newRegistration) => {
+      if (newRegistration.userId === currentUser?._id) {
+        setUserRegistrations(prev => [...prev, newRegistration]);
+      }
+    });
+    socket.on('registrationUpdated', (updatedRegistration) => {
+      if (updatedRegistration.userId === currentUser?._id) {
+        setUserRegistrations(prev => {
+          const filtered = prev.filter(r => r._id !== updatedRegistration._id);
+          return [...filtered, updatedRegistration];
+        });
+      }
+    });
+    socket.on('registrationRemoved', (id) => {
+      setUserRegistrations(prev => prev.filter(r => r._id !== id));
+    });
     return () => {
       socket.off('matchUpdated');
       socket.off('matchAdded');
@@ -110,8 +164,11 @@ const PlayerHome = () => {
       socket.off('tournamentUpdated');
       socket.off('tournamentAdded');
       socket.off('tournamentRemoved');
+      socket.off('registrationAdded');
+      socket.off('registrationUpdated');
+      socket.off('registrationRemoved');
     };
-  }, [socket]);
+  }, [socket, currentUser]);
 
   // --- ORGANIZE BY STATUS ---
   const organizeMatches = (status) =>
@@ -169,8 +226,77 @@ const PlayerHome = () => {
         </div>
       </section>
 
-      {/* Player Stats Section */}
+      {/* Registration Status Section */}
       <section className="py-8 px-4 bg-white border-b-2 border-gray-100">
+        <div className="container mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-[#16638A]">My Registrations</h2>
+          </div>
+          
+          {userRegistrations.length === 0 ? (
+            <div className="text-center text-gray-500 font-medium py-8">
+              You haven't registered for any matches or tournaments yet.
+              Look for the <UserPlus size={16} className="inline mx-1" /> icon to register!
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white rounded-xl shadow-md">
+                <thead className="bg-gray-50 rounded-t-xl">
+                  <tr>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {userRegistrations.map((registration) => (
+                    <tr key={registration._id} className="hover:bg-gray-50">
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {registration.registrationType === 'tournament' ? registration.tournamentName : registration.matchName}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">
+                          {registration.registrationType === 'tournament' ? 'Tournament' : 'Match'}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{registration.role}</div>
+                        <div className="text-xs text-gray-500">
+                          {registration.isCaptain && 'Captain'}
+                          {registration.isCaptain && registration.isWicketKeeper && ' & '}
+                          {registration.isWicketKeeper && 'Wicket-Keeper'}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">{registration.team || '-'}</div>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                          ${registration.status === 'approved' ? 'bg-green-100 text-green-800' : 
+                            registration.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                            'bg-yellow-100 text-yellow-800'}`}>
+                          {registration.status.charAt(0).toUpperCase() + registration.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(registration.registrationDate).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
+      
+      {/* Player Stats Section */}
+      <section className="py-8 px-4 bg-gray-50 border-b-2 border-gray-100">
         <div className="container mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-[#16638A]">My Statistics</h2>
@@ -291,7 +417,7 @@ const PlayerHome = () => {
               organizeMatches('Upcoming').map((match) => (
                 <div
                   key={match._id}
-                  className="min-w-[320px] bg-blue-50 rounded-xl shadow-lg p-5 border border-blue-200 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                  className="min-w-[320px] bg-blue-50 rounded-xl shadow-lg p-5 border border-blue-200 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer relative"
                   onClick={() => navigate(`/match-details/${match._id}`)}
                 >
                   <div className="flex justify-between items-center mb-4">
@@ -315,6 +441,15 @@ const PlayerHome = () => {
                   <div className="mt-4 pt-3 border-t border-gray-100">
                     <div className="text-sm text-center text-blue-600 font-semibold mb-2">{match.time || "TBD"}</div>
                     <div className="text-xs text-gray-500 text-center">{match.venue}</div>
+                    <button 
+                      className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full hover:bg-green-600 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openRegistrationModal('match', match);
+                      }}
+                    >
+                      <UserPlus size={16} />
+                    </button>
                   </div>
                 </div>
               ))
@@ -375,10 +510,52 @@ const PlayerHome = () => {
               <h2 className="text-2xl font-bold text-[#16638A] mb-6">Tournaments</h2>
               <div className="flex overflow-x-auto pb-4 space-x-4 scrollbar-hide">
                 {organizeTournaments('Live').length === 0 && <div className="text-gray-500">No live tournaments</div>}
+                {organizeTournaments('Upcoming').length > 0 && (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-800 mt-6 mb-4">Upcoming Tournaments</h3>
+                    <div className="flex overflow-x-auto pb-4 space-x-4 scrollbar-hide">
+                      {organizeTournaments('Upcoming').map((tournament) => (
+                        <div 
+                          key={tournament._id} 
+                          className="min-w-[280px] bg-white rounded-lg p-4 border border-gray-200 hover:bg-gray-100 transition-colors flex-shrink-0 cursor-pointer relative"
+                          onClick={() => navigate(`/tournament-details/${tournament._id}`)}
+                        >
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-xs px-3 py-1 rounded-full font-medium bg-blue-100 text-blue-800">UPCOMING</span>
+                          </div>
+                          <h3 className="font-bold text-lg mb-3 text-gray-900 leading-tight">{tournament.name}</h3>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Teams:</span>
+                              <span className="font-semibold text-gray-800">{tournament.teams}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Matches:</span>
+                              <span className="font-semibold text-gray-800">{tournament.matches}</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-3 pt-2 border-t border-gray-200">
+                              <div>{tournament.startDate} to {tournament.endDate}</div>
+                            </div>
+                          </div>
+                          <button 
+                            className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full hover:bg-green-600 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openRegistrationModal('tournament', tournament);
+                            }}
+                          >
+                            <UserPlus size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
                 {organizeTournaments('Live').map((tournament) => (
                   <div 
                     key={tournament._id} 
-                    className="min-w-[280px] bg-white rounded-lg p-4 border border-gray-200 hover:bg-gray-100 transition-colors flex-shrink-0 cursor-pointer"
+                    className="min-w-[280px] bg-white rounded-lg p-4 border border-gray-200 hover:bg-gray-100 transition-colors flex-shrink-0 cursor-pointer relative"
+                    onClick={() => navigate(`/tournament-details/${tournament._id}`)}
                   >
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-xs px-3 py-1 rounded-full font-medium bg-red-100 text-red-800">LIVE</span>
@@ -460,8 +637,211 @@ const PlayerHome = () => {
           )}
         </div>
       </section>
+
+      {/* Registration Modal */}
+      {showRegistrationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">
+                Register for {registrationType === 'tournament' ? 'Tournament' : 'Match'}
+              </h2>
+              <button 
+                onClick={() => setShowRegistrationModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <h3 className="font-semibold text-gray-700 mb-2">
+                {registrationType === 'tournament' ? registrationItem?.name : registrationItem?.match_name}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {registrationType === 'tournament' 
+                  ? `${registrationItem?.startDate} to ${registrationItem?.endDate}` 
+                  : `${registrationItem?.date} at ${registrationItem?.time}`}
+              </p>
+            </div>
+            
+            {registrationStatus.success ? (
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                <p>Registration submitted successfully! The organizer will review your request.</p>
+                <button 
+                  onClick={() => {
+                    setShowRegistrationModal(false);
+                    setRegistrationStatus({ loading: false, success: false, error: null });
+                  }}
+                  className="mt-4 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleRegistrationSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-1">Player Name</label>
+                    <input 
+                      type="text" 
+                      value={registrationForm.playerName} 
+                      onChange={(e) => setRegistrationForm({...registrationForm, playerName: e.target.value})}
+                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-1">Role</label>
+                    <select 
+                      value={registrationForm.role} 
+                      onChange={(e) => setRegistrationForm({...registrationForm, role: e.target.value})}
+                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select Role</option>
+                      <option value="Batsman">Batsman</option>
+                      <option value="Bowler">Bowler</option>
+                      <option value="All-Rounder">All-Rounder</option>
+                      <option value="Wicket-Keeper">Wicket-Keeper</option>
+                    </select>
+                  </div>
+                  
+                  {registrationType === 'match' && (
+                    <div>
+                      <label className="block text-gray-700 font-medium mb-1">Team</label>
+                      <select 
+                        value={registrationForm.team} 
+                        onChange={(e) => setRegistrationForm({...registrationForm, team: e.target.value})}
+                        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">Select Team</option>
+                        <option value={registrationItem?.team1_name}>{registrationItem?.team1_name}</option>
+                        <option value={registrationItem?.team2_name}>{registrationItem?.team2_name}</option>
+                      </select>
+                    </div>
+                  )}
+                  
+                  <div className="flex space-x-4">
+                    <label className="flex items-center">
+                      <input 
+                        type="checkbox" 
+                        checked={registrationForm.isCaptain} 
+                        onChange={(e) => setRegistrationForm({...registrationForm, isCaptain: e.target.checked})}
+                        className="mr-2"
+                      />
+                      Captain
+                    </label>
+                    <label className="flex items-center">
+                      <input 
+                        type="checkbox" 
+                        checked={registrationForm.isWicketKeeper} 
+                        onChange={(e) => setRegistrationForm({...registrationForm, isWicketKeeper: e.target.checked})}
+                        className="mr-2"
+                      />
+                      Wicket-Keeper
+                    </label>
+                  </div>
+                  
+                  {registrationStatus.error && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                      <p>{registrationStatus.error}</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowRegistrationModal(false)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-300"
+                      disabled={registrationStatus.loading}
+                    >
+                      {registrationStatus.loading ? 'Submitting...' : 'Register'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
+  
+  // Function to open registration modal
+  function openRegistrationModal(type, item) {
+    setRegistrationType(type);
+    setRegistrationItem(item);
+    setRegistrationForm({
+      playerName: currentUser?.displayName || '',
+      role: '',
+      team: '',
+      isCaptain: false,
+      isWicketKeeper: false
+    });
+    setShowRegistrationModal(true);
+  }
+  
+  // Function to handle registration form submission
+  async function handleRegistrationSubmit(e) {
+    e.preventDefault();
+    setRegistrationStatus({ loading: true, success: false, error: null });
+    
+    try {
+      // Check if user is already registered
+      const isAlreadyRegistered = userRegistrations.some(reg => {
+        if (registrationType === 'tournament') {
+          return reg.tournamentId === registrationItem._id && reg.status !== 'rejected';
+        } else {
+          return reg.matchId === registrationItem._id && reg.status !== 'rejected';
+        }
+      });
+      
+      if (isAlreadyRegistered) {
+        throw new Error('You have already registered for this event');
+      }
+      
+      // Check if we have the MongoDB user ID
+      if (!mongoUserId) {
+        throw new Error('User ID not available. Please refresh the page and try again.');
+      }
+      
+      const payload = {
+        userId: mongoUserId,
+        playerName: registrationForm.playerName,
+        role: registrationForm.role,
+        registrationType,
+        team: registrationForm.team,
+        isCaptain: registrationForm.isCaptain,
+        isWicketKeeper: registrationForm.isWicketKeeper,
+      };
+      
+      if (registrationType === 'tournament') {
+        payload.tournamentId = registrationItem._id;
+      } else {
+        payload.matchId = registrationItem._id;
+      }
+      
+      const response = await api.post('/api/registrations', payload);
+      setUserRegistrations(prev => [...prev, response.data]);
+      setRegistrationStatus({ loading: false, success: true, error: null });
+    } catch (err) {
+      console.error('Registration error:', err);
+      setRegistrationStatus({ 
+        loading: false, 
+        success: false, 
+        error: err.response?.data?.error || err.message || 'Failed to register. Please try again.'
+      });
+    }
+  }
 };
 
 export default PlayerHome;

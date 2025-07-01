@@ -141,6 +141,7 @@ import MatchDetailPage from './Screens/Organiser/MatchDetailPage'
 import TournamentDetailPage from './Screens/Organiser/TournamentDetailPage'
 import OrganiserCompletedMatches from './Screens/Organiser/OrganiserCompletedMatches'
 import OrganiserCompletedTournaments from './Screens/Organiser/OrganiserCompletedTournaments'
+import RegistrationManagementPage from './Screens/Organiser/RegistrationManagementPage'
 import PostMatch from './Screens/Scorer/PostMatch'
 
 import PlayerDetails from './Screens/PlayerStats/playerdetails'
@@ -261,6 +262,11 @@ function App() {
             <Route path="/organiser/completed-tournaments" element={
               <ProtectedRoute allowedRoles={['organiser']}>
                 <OrganiserCompletedTournaments />
+              </ProtectedRoute>
+            } />
+            <Route path="/organiser/registrations" element={
+              <ProtectedRoute allowedRoles={['organiser']}>
+                <RegistrationManagementPage />
               </ProtectedRoute>
             } />
           </Routes>

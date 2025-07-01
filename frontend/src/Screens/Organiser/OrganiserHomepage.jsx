@@ -8,6 +8,12 @@ const PlusIcon = () => (
     </svg>
 );
 
+const UserIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+);
+
 const CalendarIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -105,7 +111,10 @@ const OrganiserHomepage = () => {
             <h3 className="text-lg font-bold text-gray-800 mb-2">{name}</h3>
             <div className="flex justify-between items-center">
                 <div className="text-xs text-gray-600">
-                    <span className="font-semibold text-emerald-700">{teams?.length || 0}</span> Teams
+                    <span className="font-semibold text-emerald-700">
+                        {Array.isArray(teams) ? teams.length : 
+                         (typeof teams === 'number' ? teams : 0)}
+                    </span> Teams
                 </div>
                 <button
                     onClick={() => navigate(`/organiser/tournament/${_id}`)}
@@ -141,7 +150,7 @@ const OrganiserHomepage = () => {
                             </h1>
                             <p className="text-gray-600 mt-1 text-sm">Manage your tournaments and matches</p>
                         </div>
-                        <div className="flex space-x-2 mt-4 md:mt-0">
+                        <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
                             <button 
                                 onClick={() => navigate('/organiser/create-tournament')}
                                 className="flex items-center justify-center bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
@@ -155,6 +164,13 @@ const OrganiserHomepage = () => {
                             >
                                 <PlusIcon />
                                 Create Match
+                            </button>
+                            <button 
+                                onClick={() => navigate('/organiser/registrations')}
+                                className="flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                            >
+                                <UserIcon />
+                                Manage Registrations
                             </button>
                         </div>
                     </div>

@@ -7,6 +7,7 @@ import userRoutes from './routes/userRoutes.js';
 import tournamentRoutes from './routes/tournamentRoutes.js';
 import matchRoutes from './routes/matchRoutes.js';
 import matchStateRoutes from './routes/matchStateRoutes.js';
+import registrationRoutes from './routes/registrationRoutes.js';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 
@@ -44,6 +45,7 @@ app.use('/api/matches', matchRoutes);
 app.use('/api/matchStates', matchStateRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/players', (await import('./routes/PstatsRoutes.js')).default);
+app.use('/api/registrations', registrationRoutes);
 
 // Example: log connections
 io.on('connection', (socket) => {
