@@ -207,9 +207,25 @@ const TournamentDetailPage = () => {
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <h4 className="font-medium text-gray-800">{team.name}</h4>
+                                                {/* Display Team Captain */}
+                                                {team.captains && team.captains.length > 0 ? (
+                                                    <div className="mt-2 flex items-center">
+                                                        <div className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-0.5 rounded-full mr-1">
+                                                            Captain
+                                                        </div>
+                                                        <p className="text-sm text-gray-700">
+                                                            {typeof team.captains[0] === 'object' ? 
+                                                                (team.captains[0].displayName || team.captains[0].name || 'Captain') : 
+                                                                'Captain'}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-gray-500 mt-1 italic">No captain assigned</p>
+                                                )}
+                                                {/* Display Players Count */}
                                                 {team.players && (
-                                                    <p className="text-xs text-gray-600 mt-1">
-                                                        {team.players.length} players (max {tournament.maxPlayersPerTeam})
+                                                    <p className="text-xs text-gray-600 mt-2">
+                                                        <span className="font-medium">Players:</span> {team.players.length} (max {tournament.maxPlayersPerTeam})
                                                     </p>
                                                 )}
                                             </div>
@@ -288,12 +304,12 @@ const TournamentDetailPage = () => {
                                         <div className="flex items-center">
                                             <div className="bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-2">
                                                 <span className="text-white font-semibold text-xs">
-                                                    {scorer.name ? scorer.name.charAt(0).toUpperCase() : 'S'}
+                                                    {typeof scorer === 'string' ? scorer.charAt(0).toUpperCase() : (scorer.name ? scorer.name.charAt(0).toUpperCase() : 'S')}
                                                 </span>
                                             </div>
                                             <div>
-                                                <p className="text-sm font-medium text-gray-800">{scorer.name || 'Scorer'}</p>
-                                                <p className="text-xs text-gray-600">{scorer.email}</p>
+                                                <p className="text-sm font-medium text-gray-800">{typeof scorer === 'string' ? 'Scorer' : (scorer.name || 'Scorer')}</p>
+                                                <p className="text-xs text-gray-600">{typeof scorer === 'string' ? scorer : (scorer.email || 'No email provided')}</p>
                                             </div>
                                         </div>
                                     </div>

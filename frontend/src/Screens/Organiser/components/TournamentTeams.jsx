@@ -1,28 +1,47 @@
 import React, { useState } from 'react';
+import UserSelect from '../../../Components/UserSelect';
 
 const TeamCard = ({ team, index, handleChange, handleRemove }) => (
-  <div className="bg-gray-50 rounded-lg p-4 mb-4 flex flex-col md:flex-row md:items-end gap-4 border">
-    <div className="flex-1">
-      <label className="block text-gray-700 font-semibold mb-1">Team Name *</label>
-      <input type="text" name="name" value={team.name} onChange={e => handleChange(index, 'name', e.target.value)} className="w-full border rounded px-3 py-2 mb-2" required />
-      <label className="block text-gray-700 font-semibold mb-1">Coach/Manager Name *</label>
-      <input type="text" name="coach" value={team.coach} onChange={e => handleChange(index, 'coach', e.target.value)} className="w-full border rounded px-3 py-2" required />
+  <div className="bg-gray-50 rounded-lg p-4 mb-4 flex flex-col gap-4 border">
+    <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex-1">
+        <label className="block text-gray-700 font-semibold mb-1">Team Name *</label>
+        <input type="text" name="name" value={team.name} onChange={e => handleChange(index, 'name', e.target.value)} className="w-full border rounded px-3 py-2 mb-2" required />
+        <label className="block text-gray-700 font-semibold mb-1">Coach/Manager Name *</label>
+        <input type="text" name="coach" value={team.coach} onChange={e => handleChange(index, 'coach', e.target.value)} className="w-full border rounded px-3 py-2" required />
+      </div>
+      <div>
+        <label className="block text-gray-700 font-semibold mb-1">Team Logo (optional)</label>
+        <input type="file" accept="image/*" onChange={e => handleChange(index, 'logo', e.target.files[0])} className="mb-2" />
+        {team.logo && typeof team.logo === 'object' && (
+          <img src={URL.createObjectURL(team.logo)} alt="Team Logo" className="w-16 h-16 object-cover rounded border" />
+        )}
+      </div>
     </div>
-    <div>
-      <label className="block text-gray-700 font-semibold mb-1">Team Logo (optional)</label>
-      <input type="file" accept="image/*" onChange={e => handleChange(index, 'logo', e.target.files[0])} className="mb-2" />
-      {team.logo && typeof team.logo === 'object' && (
-        <img src={URL.createObjectURL(team.logo)} alt="Team Logo" className="w-16 h-16 object-cover rounded border" />
-      )}
+    
+    <div className="border-t pt-4">
+      <h3 className="text-md font-semibold mb-2 text-gray-800">Team Captain</h3>
+      <UserSelect 
+        role="player" 
+        value={team.captains?.[0] || ''} 
+        onChange={(value) => handleChange(index, 'captains', value ? [value] : [])} 
+        label="Select Team Captain" 
+        placeholder="Select a player as captain" 
+        className="mb-2" 
+      />
+      <p className="text-sm text-gray-500">The captain will be able to approve player registrations for this team.</p>
     </div>
-    <button type="button" onClick={() => handleRemove(index)} className="text-red-600 font-bold mt-2 md:mt-0 md:ml-4">Remove</button>
+    
+    <div className="flex justify-end">
+      <button type="button" onClick={() => handleRemove(index)} className="text-red-600 font-bold">Remove Team</button>
+    </div>
   </div>
 );
 
 const TournamentTeams = ({ data, updateData, nextStep, prevStep }) => {
   const [teams, setTeams] = useState(data.teams || [
-    { name: '', coach: '', logo: null },
-    { name: '', coach: '', logo: null }
+    { name: '', coach: '', logo: null, captains: [] },
+    { name: '', coach: '', logo: null, captains: [] }
   ]);
   const [error, setError] = useState('');
 
@@ -35,7 +54,7 @@ const TournamentTeams = ({ data, updateData, nextStep, prevStep }) => {
   };
 
   const handleAdd = () => {
-    setTeams(prev => [...prev, { name: '', coach: '', logo: null }]);
+    setTeams(prev => [...prev, { name: '', coach: '', logo: null, captains: [] }]);
   };
 
   const handleRemove = (idx) => {
@@ -87,4 +106,4 @@ const TournamentTeams = ({ data, updateData, nextStep, prevStep }) => {
   );
 };
 
-export default TournamentTeams; 
+export default TournamentTeams;

@@ -166,7 +166,22 @@ const MatchDetailPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
                             {/* Team 1 */}
                             <div className="bg-gray-50 p-4 rounded-lg">
-                                <h4 className="text-md font-medium text-gray-900 mb-3">{match.team1_name}</h4>
+                                <div className="flex flex-col mb-3">
+                                    <h4 className="text-md font-medium text-gray-900">{match.team1_name}</h4>
+                                    {match.team1_players && match.team1_players.find(player => player.isCaptain) ? (
+                                        <div className="flex items-center mt-1">
+                                            <span className="text-sm text-gray-600">Captain: </span>
+                                            <span className="ml-1 text-sm font-medium text-gray-900">
+                                                {match.team1_players.find(player => player.isCaptain)?.name}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-sm text-gray-600 mt-1">No captain assigned</span>
+                                    )}
+                                </div>
+                                <div className="mb-2 pb-2 border-b border-gray-200">
+                                    <h5 className="text-sm font-medium text-gray-700">Players</h5>
+                                </div>
                                 <ul className="divide-y divide-gray-200">
                                     {match.team1_players && match.team1_players.map((player, index) => (
                                         <li key={index} className="py-2 flex justify-between items-center">
@@ -187,7 +202,22 @@ const MatchDetailPage = () => {
 
                             {/* Team 2 */}
                             <div className="bg-gray-50 p-4 rounded-lg">
-                                <h4 className="text-md font-medium text-gray-900 mb-3">{match.team2_name}</h4>
+                                <div className="flex flex-col mb-3">
+                                    <h4 className="text-md font-medium text-gray-900">{match.team2_name}</h4>
+                                    {match.team2_players && match.team2_players.find(player => player.isCaptain) ? (
+                                        <div className="flex items-center mt-1">
+                                            <span className="text-sm text-gray-600">Captain: </span>
+                                            <span className="ml-1 text-sm font-medium text-gray-900">
+                                                {match.team2_players.find(player => player.isCaptain)?.name}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-sm text-gray-600 mt-1">No captain assigned</span>
+                                    )}
+                                </div>
+                                <div className="mb-2 pb-2 border-b border-gray-200">
+                                    <h5 className="text-sm font-medium text-gray-700">Players</h5>
+                                </div>
                                 <ul className="divide-y divide-gray-200">
                                     {match.team2_players && match.team2_players.map((player, index) => (
                                         <li key={index} className="py-2 flex justify-between items-center">
@@ -241,13 +271,17 @@ const MatchDetailPage = () => {
                                         <div className="flex-shrink-0">
                                             <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-500">
                                                 <span className="text-xs font-medium leading-none text-white">
-                                                    {scorer.name.charAt(0)}
+                                                    {typeof scorer === 'string' ? scorer.charAt(0) : (scorer.email ? scorer.email.charAt(0) : 'S')}
                                                 </span>
                                             </span>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 truncate">{scorer.name}</p>
-                                            <p className="text-sm text-gray-500 truncate">{scorer.email}</p>
+                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                                {typeof scorer === 'string' ? 'Scorer' : (scorer.name || 'Unnamed Scorer')}
+                                            </p>
+                                            <p className="text-sm text-gray-500 truncate">
+                                                {typeof scorer === 'string' ? scorer : (scorer.email || 'No email provided')}
+                                            </p>
                                         </div>
                                     </div>
                                 </li>

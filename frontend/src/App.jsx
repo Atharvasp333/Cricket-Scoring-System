@@ -148,6 +148,7 @@ import PlayerDetails from './Screens/PlayerStats/playerdetails'
 import PlayerSearchPage from './Screens/PlayerStats/playersearchpage'
 import PlayerHome from './Screens/Player/PlayerHome'
 import PlayerProfile from './Screens/Player/PlayerProfile'
+import CaptainApprovalPage from './Screens/Player/CaptainApprovalPage'
 
 function App() {
   return (
@@ -245,6 +246,11 @@ function App() {
                   <PlayerProfile />
                 </ProtectedRoute>
               } />
+            <Route path="/captain-approval" element={
+              <ProtectedRoute allowedRoles={['player']}>
+                <CaptainApprovalPage />
+              </ProtectedRoute>
+            } />
 
               {/* Player Stats Routes */}
               <Route path="/players/:playerId" element={<PlayerDetails />} />

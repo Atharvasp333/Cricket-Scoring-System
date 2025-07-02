@@ -20,6 +20,7 @@ const PlayerHome = () => {
   const [newsData, setNewsData] = useState([]);
   const [loadingNews, setLoadingNews] = useState(true);
   const [newsError, setNewsError] = useState(null);
+  const [isCaptain, setIsCaptain] = useState(false);
   
   // State for registration
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
@@ -43,6 +44,8 @@ const PlayerHome = () => {
   const normalizeMatch = (match) => ({
     ...match,
     date: new Date(match.date).toLocaleDateString(),
+    team1_name: match.team1_name || 'Team 1', // Ensure team1_name is available
+    team2_name: match.team2_name || 'Team 2', // Ensure team2_name is available
     team1: {
       ...match.team1,
       score: match.team1Score ? `${match.team1Score}/${match.team1Wickets}` : '-',
@@ -74,11 +77,31 @@ const PlayerHome = () => {
       try {
         // Fetch matches
         const matchesResponse = await api.get('/api/matches');
-        setMatches(matchesResponse.data.map(normalizeMatch));
+        const matchesData = matchesResponse.data.map(normalizeMatch);
+        setMatches(matchesData);
         
         // Fetch tournaments
         const tournamentsResponse = await api.get('/api/tournaments');
-        setTournaments(tournamentsResponse.data.map(normalizeTournament));
+        const tournamentsData = tournamentsResponse.data.map(normalizeTournament);
+        setTournaments(tournamentsData);
+        
+        // Check if user is a captain of any team
+        if (currentUser && currentUser.uid) {
+          // Check tournaments
+          const isTournamentCaptain = tournamentsData.some(tournament => 
+            tournament.teams && tournament.teams.some(team => 
+              team.captains && team.captains.includes(currentUser.uid)
+            )
+          );
+          
+          // Check matches
+          const isMatchCaptain = matchesData.some(match => 
+            (match.team1_captains && match.team1_captains.includes(currentUser.uid)) || 
+            (match.team2_captains && match.team2_captains.includes(currentUser.uid))
+          );
+          
+          setIsCaptain(isTournamentCaptain || isMatchCaptain);
+        }
         
         // Fetch user data and player stats
         setLoadingStats(true);
@@ -211,6 +234,19 @@ const PlayerHome = () => {
       <section className="bg-gradient-to-br from-[#16638A] to-[#0F4C75] text-white py-16 px-4">
         <div className="container mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white drop-shadow-lg">Player Dashboard</h1>
+          {isCaptain && (
+            <div className="flex justify-center mb-6">
+              <button 
+                onClick={() => navigate('/captain-approval')} 
+                className="bg-[#74D341] hover:bg-[#5FB535] text-white font-medium py-2 px-6 rounded-lg shadow-md transition-colors duration-300 flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6 9 17l-5-5"/>
+                </svg>
+                Captain Approval Dashboard
+              </button>
+            </div>
+          )}
           <div className="max-w-md mx-auto relative">
             <input
               type="text"

@@ -44,11 +44,16 @@ const RegistrationSchema = new mongoose.Schema({
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
   },
+  approvedBy: {
+    type: String,
+    enum: ['captain', 'organiser'],
+    default: null
+  },
   registrationDate: {
     type: Date,
     default: Date.now
   }
-});
+}, { timestamps: true });
 
 // Ensure that either tournamentId or matchId is provided
 RegistrationSchema.pre('validate', function(next) {

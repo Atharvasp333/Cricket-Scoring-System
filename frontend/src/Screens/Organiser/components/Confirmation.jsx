@@ -41,10 +41,41 @@ const Confirmation = ({ data, prevStep, submit }) => {
                             <DetailItem label="Match Type" value={data.match_type} />
                             <DetailItem label="Teams" value={`${data.team1_name} vs ${data.team2_name}`} />
                             <DetailItem label="Venue" value={data.venue} />
-                            <DetailItem label="Date" value={data.date} />
-                            <DetailItem label="Time" value={data.time} />
+                            <DetailItem label="Date" value={data.dateTime ? data.dateTime.split('T')[0] : data.date} />
+                            <DetailItem label="Time" value={data.dateTime ? data.dateTime.split('T')[1] : data.time} />
                             <DetailItem label="Status" value={data.status || 'Upcoming'} />
                         </div>
+                        
+                        {/* Team 1 Captain */}
+                        <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt className="text-sm font-medium text-gray-500">{data.team1_name} Captain</dt>
+                            <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                {data.team1_captains && data.team1_captains.length > 0 ? (
+                                    <div className="flex items-center">
+                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 mr-2">C</span>
+                                        {typeof data.team1_captains[0] === 'object' ? data.team1_captains[0].displayName : data.team1_captains[0]}
+                                    </div>
+                                ) : (
+                                    <span className="text-gray-500">No captain assigned</span>
+                                )}
+                            </dd>
+                        </div>
+                        
+                        {/* Team 2 Captain */}
+                        <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt className="text-sm font-medium text-gray-500">{data.team2_name} Captain</dt>
+                            <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                {data.team2_captains && data.team2_captains.length > 0 ? (
+                                    <div className="flex items-center">
+                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 mr-2">C</span>
+                                        {typeof data.team2_captains[0] === 'object' ? data.team2_captains[0].displayName : data.team2_captains[0]}
+                                    </div>
+                                ) : (
+                                    <span className="text-gray-500">No captain assigned</span>
+                                )}
+                            </dd>
+                        </div>
+                        
                         <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                             <dt className="text-sm font-medium text-gray-500">{data.team1_name} Players</dt>
                             <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">

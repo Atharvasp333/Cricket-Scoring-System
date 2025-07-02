@@ -1,8 +1,9 @@
 import React from 'react';
-import { UserPlus, Users } from 'lucide-react';
+import { UserPlus, Users, Crown } from 'lucide-react';
+import UserSelect from '../../../Components/UserSelect';
 
 const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
-    // Initialize empty player arrays if they don't exist
+    // Initialize empty player arrays and captain arrays if they don't exist
     const handleContinue = () => {
         if (!data.team1_players) {
             setData(prev => ({ ...prev, team1_players: [] }));
@@ -10,7 +11,21 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
         if (!data.team2_players) {
             setData(prev => ({ ...prev, team2_players: [] }));
         }
+        if (!data.team1_captains) {
+            setData(prev => ({ ...prev, team1_captains: [] }));
+        }
+        if (!data.team2_captains) {
+            setData(prev => ({ ...prev, team2_captains: [] }));
+        }
         nextStep();
+    };
+    
+    const handleCaptainChange = (team, value) => {
+        if (team === 1) {
+            setData(prev => ({ ...prev, team1_captains: value ? [value] : [] }));
+        } else {
+            setData(prev => ({ ...prev, team2_captains: value ? [value] : [] }));
+        }
     };
 
     return (
@@ -50,8 +65,23 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
                     <p className="text-gray-600 mb-4">
                         Players will be able to register for this team after match creation.
                     </p>
-                    <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500">
+                    <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500 mb-4">
                         Players will specify their role and position when registering.
+                    </div>
+                    
+                    <div className="border-t pt-4 mt-4">
+                        <div className="flex items-center mb-2">
+                            <Crown className="h-4 w-4 text-amber-500 mr-2" />
+                            <h4 className="font-semibold text-gray-700">Team Captain</h4>
+                        </div>
+                        <UserSelect 
+                            role="player" 
+                            value={data.team1_captains?.[0] || ''} 
+                            onChange={(value) => handleCaptainChange(1, value)} 
+                            placeholder="Select a player as captain" 
+                            className="mb-2" 
+                        />
+                        <p className="text-xs text-gray-500">The captain will be able to approve player registrations for this team.</p>
                     </div>
                 </div>
                 
@@ -65,8 +95,23 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
                     <p className="text-gray-600 mb-4">
                         Players will be able to register for this team after match creation.
                     </p>
-                    <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500">
+                    <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500 mb-4">
                         Players will specify their role and position when registering.
+                    </div>
+                    
+                    <div className="border-t pt-4 mt-4">
+                        <div className="flex items-center mb-2">
+                            <Crown className="h-4 w-4 text-amber-500 mr-2" />
+                            <h4 className="font-semibold text-gray-700">Team Captain</h4>
+                        </div>
+                        <UserSelect 
+                            role="player" 
+                            value={data.team2_captains?.[0] || ''} 
+                            onChange={(value) => handleCaptainChange(2, value)} 
+                            placeholder="Select a player as captain" 
+                            className="mb-2" 
+                        />
+                        <p className="text-xs text-gray-500">The captain will be able to approve player registrations for this team.</p>
                     </div>
                 </div>
             </div>

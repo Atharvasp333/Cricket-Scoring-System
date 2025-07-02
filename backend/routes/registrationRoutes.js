@@ -74,14 +74,20 @@ router.get('/match/:matchId', async (req, res) => {
 // Update registration status (approve/reject)
 router.put('/:id/status', async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, approverRole } = req.body;
     if (!['pending', 'approved', 'rejected'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status value' });
     }
     
+    // Validate approver role if provided
+    const approvedBy = approverRole && ['captain', 'organiser'].includes(approverRole) ? approverRole : null;
+    
     const registration = await Registration.findByIdAndUpdate(
       req.params.id,
-      { status },
+      { 
+        status,
+        approvedBy: status === 'approved' ? approvedBy : null
+      },
       { new: true, runValidators: true }
     );
     
@@ -95,14 +101,27 @@ router.put('/:id/status', async (req, res) => {
         const tournament = await Tournament.findById(registration.tournamentId);
         if (tournament) {
           // Check if player already exists in the tournament
-          const playerExists = tournament.players.some(p => p.name === registration.playerName);
+          const playerExists = tournament.players.some(p => 
+            (p.userId && p.userId.equals(registration.userId)) || 
+            p.name === registration.playerName
+          );
+          
           if (!playerExists) {
+            // Check if we're at the squad limit (15 players per team)
+            const teamPlayers = tournament.players.filter(p => p.team === registration.team);
+            if (teamPlayers.length >= 15) {
+              return res.status(400).json({ error: 'Squad limit reached (15 players per team)' });
+            }
+            
             tournament.players.push({
+              userId: registration.userId,
               name: registration.playerName,
               role: registration.role,
               team: registration.team,
               isCaptain: registration.isCaptain,
-              isWicketKeeper: registration.isWicketKeeper
+              isWicketKeeper: registration.isWicketKeeper,
+              status: 'approved',
+              approvedBy: approvedBy
             });
             await tournament.save();
           }
@@ -114,13 +133,25 @@ router.put('/:id/status', async (req, res) => {
           const teamKey = registration.team === match.team1_name ? 'team1_players' : 'team2_players';
           
           // Check if player already exists in the match
-          const playerExists = match[teamKey].some(p => p.name === registration.playerName);
+          const playerExists = match[teamKey].some(p => 
+            (p.userId && p.userId.equals(registration.userId)) || 
+            p.name === registration.playerName
+          );
+          
           if (!playerExists) {
+            // Check if we're at the squad limit (15 players per team)
+            if (match[teamKey].length >= 15) {
+              return res.status(400).json({ error: 'Squad limit reached (15 players per team)' });
+            }
+            
             match[teamKey].push({
+              userId: registration.userId,
               name: registration.playerName,
               role: registration.role,
               isCaptain: registration.isCaptain,
-              isWicketKeeper: registration.isWicketKeeper
+              isWicketKeeper: registration.isWicketKeeper,
+              status: 'approved',
+              approvedBy: approvedBy
             });
             await match.save();
           }

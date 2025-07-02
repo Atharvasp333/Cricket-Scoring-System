@@ -1,5 +1,25 @@
 import User from '../models/User.js';
 
+// Get users by role
+export const getUsersByRole = async (req, res) => {
+  try {
+    const { role } = req.params;
+    
+    // Validate role
+    const validRoles = ['viewer', 'scorer', 'organiser', 'player'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ message: 'Invalid role specified' });
+    }
+    
+    const users = await User.find({ role }).select('_id displayName email');
+    
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Error fetching users by role:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // Create or update user after Firebase authentication
 export const createOrUpdateUser = async (req, res) => {
   try {

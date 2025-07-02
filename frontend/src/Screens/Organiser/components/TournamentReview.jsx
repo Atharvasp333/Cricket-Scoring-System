@@ -41,7 +41,18 @@ const TournamentReview = ({ data, prevStep }) => {
         <h3 className="text-lg font-semibold mb-2">Teams</h3>
         <ul className="list-disc ml-6">
           {data.teams && data.teams.map((t, i) => (
-            <li key={i}>{t.name} (Coach: {t.coach})</li>
+            <li key={i} className="mb-2">
+              <div className="font-medium">{t.name} (Coach: {t.coach})</div>
+              {t.captains && t.captains.length > 0 ? (
+                <div className="text-sm ml-2 mt-1">
+                  Captain: <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                    {typeof t.captains[0] === 'object' ? t.captains[0].displayName : t.captains[0]}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-sm ml-2 mt-1 text-gray-500">No captain assigned</div>
+              )}
+            </li>
           ))}
         </ul>
       </div>
@@ -94,4 +105,4 @@ const TournamentReview = ({ data, prevStep }) => {
   );
 };
 
-export default TournamentReview; 
+export default TournamentReview;
