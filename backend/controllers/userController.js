@@ -25,7 +25,22 @@ export const createOrUpdateUser = async (req, res) => {
   try {
     console.log('Request body received:', req.body);
     
-    const { email, displayName, role, photoURL, firebaseUID } = req.body;
+    const { 
+      email, 
+      displayName, 
+      role, 
+      photoURL, 
+      firebaseUID, 
+      battingStyle, 
+      bowlingStyle, 
+      bowlerType, 
+      phoneNumber,
+      dateOfBirth,
+      height,
+      weight,
+      bio,
+      address 
+    } = req.body;
     
     // Required field checks
     if (!email || !displayName || !firebaseUID) {
@@ -51,6 +66,20 @@ export const createOrUpdateUser = async (req, res) => {
       user.displayName = displayName || user.displayName;
       user.role = validatedRole; // Use validated role
       user.photoURL = photoURL || user.photoURL;
+      
+      // Update player-specific fields if role is player
+      if (validatedRole === 'player') {
+        user.battingStyle = battingStyle || user.battingStyle;
+        user.bowlingStyle = bowlingStyle || user.bowlingStyle;
+        user.bowlerType = bowlerType || user.bowlerType;
+        user.phoneNumber = phoneNumber || user.phoneNumber;
+        user.dateOfBirth = dateOfBirth || user.dateOfBirth;
+        user.height = height || user.height;
+        user.weight = weight || user.weight;
+        user.bio = bio || user.bio;
+        user.address = address || user.address;
+      }
+      
       await user.save();
       return res.status(200).json(user);
     }
@@ -58,13 +87,28 @@ export const createOrUpdateUser = async (req, res) => {
     // Create new user
     console.log('Creating new user with validated role:', validatedRole);
     
-    const newUser = new User({
+    const userData = {
       email,
       displayName,
       role: validatedRole, // Use validated role
       photoURL,
       firebaseUID
-    });
+    };
+    
+    // Add player-specific fields if role is player
+    if (validatedRole === 'player') {
+      userData.battingStyle = battingStyle;
+      userData.bowlingStyle = bowlingStyle;
+      userData.bowlerType = bowlerType;
+      userData.phoneNumber = phoneNumber;
+      userData.dateOfBirth = dateOfBirth;
+      userData.height = height;
+      userData.weight = weight;
+      userData.bio = bio;
+      userData.address = address;
+    }
+    
+    const newUser = new User(userData);
 
     await newUser.save();
     console.log('New user created successfully with role:', newUser.role);

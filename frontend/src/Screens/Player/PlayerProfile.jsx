@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext'; // Fixed import path
-import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../firebase'; // Fixed import path
-import { FiEdit2, FiSave, FiCalendar, FiUser } from 'react-icons/fi';
+import { useAuth } from '../../contexts/AuthContext';
+import { FiEdit2, FiSave, FiCalendar, FiUser, FiPhone, FiMapPin, FiActivity, FiTarget, FiAward, FiX } from 'react-icons/fi';
+import api from '../../utils/api';
 
 const PlayerProfile = () => {
   const { currentUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [darkMode, setDarkMode] = useState(false); // Added darkMode state
+  const [darkMode, setDarkMode] = useState(false);
   const [playerData, setPlayerData] = useState({
     fullName: '',
     dateOfBirth: '',
-    battingStyle: 'Right-handed',
-    bowlingStyle: 'Right-arm',
-    bowlerType: 'Medium',
+    battingStyle: '', // Empty string instead of default value
+    bowlingStyle: '', // Empty string instead of default value
+    bowlerType: '', // Empty string instead of default value
     height: '',
     weight: '',
     teams: [],
@@ -37,51 +36,46 @@ const PlayerProfile = () => {
     const fetchPlayerData = async () => {
       if (currentUser) {
         try {
-          const docRef = doc(db, 'players', currentUser.uid);
-          const docSnap = await getDoc(docRef);
+          const response = await api.get(`/api/users/${currentUser.uid}`);
+          const userData = response.data;
           
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            setPlayerData({
-              fullName: data.fullName || currentUser.displayName || '',
-              dateOfBirth: data.dateOfBirth || '',
-              battingStyle: data.battingStyle || 'Right-handed',
-              bowlingStyle: data.bowlingStyle || 'Right-arm',
-              bowlerType: data.bowlerType || 'Medium',
-              height: data.height || '',
-              weight: data.weight || '',
-              teams: data.teams || [],
-              bio: data.bio || '',
-              phoneNumber: data.phoneNumber || '',
-              address: data.address || ''
-            });
-            
-            if (data.dateOfBirth) {
-              calculateAge(data.dateOfBirth);
-            }
-          } else {
-            // If no player document exists, create one with default values
+          setPlayerData({
+            fullName: userData.displayName || '',
+            dateOfBirth: userData.dateOfBirth || '',
+            battingStyle: userData.battingStyle || '', // No default value
+            bowlingStyle: userData.bowlingStyle || '', // No default value
+            bowlerType: userData.bowlerType || '', // No default value
+            height: userData.height || '',
+            weight: userData.weight || '',
+            teams: userData.teams || [],
+            bio: userData.bio || '',
+            phoneNumber: userData.phoneNumber || '',
+            address: userData.address || ''
+          });
+          
+          if (userData.dateOfBirth) {
+            calculateAge(userData.dateOfBirth);
+          }
+        } catch (error) {
+          if (error.response && error.response.status === 404) {
+            console.log('User not found in database, using default values');
             const defaultData = {
               fullName: currentUser.displayName || '',
               dateOfBirth: '',
-              battingStyle: 'Right-handed',
-              bowlingStyle: 'Right-arm',
-              bowlerType: 'Medium',
+              battingStyle: '', // No default value
+              bowlingStyle: '', // No default value
+              bowlerType: '', // No default value
               height: '',
               weight: '',
               teams: [],
               bio: '',
               phoneNumber: '',
-              address: '',
-              email: currentUser.email,
-              createdAt: new Date().toISOString()
+              address: ''
             };
-            
-            await setDoc(docRef, defaultData);
             setPlayerData(defaultData);
+          } else {
+            console.error('Error fetching player data:', error);
           }
-        } catch (error) {
-          console.error('Error fetching player data:', error);
         }
       }
     };
@@ -117,12 +111,25 @@ const PlayerProfile = () => {
   const handleSave = async () => {
     try {
       if (currentUser) {
-        const playerRef = doc(db, 'players', currentUser.uid);
-        const updatedData = {
-          ...playerData,
-          updatedAt: new Date().toISOString()
+        const userData = {
+          email: currentUser.email,
+          displayName: playerData.fullName,
+          role: 'player',
+          firebaseUID: currentUser.uid,
+          photoURL: currentUser.photoURL || '',
+          battingStyle: playerData.battingStyle,
+          bowlingStyle: playerData.bowlingStyle,
+          bowlerType: playerData.bowlerType,
+          phoneNumber: playerData.phoneNumber,
+          dateOfBirth: playerData.dateOfBirth,
+          height: playerData.height,
+          weight: playerData.weight,
+          bio: playerData.bio,
+          address: playerData.address
         };
-        await updateDoc(playerRef, updatedData);
+        
+        await api.post('/api/users', userData);
+        
         setIsEditing(false);
         alert('Profile updated successfully!');
       }
@@ -138,188 +145,275 @@ const PlayerProfile = () => {
     localStorage.setItem('darkMode', newDarkMode.toString());
   };
 
-  return (
-    <div className="min-h-screen p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Dark mode toggle */}
-        <div className="mb-4 flex justify-end">
-          <button
-            onClick={toggleDarkMode}
-            className={`px-4 py-2 rounded transition ${
-              darkMode 
-                ? 'bg-gray-700 text-white hover:bg-gray-600' 
-                : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-            }`}
-          >
-            {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-          </button>
-        </div>
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    // Reset to original data if needed
+  };
 
-        <div className={`rounded-lg shadow-md p-6 mb-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-6">
-            <div className="relative">
-              {currentUser?.photoURL ? (
-                <img 
-                  src={currentUser.photoURL} 
-                  alt="Player" 
-                  className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-blue-600"
-                />
-              ) : (
-                <div className={`w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center text-4xl ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'}`}>
-                  <FiUser />
-                </div>
-              )}
+  return (
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 to-indigo-100'}`}>
+      <div className="p-4 md:p-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Header with dark mode toggle */}
+          <div className="mb-6 flex justify-between items-center">
+            <div>
+              <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                Player Profile
+              </h1>
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+                Manage your cricket profile and statistics
+              </p>
             </div>
-            
-            <div className="flex-1">
-              {isEditing ? (
-                <div className="mb-4">
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={playerData.fullName}
-                    onChange={handleInputChange}
-                    className={`w-full p-2 rounded border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+            <button
+              onClick={toggleDarkMode}
+              className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                darkMode 
+                  ? 'bg-gray-700 text-white hover:bg-gray-600 shadow-lg' 
+                  : 'bg-white text-gray-800 hover:bg-gray-50 shadow-md'
+              }`}
+            >
+              {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+            </button>
+          </div>
+
+          {/* Main Profile Card */}
+          <div className={`rounded-2xl shadow-xl p-8 mb-8 backdrop-blur-sm ${
+            darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-white/20'
+          }`}>
+            {/* Profile Header */}
+            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8 mb-8">
+              <div className="relative group">
+                {currentUser?.photoURL ? (
+                  <img 
+                    src={currentUser.photoURL} 
+                    alt="Player" 
+                    className="w-32 h-32 rounded-full object-cover border-4 border-gradient-to-r from-blue-500 to-purple-500 shadow-2xl transition-transform duration-300 group-hover:scale-105"
                   />
-                </div>
-              ) : (
-                <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-blue-400' : 'text-[#16638A]'}`}>
-                  {playerData.fullName || 'Player Name'}
-                </h2>
-              )}
-              
-              <div className="flex items-center gap-4 mb-2">
-                <div className="flex items-center">
-                  <FiCalendar className={`mr-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                  <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {playerData.dateOfBirth ? `${playerData.dateOfBirth} (${age} years)` : 'Date of Birth not set'}
-                  </span>
-                </div>
+                ) : (
+                  <div className={`w-32 h-32 rounded-full flex items-center justify-center text-4xl border-4 border-gradient-to-r from-blue-500 to-purple-500 shadow-2xl transition-transform duration-300 group-hover:scale-105 ${
+                    darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gradient-to-br from-blue-100 to-purple-100 text-blue-600'
+                  }`}>
+                    <FiUser />
+                  </div>
+                )}
+                <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg"></div>
               </div>
               
-              {isEditing && (
-                <div className="mb-4">
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Date of Birth
-                  </label>
-                  <input
-                    type="date"
-                    name="dateOfBirth"
-                    value={playerData.dateOfBirth}
-                    onChange={handleInputChange}
-                    className={`w-full p-2 rounded border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                  />
+              <div className="flex-1">
+                {isEditing ? (
+                  <div className="mb-6">
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={playerData.fullName}
+                      onChange={handleInputChange}
+                      className={`w-full p-3 rounded-xl border-2 transition-all duration-200 focus:ring-2 focus:ring-blue-500 ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-400' 
+                          : 'bg-white border-gray-300 focus:border-blue-400'
+                      }`}
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                ) : (
+                  <h2 className={`text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent`}>
+                    {playerData.fullName || 'Player Name'}
+                  </h2>
+                )}
+                
+                <div className="flex flex-wrap items-center gap-6 mb-4">
+                  <div className="flex items-center gap-2">
+                    <FiCalendar className={`text-lg ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {playerData.dateOfBirth ? `${playerData.dateOfBirth} (${age} years)` : 'Date of Birth not set'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FiAward className={`text-lg ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Cricket Player
+                    </span>
+                  </div>
                 </div>
-              )}
-            </div>
-            
-            <div>
-              {isEditing ? (
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-                >
-                  <FiSave /> Save
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                >
-                  <FiEdit2 /> Edit Profile
-                </button>
-              )}
+                
+                {isEditing && (
+                  <div className="mb-6">
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Date of Birth
+                    </label>
+                    <input
+                      type="date"
+                      name="dateOfBirth"
+                      value={playerData.dateOfBirth}
+                      onChange={handleInputChange}
+                      className={`w-full p-3 rounded-xl border-2 transition-all duration-200 focus:ring-2 focus:ring-blue-500 ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-400' 
+                          : 'bg-white border-gray-300 focus:border-blue-400'
+                      }`}
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-3">
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={handleSave}
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    >
+                      <FiSave className="text-lg" /> Save
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                        darkMode 
+                          ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                          : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                      }`}
+                    >
+                      <FiX className="text-lg" /> Cancel
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  >
+                    <FiEdit2 className="text-lg" /> Edit Profile
+                  </button>
+                )}
+              </div>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-              <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-[#16638A]'}`}>
-                Batting & Bowling Details
-              </h3>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Batting & Bowling Details */}
+            <div className={`rounded-2xl shadow-xl p-6 backdrop-blur-sm ${
+              darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-white/20'
+            }`}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl">
+                  <FiTarget className="text-white text-xl" />
+                </div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                  Batting & Bowling Details
+                </h3>
+              </div>
               
               {isEditing ? (
-                <>
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Batting Style
                     </label>
                     <select
                       name="battingStyle"
                       value={playerData.battingStyle}
                       onChange={handleInputChange}
-                      className={`w-full p-2 rounded border ${darkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'}`}
+                      className={`w-full p-3 rounded-xl border-2 transition-all duration-200 focus:ring-2 focus:ring-blue-500 ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-400' 
+                          : 'bg-white border-gray-300 focus:border-blue-400'
+                      }`}
                     >
+                      <option value="">Select batting style</option>
                       {battingStyles.map(style => (
                         <option key={style} value={style}>{style}</option>
                       ))}
                     </select>
                   </div>
                   
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Bowling Style
                     </label>
                     <select
                       name="bowlingStyle"
                       value={playerData.bowlingStyle}
                       onChange={handleInputChange}
-                      className={`w-full p-2 rounded border ${darkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'}`}
+                      className={`w-full p-3 rounded-xl border-2 transition-all duration-200 focus:ring-2 focus:ring-blue-500 ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-400' 
+                          : 'bg-white border-gray-300 focus:border-blue-400'
+                      }`}
                     >
+                      <option value="">Select bowling style</option>
                       {bowlingStyles.map(style => (
                         <option key={style} value={style}>{style}</option>
                       ))}
                     </select>
                   </div>
                   
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Bowler Type
                     </label>
                     <select
                       name="bowlerType"
                       value={playerData.bowlerType}
                       onChange={handleInputChange}
-                      className={`w-full p-2 rounded border ${darkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'}`}
+                      className={`w-full p-3 rounded-xl border-2 transition-all duration-200 focus:ring-2 focus:ring-blue-500 ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-400' 
+                          : 'bg-white border-gray-300 focus:border-blue-400'
+                      }`}
                     >
+                      <option value="">Select bowler type</option>
                       {bowlerTypes.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
                     </select>
                   </div>
-                </>
+                </div>
               ) : (
-                <>
-                  <div className="mb-3">
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Batting Style</p>
-                    <p className={darkMode ? 'text-gray-200' : 'text-gray-800'}>{playerData.battingStyle}</p>
+                <div className="space-y-4">
+                  <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                    <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Batting Style</p>
+                    <p className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {playerData.battingStyle || 'Not specified'}
+                    </p>
                   </div>
                   
-                  <div className="mb-3">
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Bowling Style</p>
-                    <p className={darkMode ? 'text-gray-200' : 'text-gray-800'}>{playerData.bowlingStyle}</p>
+                  <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                    <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Bowling Style</p>
+                    <p className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {playerData.bowlingStyle || 'Not specified'}
+                    </p>
                   </div>
                   
-                  <div className="mb-3">
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Bowler Type</p>
-                    <p className={darkMode ? 'text-gray-200' : 'text-gray-800'}>{playerData.bowlerType}</p>
+                  <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                    <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Bowler Type</p>
+                    <p className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {playerData.bowlerType || 'Not specified'}
+                    </p>
                   </div>
-                </>
+                </div>
               )}
             </div>
             
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-              <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-[#16638A]'}`}>
-                Physical Attributes
-              </h3>
+            {/* Physical Attributes */}
+            <div className={`rounded-2xl shadow-xl p-6 backdrop-blur-sm ${
+              darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-white/20'
+            }`}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-gradient-to-r from-green-500 to-teal-500 rounded-xl">
+                  <FiActivity className="text-white text-xl" />
+                </div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                  Physical Attributes
+                </h3>
+              </div>
               
               {isEditing ? (
-                <>
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Height (cm)
                     </label>
                     <input
@@ -327,12 +421,17 @@ const PlayerProfile = () => {
                       name="height"
                       value={playerData.height}
                       onChange={handleInputChange}
-                      className={`w-full p-2 rounded border ${darkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'}`}
+                      placeholder="Enter height in cm"
+                      className={`w-full p-3 rounded-xl border-2 transition-all duration-200 focus:ring-2 focus:ring-blue-500 ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-400' 
+                          : 'bg-white border-gray-300 focus:border-blue-400'
+                      }`}
                     />
                   </div>
                   
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Weight (kg)
                     </label>
                     <input
@@ -340,38 +439,51 @@ const PlayerProfile = () => {
                       name="weight"
                       value={playerData.weight}
                       onChange={handleInputChange}
-                      className={`w-full p-2 rounded border ${darkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'}`}
+                      placeholder="Enter weight in kg"
+                      className={`w-full p-3 rounded-xl border-2 transition-all duration-200 focus:ring-2 focus:ring-blue-500 ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-400' 
+                          : 'bg-white border-gray-300 focus:border-blue-400'
+                      }`}
                     />
                   </div>
-                </>
+                </div>
               ) : (
-                <>
-                  <div className="mb-3">
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Height</p>
-                    <p className={darkMode ? 'text-gray-200' : 'text-gray-800'}>
+                <div className="space-y-4">
+                  <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                    <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Height</p>
+                    <p className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                       {playerData.height ? `${playerData.height} cm` : 'Not specified'}
                     </p>
                   </div>
                   
-                  <div className="mb-3">
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Weight</p>
-                    <p className={darkMode ? 'text-gray-200' : 'text-gray-800'}>
+                  <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                    <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Weight</p>
+                    <p className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                       {playerData.weight ? `${playerData.weight} kg` : 'Not specified'}
                     </p>
                   </div>
-                </>
+                </div>
               )}
             </div>
             
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-              <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-[#16638A]'}`}>
-                Contact Information
-              </h3>
+            {/* Contact Information */}
+            <div className={`rounded-2xl shadow-xl p-6 backdrop-blur-sm ${
+              darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-white/20'
+            }`}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl">
+                  <FiPhone className="text-white text-xl" />
+                </div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                  Contact Information
+                </h3>
+              </div>
               
               {isEditing ? (
-                <>
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Phone Number
                     </label>
                     <input
@@ -379,12 +491,17 @@ const PlayerProfile = () => {
                       name="phoneNumber"
                       value={playerData.phoneNumber}
                       onChange={handleInputChange}
-                      className={`w-full p-2 rounded border ${darkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'}`}
+                      placeholder="Enter phone number"
+                      className={`w-full p-3 rounded-xl border-2 transition-all duration-200 focus:ring-2 focus:ring-blue-500 ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-400' 
+                          : 'bg-white border-gray-300 focus:border-blue-400'
+                      }`}
                     />
                   </div>
                   
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Address
                     </label>
                     <textarea
@@ -392,37 +509,56 @@ const PlayerProfile = () => {
                       value={playerData.address}
                       onChange={handleInputChange}
                       rows="3"
-                      className={`w-full p-2 rounded border ${darkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'}`}
+                      placeholder="Enter your address"
+                      className={`w-full p-3 rounded-xl border-2 transition-all duration-200 focus:ring-2 focus:ring-blue-500 resize-none ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-400' 
+                          : 'bg-white border-gray-300 focus:border-blue-400'
+                      }`}
                     />
                   </div>
-                </>
+                </div>
               ) : (
-                <>
-                  <div className="mb-3">
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Phone</p>
-                    <p className={darkMode ? 'text-gray-200' : 'text-gray-800'}>
+                <div className="space-y-4">
+                  <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <FiPhone className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                      <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Phone</p>
+                    </div>
+                    <p className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                       {playerData.phoneNumber || 'Not specified'}
                     </p>
                   </div>
                   
-                  <div className="mb-3">
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Address</p>
-                    <p className={darkMode ? 'text-gray-200' : 'text-gray-800'}>
+                  <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <FiMapPin className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                      <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Address</p>
+                    </div>
+                    <p className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                       {playerData.address || 'Not specified'}
                     </p>
                   </div>
-                </>
+                </div>
               )}
             </div>
             
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-              <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-blue-400' : 'text-[#16638A]'}`}>
-                About
-              </h3>
+            {/* About Section */}
+            <div className={`rounded-2xl shadow-xl p-6 backdrop-blur-sm ${
+              darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-white/20'
+            }`}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-xl">
+                  <FiUser className="text-white text-xl" />
+                </div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                  About Me
+                </h3>
+              </div>
               
               {isEditing ? (
-                <div className="mb-4">
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Bio
                   </label>
                   <textarea
@@ -430,13 +566,20 @@ const PlayerProfile = () => {
                     value={playerData.bio}
                     onChange={handleInputChange}
                     rows="4"
-                    className={`w-full p-2 rounded border ${darkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'}`}
+                    placeholder="Tell us about yourself..."
+                    className={`w-full p-3 rounded-xl border-2 transition-all duration-200 focus:ring-2 focus:ring-blue-500 resize-none ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-400' 
+                        : 'bg-white border-gray-300 focus:border-blue-400'
+                    }`}
                   />
                 </div>
               ) : (
-                <p className={darkMode ? 'text-gray-200' : 'text-gray-800'}>
-                  {playerData.bio || 'No bio added yet.'}
-                </p>
+                <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                  <p className={`text-base leading-relaxed ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                    {playerData.bio || 'No bio added yet. Share something about yourself!'}
+                  </p>
+                </div>
               )}
             </div>
           </div>
