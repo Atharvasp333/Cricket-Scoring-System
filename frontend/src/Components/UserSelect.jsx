@@ -1,56 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 
-const UserSelect = ({ 
-  role, 
-  value, 
-  onChange, 
-  label, 
-  placeholder, 
-  className, 
-  required,
-  options, // Allow passing options directly
-  showEmail = true // Option to show/hide email
-}) => {
-  const [users, setUsers] = useState(options || []);
+const UserSelect = ({ role, value, onChange, label, placeholder, className, required }) => {
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Only fetch users if options aren't provided and role is specified
-    if (!options && role) {
-      const fetchUsers = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-          const response = await api.get(`/api/users/role/${role}`);
-          setUsers(response.data);
-        } catch (err) {
-          console.error('Error fetching users:', err);
-          setError('Failed to load users. Please try again.');
-        } finally {
-          setLoading(false);
-        }
-      };
+    const fetchUsers = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await api.get(`/api/users/role/${role}`);
+        setUsers(response.data);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        setError('Failed to load users. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      fetchUsers();
-    }
-  }, [role, options]);
-
-  // If options are provided, use them instead of fetched users
-  useEffect(() => {
-    if (options) {
-      setUsers(options);
-    }
-  }, [options]);
-
-  const handleChange = (e) => {
-    const selectedValue = e.target.value;
-    const selectedUser = users.find(user => user.value === selectedValue);
-    
-    // Pass both the ID and the full user object if available
-    onChange(selectedValue, selectedUser);
-  };
+    fetchUsers();
+  }, [role]);
 
   return (
     <div className={className}>
@@ -61,16 +33,15 @@ const UserSelect = ({
       )}
       <select
         value={value || ''}
-        onChange={handleChange}
+        onChange={(e) => onChange(e.target.value)}
         className="w-full border rounded px-3 py-2"
-        disabled={loading || (options && options.length === 0)}
+        disabled={loading}
         required={required}
       >
         <option value="">{placeholder || 'Select a user'}</option>
         {users.map((user) => (
-          <option key={user.value || user._id} value={user.value || user._id}>
-            {user.label || user.displayName}
-            {showEmail && user.email && ` (${user.email})`}
+          <option key={user._id} value={user._id}>
+            {user.displayName} ({user.email})
           </option>
         ))}
       </select>
