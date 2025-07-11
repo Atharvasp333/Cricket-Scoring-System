@@ -1,11 +1,59 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { SocketProvider } from './contexts/SocketContext';
-import Navbar from './Components/Navbar';
-import Footer from './Components/Footer';
-import ProtectedRoute from './Components/ProtectedRoute';
-import './App.css';
+// import React from 'react'
+// import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+// import Navbar from './Components/Navbar'
+// import Footer from './Components/Footer'
+// import ProtectedRoute from './Components/ProtectedRoute'
+// import { AuthProvider } from './contexts/AuthContext'
+// import './App.css'
+
+// // Auth Screens
+// import Login from './Screens/Auth/Login'
+// import Signup from './Screens/Auth/Signup'
+
+// // Import Pages
+// import ScorerHome from './Screens/Scorer/ScorerHome'
+// import MatchSetup from './Screens/Scorer/MatchSetup'
+// import Scoring from './Screens/Scorer/Scoring'
+// import InningsBreak from './Screens/Scorer/InningsBreak'
+// import MatchSummary from './Screens/Scorer/MatchSummary'
+// import CompletedMatches from './Screens/Scorer/CompletedMatches'
+// import CompletedTournaments from './Screens/Scorer/CompletedTournaments'
+
+// import MatchDetails from './Screens/Viewer/MatchDetails'
+// import ViewerHome from './Screens/Viewer/ViewerHome'
+// import OrganiserHomepage from './Screens/Organiser/OrganiserHomepage'
+// import CreateTournamentPage from './Screens/Organiser/CreateTournamentPage'
+// import CreateMatchPage from './Screens/Organiser/CreateMatchPage'
+// import NewsDetail from './Screens/Viewer/NewsDetail'
+// import OldNews from './Screens/Viewer/OldNews'
+// import MatchDetailPage from './Screens/Organiser/MatchDetailPage'
+// import TournamentDetailPage from './Screens/Organiser/TournamentDetailPage'
+
+// function App() {
+//   return (
+//     <Router>
+//       <AuthProvider>
+//         <Navbar />
+//         <div className="content">
+//           <Routes>
+//             {/* Redirect root to viewer home for now */}
+//             <Route path="/" element={<Navigate to="/viewer-home" />} />
+
+//             {/* Auth Routes */}
+//             <Route path="/login" element={<Login />} />
+//             <Route path="/signup" element={<Signup />} />
+
+//             {/* Scorer Routes - Protected */}
+//             <Route path="/scorer-home" element={
+//               <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+//                 <ScorerHome />
+//               </ProtectedRoute>
+//             } />
+//             <Route path='/CompletedMatches' element={<CompletedMatches />} />
+//             <Route path='/CompletedTournaments' element={<CompletedTournaments />} />
+
+//             <Route path="/match-setup/:matchId" element={
+//               <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
 //                 <MatchSetup />
 //               </ProtectedRoute>
 //             } />
@@ -111,21 +159,13 @@ function App() {
           <Navbar />
           <div className="content">
             <Routes>
-              {/* Redirect root to player dashboard */}
-              <Route path="/" element={<Navigate to="/player/dashboard" replace />} />
+              {/* Redirect root to viewer home for now */}
+              <Route path="/" element={<Navigate to="/viewer-home" />} />
 
               {/* Auth Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
 
-              {/* Player Routes */}
-              {playerRoutes.map((route, index) => (
-                <Route
-                  key={`player-${index}`}
-                  path={route.path}
-                  element={route.element}
-                />
-              ))}
               {/* Scorer Routes - Protected */}
               <Route path="/scorer-home" element={
                 <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
@@ -163,54 +203,67 @@ function App() {
                   <MatchSummary />
                 </ProtectedRoute>
               } />
-              <Route path="/postmatch/:matchId" element={
-                <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
-                  <PostMatch />
-                </ProtectedRoute>
-              } />
+              <Route
+                path="/postmatch/:matchId"
+                element={
+                  <ProtectedRoute allowedRoles={['scorer', 'organiser']}>
+                    <PostMatch />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Viewer Routes */}
-              <Route path="/viewer-home" element={<ViewerHome />} />
               <Route path="/match-details/:matchId" element={<MatchDetails />} />
+              <Route path="/viewer-home" element={<ViewerHome />} />
               <Route path="/news/:id" element={<NewsDetail />} />
               <Route path="/old-news" element={<OldNews />} />
 
               {/* Organiser Routes - Protected */}
-              <Route path="/organiser/home" element={
+              <Route path="/organiser-homepage" element={
                 <ProtectedRoute allowedRoles={['organiser']}>
                   <OrganiserHomepage />
                 </ProtectedRoute>
               } />
-              <Route path="/organiser/tournaments/create" element={
+              <Route path="/organiser/create-tournament" element={
                 <ProtectedRoute allowedRoles={['organiser']}>
                   <CreateTournamentPage />
                 </ProtectedRoute>
               } />
-              <Route path="/organiser/matches/create" element={
+              <Route path="/organiser/create-match" element={
                 <ProtectedRoute allowedRoles={['organiser']}>
                   <CreateMatchPage />
                 </ProtectedRoute>
               } />
-              <Route path="/organiser/matches/:id" element={
+
+              {/* Player Routes - Protected */}
+              <Route path="/player-home" element={
+                <ProtectedRoute allowedRoles={['player']}>
+                  <PlayerHome />
+                </ProtectedRoute>
+              } />
+              <Route path="/player-profile" element={
+                <ProtectedRoute allowedRoles={['player']}>
+                  <PlayerProfile />
+                </ProtectedRoute>
+              } />
+            <Route path="/captain-approval" element={
+              <ProtectedRoute allowedRoles={['player']}>
+                <CaptainApprovalPage />
+              </ProtectedRoute>
+            } />
+
+              {/* Player Stats Routes */}
+              <Route path="/players/:playerId" element={<PlayerDetails />} />
+              <Route path="/player-stats" element={<PlayerSearchPage />} />
+
+              <Route path="/organiser/match/:id" element={
                 <ProtectedRoute allowedRoles={['organiser']}>
                   <MatchDetailPage />
                 </ProtectedRoute>
               } />
-              <Route path="/organiser/tournaments/:id" element={
+              <Route path="/organiser/tournament/:id" element={
                 <ProtectedRoute allowedRoles={['organiser']}>
                   <TournamentDetailPage />
-                </ProtectedRoute>
-              } />
-
-              {/* Player Stats Routes */}
-              <Route path="/players/search" element={
-                <ProtectedRoute allowedRoles={['player', 'organiser', 'scorer']}>
-                  <PlayerSearchPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/players/:id" element={
-                <ProtectedRoute allowedRoles={['player', 'organiser', 'scorer']}>
-                  <PlayerDetails />
                 </ProtectedRoute>
               } />
               <Route path="/organiser/completed-matches" element={
