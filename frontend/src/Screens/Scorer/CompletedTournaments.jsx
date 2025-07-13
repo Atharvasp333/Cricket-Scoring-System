@@ -1,4 +1,9 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Components, Icons } from '../../exports';
+
+const { Card, Table, Badge, Button } = Components;
+const { FiEye, FiCalendar, FiAward, FiUsers } = Icons;
 
 const Tournaments = () => {
   // Mock data for completed tournaments

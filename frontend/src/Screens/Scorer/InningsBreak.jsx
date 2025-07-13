@@ -1,5 +1,9 @@
-import React from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import React from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Components, Icons } from '../../exports';
+
+const { Button, Card, StatCard } = Components;
+const { FiArrowRight, FiAward, FiClock, FiBarChart2 } = Icons;
 
 const InningsBreak = () => {
   const { matchId } = useParams()

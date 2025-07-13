@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
+import { Components, Icons } from '../../exports';
+
+const { Button, Input, Select, Card, LoadingSpinner, Alert } = Components;
+const { FiAlertCircle, FiCheck, FiX, FiSave, FiUser, FiUsers } = Icons;
 
 const MatchSetup = () => {
   const { matchId } = useParams();

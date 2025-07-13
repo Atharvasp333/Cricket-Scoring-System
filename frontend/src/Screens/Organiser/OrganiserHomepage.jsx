@@ -1,30 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Components, Icons } from '../../exports';
 import api from '../../utils/api';
 
-const PlusIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-    </svg>
-);
+const { 
+  Button, 
+  Card, 
+  LoadingSpinner, 
+  ErrorAlert, 
+  SuccessAlert 
+} = Components;
 
-const UserIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
-);
-
-const CalendarIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
-);
-
-const TrophyIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-    </svg>
-);
+const { 
+  FiPlus, 
+  FiUser, 
+  FiCalendar, 
+  FiAward, 
+  FiChevronRight,
+  FiAlertCircle,
+  FiCheckCircle
+} = Icons;
 
 const OrganiserHomepage = () => {
     const [tournaments, setTournaments] = useState([]);
@@ -48,225 +43,166 @@ const OrganiserHomepage = () => {
                 
                 setTournaments(tournamentsData);
                 setMatches(matchesData);
+                setLoading(false);
             } catch (err) {
-                setError('Failed to load tournaments or matches.');
-                console.error('Fetch error:', err);
-            } finally {
+                console.error('Error fetching data:', err);
+                setError('Failed to load data. Please try again later.');
                 setLoading(false);
             }
         };
-        
+
         fetchData();
     }, []);
 
-    const MatchCard = ({ _id, match_name, match_type, date, time, team1_name, team2_name, status, venue }) => (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 ease-in-out p-4 border border-blue-200 hover:border-blue-300">
-            <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center">
-                    <CalendarIcon />
-                    <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
-                        {date}
-                    </span>
-                </div>
-                {status && (
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        status === 'Live' ? 'bg-red-100 text-red-600' :
-                        status === 'completed' ? 'bg-green-100 text-green-600' :
-                        'bg-gray-100 text-gray-600'
-                    }`}>
-                        {status}
-                    </span>
-                )}
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <LoadingSpinner size="lg" />
             </div>
-            <h3 className="text-lg font-bold text-gray-800 mb-1">{match_name}</h3>
-            {match_type && <p className="text-xs text-gray-600 mb-2">{match_type}</p>}
-            <div className="text-xs text-gray-600 mb-2">
-                {team1_name && team2_name ?
-                    `${team1_name} vs ${team2_name}` :
-                    'Teams not specified'}
-            </div>
-            {venue && <p className="text-xs text-gray-500 mb-2">📍 {venue}</p>}
-            <div className="flex justify-between items-center">
-                <p className="text-xs font-semibold text-indigo-700">
-                    {time || 'Time TBD'}
-                </p>
-                <button
-                    onClick={() => navigate(`/organiser/match/${_id}`)}
-                    className="px-3 py-1 bg-black text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors duration-200"
-                >
-                    View Details
-                </button>
-            </div>
-        </div>
-    );
+        );
+    }
 
-    const TournamentCard = ({ _id, name, teams, createdAt }) => (
-        <div className="bg-gradient-to-br from-emerald-50 to-green-100 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 ease-in-out p-4 border border-emerald-200 hover:border-emerald-300">
-            <div className="flex items-center mb-2">
-                <TrophyIcon />
-                <span className="text-xs font-semibold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
-                    {new Date(createdAt).toLocaleDateString()}
-                </span>
+    if (error) {
+        return (
+            <div className="container mx-auto p-4">
+                <ErrorAlert message={error} />
             </div>
-            <h3 className="text-lg font-bold text-gray-800 mb-2">{name}</h3>
-            <div className="flex justify-between items-center">
-                <div className="text-xs text-gray-600">
-                    <span className="font-semibold text-emerald-700">
-                        {Array.isArray(teams) ? teams.length : 
-                         (typeof teams === 'number' ? teams : 0)}
-                    </span> Teams
-                </div>
-                <button
-                    onClick={() => navigate(`/organiser/tournament/${_id}`)}
-                    className="px-3 py-1 bg-black text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors duration-200"
-                >
-                    Manage
-                </button>
-            </div>
-        </div>
-    );
-
-    const Section = ({ title, children, icon }) => (
-        <div className="mb-8">
-            <div className="flex items-center mb-4">
-                {icon}
-                <h2 className="text-xl font-bold text-gray-800">{title}</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {children}
-            </div>
-        </div>
-    );
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-            <div className="container mx-auto p-6">
-                {/* Header Section */}
-                <header className="bg-white rounded-2xl shadow-md p-6 mb-8 border border-gray-100">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-                        <div>
-                            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                                Organiser Dashboard
-                            </h1>
-                            <p className="text-gray-600 mt-1 text-sm">Manage your tournaments and matches</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-                            <button 
-                                onClick={() => navigate('/organiser/create-tournament')}
-                                className="flex items-center justify-center bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-                            >
-                                <PlusIcon />
-                                Create Tournament
-                            </button>
-                            <button 
-                                onClick={() => navigate('/organiser/create-match')}
-                                className="flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-                            >
-                                <PlusIcon />
-                                Create Match
-                            </button>
-                            <button 
-                                onClick={() => navigate('/organiser/registrations')}
-                                className="flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-                            >
-                                <UserIcon />
-                                Manage Registrations
-                            </button>
-                        </div>
-                    </div>
-                </header>
+        <div className="container mx-auto p-4">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold">Organiser Dashboard</h1>
+                <div className="space-x-2">
+                    <Button 
+                        onClick={() => navigate('/organiser/tournaments/create')}
+                        variant="primary"
+                        className="flex items-center"
+                    >
+                        <FiPlus className="mr-1" />
+                        New Tournament
+                    </Button>
+                    <Button 
+                        onClick={() => navigate('/organiser/matches/create')}
+                        variant="secondary"
+                        className="flex items-center ml-2"
+                    >
+                        <FiPlus className="mr-1" />
+                        New Match
+                    </Button>
+                </div>
+            </div>
 
-                {/* Content */}
-                {loading ? (
-                    <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <p className="text-sm text-gray-600 mt-2">Loading your dashboard...</p>
-                    </div>
-                ) : error ? (
-                    <div className="text-center py-12">
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md mx-auto">
-                            <p className="text-red-600 font-medium text-sm">{error}</p>
-                            <button 
-                                onClick={() => window.location.reload()}
-                                className="mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                            >
-                                Try Again
-                            </button>
-                        </div>
+            {/* Upcoming Matches */}
+            <section className="mb-8">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold">Upcoming Matches</h2>
+                    <Link 
+                        to="/organiser/matches" 
+                        className="text-indigo-600 hover:text-indigo-800 text-sm flex items-center"
+                    >
+                        View All <FiChevronRight className="ml-1" />
+                    </Link>
+                </div>
+                
+                {matches.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {matches.slice(0, 3).map((match) => (
+                            <Card key={match._id} className="p-4 hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-semibold">{match.team1_name} vs {match.team2_name}</h3>
+                                        <div className="flex items-center text-sm text-gray-600 mt-1">
+                                            <FiCalendar className="mr-1" />
+                                            {new Date(match.date).toLocaleDateString()}
+                                        </div>
+                                        <div className="flex items-center text-sm text-gray-600">
+                                            <FiAward className="mr-1" />
+                                            {match.match_type || 'Friendly Match'}
+                                        </div>
+                                    </div>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => navigate(`/organiser/matches/${match._id}`)}
+                                    >
+                                        Manage
+                                    </Button>
+                                </div>
+                            </Card>
+                        ))}
                     </div>
                 ) : (
-                    <>
-                        {/* Scheduled Matches Section */}
-                        <Section 
-                            title="Scheduled Matches" 
-                            icon={<CalendarIcon />}
+                    <div className="text-center py-8 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">No upcoming matches found.</p>
+                        <Button 
+                            onClick={() => navigate('/organiser/matches/create')}
+                            variant="link"
+                            className="mt-2"
                         >
-                            {matches.length === 0 ? (
-                                <div className="col-span-full">
-                                    <div className="bg-white rounded-xl p-6 text-center border-2 border-dashed border-gray-200">
-                                        <CalendarIcon />
-                                        <p className="text-gray-500 text-sm">No matches scheduled yet</p>
-                                        <p className="text-gray-400 text-xs mt-1">Create your first match to get started</p>
-                                        <button
-                                            onClick={() => navigate('/organiser/create-match')}
-                                            className="mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                                        >
-                                            Create Match
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                matches.map(match => (
-                                    <MatchCard 
-                                        key={match._id} 
-                                        _id={match._id}
-                                        match_name={match.match_name}
-                                        match_type={match.match_type}
-                                        date={match.date}
-                                        time={match.time}
-                                        team1_name={match.team1_name}
-                                        team2_name={match.team2_name}
-                                        status={match.status}
-                                        venue={match.venue}
-                                    />
-                                ))
-                            )}
-                        </Section>
-
-                        {/* Created Tournaments Section */}
-                        <Section 
-                            title="Your Tournaments" 
-                            icon={<TrophyIcon />}
-                        >
-                            {tournaments.length === 0 ? (
-                                <div className="col-span-full">
-                                    <div className="bg-white rounded-xl p-6 text-center border-2 border-dashed border-gray-200">
-                                        <TrophyIcon />
-                                        <p className="text-gray-500 text-sm">No tournaments created yet</p>
-                                        <p className="text-gray-400 text-xs mt-1">Create your first tournament to get started</p>
-                                        <button
-                                            onClick={() => navigate('/organiser/create-tournament')}
-                                            className="mt-2 bg-emerald-600 text-white px-3 py-1 rounded text-sm"
-                                        >
-                                            Create Tournament
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                tournaments.map(tournament => (
-                                    <TournamentCard 
-                                        key={tournament._id} 
-                                        _id={tournament._id}
-                                        name={tournament.name}
-                                        teams={tournament.teams}
-                                        createdAt={tournament.createdAt}
-                                    />
-                                ))
-                            )}
-                        </Section>
-                    </>
+                            Create your first match
+                        </Button>
+                    </div>
                 )}
-            </div>
+            </section>
+
+            {/* Tournaments */}
+            <section>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold">Your Tournaments</h2>
+                    <Link 
+                        to="/organiser/tournaments" 
+                        className="text-indigo-600 hover:text-indigo-800 text-sm flex items-center"
+                    >
+                        View All <FiChevronRight className="ml-1" />
+                    </Link>
+                </div>
+                
+                {tournaments.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {tournaments.slice(0, 3).map((tournament) => (
+                            <Card key={tournament._id} className="p-4 hover:shadow-md transition-shadow">
+                                <h3 className="font-semibold">{tournament.name}</h3>
+                                <div className="text-sm text-gray-600 mt-1">
+                                    <div className="flex items-center">
+                                        <FiCalendar className="mr-1" />
+                                        {new Date(tournament.createdAt).toLocaleDateString()}
+                                    </div>
+                                    <div className="flex items-center">
+                                        <FiUser className="mr-1" />
+                                        {Array.isArray(tournament.teams) ? tournament.teams.length : 
+                                         (typeof tournament.teams === 'number' ? tournament.teams : 0)}
+                                    </div>
+                                </div>
+                                <div className="mt-3 flex justify-between items-center">
+                                    <span className="text-sm px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">
+                                        {tournament.status || 'Upcoming'}
+                                    </span>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => navigate(`/organiser/tournaments/${tournament._id}`)}
+                                    >
+                                        View
+                                    </Button>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-8 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">No tournaments found.</p>
+                        <Button 
+                            onClick={() => navigate('/organiser/tournaments/create')}
+                            variant="link"
+                            className="mt-2"
+                        >
+                            Create your first tournament
+                        </Button>
+                    </div>
+                )}
+            </section>
         </div>
     );
 };

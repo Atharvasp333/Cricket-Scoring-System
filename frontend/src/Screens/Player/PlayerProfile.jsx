@@ -1,7 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { FiEdit2, FiSave, FiCalendar, FiUser, FiPhone, FiMapPin, FiActivity, FiTarget, FiAward, FiX } from 'react-icons/fi';
 import api from '../../utils/api';
+import { Components, Icons } from '../../exports';
+
+const { 
+  Card, 
+  Input, 
+  Select, 
+  Button, 
+  TextArea,
+  Modal
+} = Components;
+
+const { 
+  FiEdit2, 
+  FiSave, 
+  FiCalendar, 
+  FiUser, 
+  FiPhone, 
+  FiMapPin, 
+  FiActivity, 
+  FiTarget, 
+  FiAward, 
+  FiX,
+  FiPlus,
+  FiTrash2
+} = Icons;
 
 const PlayerProfile = () => {
   const { currentUser } = useAuth();
@@ -205,7 +229,7 @@ const PlayerProfile = () => {
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Full Name
                     </label>
-                    <input
+                    <Input
                       type="text"
                       name="fullName"
                       value={playerData.fullName}
@@ -244,7 +268,7 @@ const PlayerProfile = () => {
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Date of Birth
                     </label>
-                    <input
+                    <Input
                       type="date"
                       name="dateOfBirth"
                       value={playerData.dateOfBirth}
@@ -262,13 +286,13 @@ const PlayerProfile = () => {
               <div className="flex gap-3">
                 {isEditing ? (
                   <>
-                    <button
+                    <Button
                       onClick={handleSave}
                       className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                     >
                       <FiSave className="text-lg" /> Save
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={handleCancelEdit}
                       className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 ${
                         darkMode 
@@ -277,15 +301,15 @@ const PlayerProfile = () => {
                       }`}
                     >
                       <FiX className="text-lg" /> Cancel
-                    </button>
+                    </Button>
                   </>
                 ) : (
-                  <button
+                  <Button
                     onClick={() => setIsEditing(true)}
                     className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
                     <FiEdit2 className="text-lg" /> Edit Profile
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -294,7 +318,7 @@ const PlayerProfile = () => {
           {/* Stats Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Batting & Bowling Details */}
-            <div className={`rounded-2xl shadow-xl p-6 backdrop-blur-sm ${
+            <Card className={`rounded-2xl shadow-xl p-6 backdrop-blur-sm ${
               darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-white/20'
             }`}>
               <div className="flex items-center gap-3 mb-6">
@@ -312,7 +336,7 @@ const PlayerProfile = () => {
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Batting Style
                     </label>
-                    <select
+                    <Select
                       name="battingStyle"
                       value={playerData.battingStyle}
                       onChange={handleInputChange}
@@ -326,14 +350,14 @@ const PlayerProfile = () => {
                       {battingStyles.map(style => (
                         <option key={style} value={style}>{style}</option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                   
                   <div>
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Bowling Style
                     </label>
-                    <select
+                    <Select
                       name="bowlingStyle"
                       value={playerData.bowlingStyle}
                       onChange={handleInputChange}
@@ -347,14 +371,14 @@ const PlayerProfile = () => {
                       {bowlingStyles.map(style => (
                         <option key={style} value={style}>{style}</option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                   
                   <div>
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Bowler Type
                     </label>
-                    <select
+                    <Select
                       name="bowlerType"
                       value={playerData.bowlerType}
                       onChange={handleInputChange}
@@ -368,7 +392,7 @@ const PlayerProfile = () => {
                       {bowlerTypes.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                 </div>
               ) : (
@@ -395,10 +419,10 @@ const PlayerProfile = () => {
                   </div>
                 </div>
               )}
-            </div>
+            </Card>
             
             {/* Physical Attributes */}
-            <div className={`rounded-2xl shadow-xl p-6 backdrop-blur-sm ${
+            <Card className={`rounded-2xl shadow-xl p-6 backdrop-blur-sm ${
               darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-white/20'
             }`}>
               <div className="flex items-center gap-3 mb-6">
@@ -416,7 +440,7 @@ const PlayerProfile = () => {
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Height (cm)
                     </label>
-                    <input
+                    <Input
                       type="number"
                       name="height"
                       value={playerData.height}
@@ -434,7 +458,7 @@ const PlayerProfile = () => {
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Weight (kg)
                     </label>
-                    <input
+                    <Input
                       type="number"
                       name="weight"
                       value={playerData.weight}
@@ -465,10 +489,10 @@ const PlayerProfile = () => {
                   </div>
                 </div>
               )}
-            </div>
+            </Card>
             
             {/* Contact Information */}
-            <div className={`rounded-2xl shadow-xl p-6 backdrop-blur-sm ${
+            <Card className={`rounded-2xl shadow-xl p-6 backdrop-blur-sm ${
               darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-white/20'
             }`}>
               <div className="flex items-center gap-3 mb-6">
@@ -486,7 +510,7 @@ const PlayerProfile = () => {
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Phone Number
                     </label>
-                    <input
+                    <Input
                       type="tel"
                       name="phoneNumber"
                       value={playerData.phoneNumber}
@@ -504,7 +528,7 @@ const PlayerProfile = () => {
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Address
                     </label>
-                    <textarea
+                    <TextArea
                       name="address"
                       value={playerData.address}
                       onChange={handleInputChange}
@@ -541,10 +565,10 @@ const PlayerProfile = () => {
                   </div>
                 </div>
               )}
-            </div>
+            </Card>
             
             {/* About Section */}
-            <div className={`rounded-2xl shadow-xl p-6 backdrop-blur-sm ${
+            <Card className={`rounded-2xl shadow-xl p-6 backdrop-blur-sm ${
               darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-white/20'
             }`}>
               <div className="flex items-center gap-3 mb-6">
@@ -561,7 +585,7 @@ const PlayerProfile = () => {
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Bio
                   </label>
-                  <textarea
+                  <TextArea
                     name="bio"
                     value={playerData.bio}
                     onChange={handleInputChange}
@@ -581,7 +605,7 @@ const PlayerProfile = () => {
                   </p>
                 </div>
               )}
-            </div>
+            </Card>
           </div>
         </div>
       </div>

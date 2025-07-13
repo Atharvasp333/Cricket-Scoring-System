@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Stepper from './components/Stepper';
-import TournamentBasicInfo from './components/TournamentBasicInfo';
-import TournamentTeams from './components/TournamentTeams';
-import TournamentRules from './components/TournamentRules';
-import ScorerAccess from './components/ScorerAccess';
-import Confirmation from './components/Confirmation';
+import { Components } from '../../exports';
+
+const {
+  Stepper,
+  TournamentBasicInfo,
+  TournamentTeams,
+  TournamentRules,
+  ScorerAccess,
+  Confirmation,
+} = Components;
 
 const TournamentDetailPage = () => {
     const { id } = useParams();

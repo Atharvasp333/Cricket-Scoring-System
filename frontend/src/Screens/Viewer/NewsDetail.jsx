@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Components, Icons } from '../../exports';
+
+const { Card, LoadingSpinner, Button } = Components;
+const { FiArrowLeft, FiCalendar, FiClock } = Icons;
 
 const NewsDetail = () => {
   const { id } = useParams();
@@ -31,11 +35,11 @@ const NewsDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 flex flex-col items-center">
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-        <button onClick={() => navigate(-1)} className="mb-4 text-[#16638A] hover:text-[#0F4C75] font-semibold">← Back</button>
+      <Card className="w-full max-w-2xl bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+        <Button onClick={() => navigate(-1)} className="mb-4 text-[#16638A] hover:text-[#0F4C75] font-semibold">← Back</Button>
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#16638A]"></div>
+            <LoadingSpinner className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#16638A]"></LoadingSpinner>
             <span className="ml-4 text-[#16638A] font-medium">Loading article...</span>
           </div>
         ) : error ? (
@@ -59,7 +63,7 @@ const NewsDetail = () => {
             )}
           </>
         ) : null}
-      </div>
+      </Card>
     </div>
   );
 };

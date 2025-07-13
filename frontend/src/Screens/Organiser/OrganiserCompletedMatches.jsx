@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Components, Icons } from '../../exports';
 
-const CalendarIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
-);
+const {
+  Card,
+  Button,
+  Badge,
+  LoadingSpinner,
+  EmptyState
+} = Components;
 
-const TrophyIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-    </svg>
-);
+const {
+  FiCalendar,
+  FiAward,
+  FiClock,
+  FiDownload,
+  FiEye,
+  FiTrash2,
+  FiSearch
+} = Icons;
 
 const OrganiserCompletedMatches = () => {
 
@@ -40,7 +47,7 @@ const OrganiserCompletedMatches = () => {
     const MatchCard = ({ _id, name, tournament, date, teams, winner, score }) => (
         <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 ease-in-out p-4 border border-blue-200 hover:border-blue-300">
             <div className="flex items-center mb-2">
-                <CalendarIcon />
+                <FiCalendar className="h-4 w-4 mr-2" />
                 <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
                     {new Date(date).toLocaleDateString()}
                 </span>
@@ -115,14 +122,14 @@ const OrganiserCompletedMatches = () => {
                 ) : (
                     <div className="mb-8">
                         <div className="flex items-center mb-4">
-                            <TrophyIcon />
+                            <FiAward className="h-4 w-4 mr-2" />
                             <h2 className="text-xl font-bold text-gray-800">Match History</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {matches.length === 0 ? (
                                 <div className="col-span-full">
                                     <div className="bg-white rounded-xl p-6 text-center border-2 border-dashed border-gray-200">
-                                        <TrophyIcon />
+                                        <FiAward className="h-4 w-4 mr-2" />
                                         <p className="text-gray-500 text-sm">No completed matches yet</p>
                                         <p className="text-gray-400 text-xs mt-1">Completed matches will appear here</p>
                                     </div>

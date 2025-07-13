@@ -1,5 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Components, Icons } from '../../exports';
+
+const { 
+  Card, 
+  Tabs, 
+  Table, 
+  Button, 
+  ProgressBar,
+  LoadingSpinner
+} = Components;
+
+const { 
+  FiBarChart2, 
+  FiList, 
+  FiUsers, 
+  FiAward, 
+  FiPlay, 
+  FiPause,
+  FiRefreshCw,
+  FiArrowLeft
+} = Icons;
 
 const MatchDetails = () => {
     const { matchId } = useParams();
@@ -419,7 +440,7 @@ const MatchDetails = () => {
             <section className="py-4 px-4">
                 <div className="container mx-auto">
                     <div className="flex gap-2 overflow-x-auto border-b border-gray-200 mb-4 px-3 py-3 bg-white rounded-t-lg">
-                        <button
+                        <Button
                             className={`px-4 py-2 font-medium text-sm whitespace-nowrap ${activeTab === 'overview'
                                 ? 'text-white bg-[#16638A] border-b-2 border-[#16638A]'
                                 : 'text-gray-700 hover:text-[#16638A] hover:bg-gray-50'
@@ -427,8 +448,8 @@ const MatchDetails = () => {
                             onClick={() => setActiveTab('overview')}
                         >
                             Overview
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             className={`px-4 py-2 font-medium text-sm whitespace-nowrap ${activeTab === 'scorecard'
                                 ? 'text-white bg-[#16638A] border-b-2 border-[#16638A]'
                                 : 'text-gray-700 hover:text-[#16638A] hover:bg-gray-50'
@@ -436,8 +457,8 @@ const MatchDetails = () => {
                             onClick={() => setActiveTab('scorecard')}
                         >
                             Scorecard
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             className={`px-4 py-2 font-medium text-sm whitespace-nowrap ${activeTab === 'commentary'
                                 ? 'text-white bg-[#16638A] border-b-2 border-[#16638A]'
                                 : 'text-gray-700 hover:text-[#16638A] hover:bg-gray-50'
@@ -445,8 +466,8 @@ const MatchDetails = () => {
                             onClick={() => setActiveTab('commentary')}
                         >
                             Commentary
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             className={`px-4 py-2 font-medium text-sm whitespace-nowrap ${activeTab === 'squads'
                                 ? 'text-white bg-[#16638A] border-b-2 border-[#16638A]'
                                 : 'text-gray-700 hover:text-[#16638A] hover:bg-gray-50'
@@ -454,8 +475,8 @@ const MatchDetails = () => {
                             onClick={() => setActiveTab('squads')}
                         >
                             Squads
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             className={`px-4 py-2 font-medium text-sm whitespace-nowrap ${activeTab === 'stats'
                                 ? 'text-white bg-[#16638A] border-b-2 border-[#16638A]'
                                 : 'text-gray-700 hover:text-[#16638A] hover:bg-gray-50'
@@ -463,7 +484,7 @@ const MatchDetails = () => {
                             onClick={() => setActiveTab('stats')}
                         >
                             Stats
-                        </button>
+                        </Button>
                     </div>
 
                     {/* Tab Content */}
@@ -475,7 +496,7 @@ const MatchDetails = () => {
                                 <div className="mb-6">
                                     <h3 className="text-lg font-bold mb-3 text-[#16638A]">Batsmen</h3>
                                     <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200">
+                                        <Table className="min-w-full divide-y divide-gray-200">
                                             <thead>
                                                 <tr>
                                                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batsman</th>
@@ -503,7 +524,7 @@ const MatchDetails = () => {
                                                     </tr>
                                                 ))}
                                             </tbody>
-                                        </table>
+                                        </Table>
                                     </div>
                                 </div>
 
@@ -511,7 +532,7 @@ const MatchDetails = () => {
                                 <div className="mb-6">
                                     <h3 className="text-lg font-bold mb-3 text-[#16638A]">Bowlers</h3>
                                     <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200">
+                                        <Table className="min-w-full divide-y divide-gray-200">
                                             <thead>
                                                 <tr>
                                                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bowler</th>
@@ -540,7 +561,7 @@ const MatchDetails = () => {
                                                     </tr>
                                                 ))}
                                             </tbody>
-                                        </table>
+                                        </Table>
                                     </div>
                                 </div>
 
@@ -615,28 +636,28 @@ const MatchDetails = () => {
                             <div>
                                 {/* Innings Tabs */}
                                 <div className="flex justify-center border-b border-gray-200 mb-4">
-                                    <button
+                                    <Button
                                         className={`px-4 py-2 font-medium text-sm ${activeInning === 1 ? 'text-[#16638A] border-b-2 border-[#16638A]' : 'text-gray-700'}`}
                                         onClick={() => setActiveInning(1)}
                                     >
                                         1st Innings - {matchData.team1.name}
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                         className={`px-4 py-2 font-medium text-sm ${activeInning === 2 ? 'text-[#16638A] border-b-2 border-[#16638A]' : 'text-gray-700'}`}
                                         onClick={() => setActiveInning(2)}
                                     >
                                         2nd Innings - {matchData.team2.name}
-                                    </button>
+                                    </Button>
                                 </div>
 
                                 {/* First Innings Content */}
                                 {activeInning === 1 && (
                                     <div className="space-y-6">
                                         {/* Team 1 Batting Card */}
-                                        <div className="bg-white rounded-lg shadow-sm p-4">
+                                        <Card className="bg-white rounded-lg shadow-sm p-4">
                                             <h3 className="text-lg font-bold mb-3 text-[#16638A]">{matchData.team1.name} Batting</h3>
                                             <div className="overflow-x-auto">
-                                                <table className="min-w-full divide-y divide-gray-200">
+                                                <Table className="min-w-full divide-y divide-gray-200">
                                                     <thead>
                                                         <tr>
                                                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batsman</th>
@@ -662,7 +683,7 @@ const MatchDetails = () => {
                                                             </tr>
                                                         ))}
                                                     </tbody>
-                                                </table>
+                                                </Table>
                                             </div>
 
                                             {/* Extras and Total */}
@@ -706,13 +727,13 @@ const MatchDetails = () => {
                                                     ))}
                                                 </div>
                                             </div>
-                                        </div>
+                                        </Card>
 
                                         {/* Team 2 Bowling Card */}
-                                        <div className="bg-white rounded-lg shadow-sm p-4">
+                                        <Card className="bg-white rounded-lg shadow-sm p-4">
                                             <h3 className="text-lg font-bold mb-3 text-[#16638A]">{matchData.team2.name} Bowling</h3>
                                             <div className="overflow-x-auto">
-                                                <table className="min-w-full divide-y divide-gray-200">
+                                                <Table className="min-w-full divide-y divide-gray-200">
                                                     <thead>
                                                         <tr>
                                                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bowler</th>
@@ -735,9 +756,9 @@ const MatchDetails = () => {
                                                             </tr>
                                                         ))}
                                                     </tbody>
-                                                </table>
+                                                </Table>
                                             </div>
-                                        </div>
+                                        </Card>
                                     </div>
                                 )}
 
@@ -745,10 +766,10 @@ const MatchDetails = () => {
                                 {activeInning === 2 && (
                                     <div className="space-y-6">
                                         {/* Team 2 Batting Card */}
-                                        <div className="bg-white rounded-lg shadow-sm p-4">
+                                        <Card className="bg-white rounded-lg shadow-sm p-4">
                                             <h3 className="text-lg font-bold mb-3 text-[#16638A]">{matchData.team2.name} Batting</h3>
                                             <div className="overflow-x-auto">
-                                                <table className="min-w-full divide-y divide-gray-200">
+                                                <Table className="min-w-full divide-y divide-gray-200">
                                                     <thead>
                                                         <tr>
                                                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batsman</th>
@@ -774,7 +795,7 @@ const MatchDetails = () => {
                                                             </tr>
                                                         ))}
                                                     </tbody>
-                                                </table>
+                                                </Table>
                                             </div>
 
                                             {/* Extras and Total */}
@@ -820,13 +841,13 @@ const MatchDetails = () => {
                                                     ))}
                                                 </div>
                                             </div>
-                                        </div>
+                                        </Card>
 
                                         {/* Team 1 Bowling Card */}
-                                        <div className="bg-white rounded-lg shadow-sm p-4">
+                                        <Card className="bg-white rounded-lg shadow-sm p-4">
                                             <h3 className="text-lg font-bold mb-3 text-[#16638A]">{matchData.team1.name} Bowling</h3>
                                             <div className="overflow-x-auto">
-                                                <table className="min-w-full divide-y divide-gray-200">
+                                                <Table className="min-w-full divide-y divide-gray-200">
                                                     <thead>
                                                         <tr>
                                                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bowler</th>
@@ -849,15 +870,14 @@ const MatchDetails = () => {
                                                             </tr>
                                                         ))}
                                                     </tbody>
-                                                </table>
+                                                </Table>
                                             </div>
-                                        </div>
+                                        </Card>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* Commentary Tab */}
                         {/* Commentary Tab */}
                         {activeTab === 'commentary' && (
                             <div className="space-y-4">
@@ -924,7 +944,7 @@ const MatchDetails = () => {
                         {activeTab === 'squads' && (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {/* Team 1 Squad */}
-                                <div className="bg-white rounded-lg shadow-sm p-4">
+                                <Card className="bg-white rounded-lg shadow-sm p-4">
                                     <h3 className="text-lg font-bold mb-4 text-[#16638A] text-center">{matchData.team1.name}</h3>
                                     <div className="space-y-4">
                                         <div>
@@ -968,10 +988,10 @@ const MatchDetails = () => {
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </Card>
 
                                 {/* Team 2 Squad */}
-                                <div className="bg-white rounded-lg shadow-sm p-4">
+                                <Card className="bg-white rounded-lg shadow-sm p-4">
                                     <h3 className="text-lg font-bold mb-4 text-[#16638A] text-center">{matchData.team2.name}</h3>
                                     <div className="space-y-4">
                                         <div>
@@ -1015,7 +1035,7 @@ const MatchDetails = () => {
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </Card>
                             </div>
                         )}
 
@@ -1026,8 +1046,8 @@ const MatchDetails = () => {
                                 <div className="mb-6">
                                     <h3 className="text-xl font-bold mb-3 text-[#16638A]">Match Information</h3>
                                     <div className="grid grid-cols-1 font-bold text-blue-900 md:grid-cols-2 gap-4">
-                                        <div className="bg-gray-50 p-4 rounded-lg">
-                                            <h4 className="text-xl font-bold mb-2">Match Details</h4>
+                                        <Card className="bg-gray-50 p-4 rounded-lg">
+                                            <h4 className="font-medium mb-2">Match Details</h4>
                                             <div className="space-y-1">
                                                 <p><span className="font-medium">Venue:</span> {matchData.venue}</p>
                                                 <p><span className="font-medium">Date:</span> {new Date(matchData.date).toLocaleDateString('en-US', {
@@ -1038,14 +1058,14 @@ const MatchDetails = () => {
                                                 })}</p>
                                                 <p><span className="font-medium">Toss:</span> {matchData.toss.winner} won the toss and chose to {matchData.toss.decision}</p>
                                             </div>
-                                        </div>
-                                        <div className="bg-gray-50 p-4 rounded-lg">
-                                            <h4 className="text-xl font-bold mb-2">Run Rates</h4>
+                                        </Card>
+                                        <Card className="bg-gray-50 p-4 rounded-lg">
+                                            <h4 className="font-medium mb-2">Run Rates</h4>
                                             <div className="space-y-1 font-bold">
                                                 <p><span className="font-medium">Current Run Rate:</span> {matchData.currentRunRate}</p>
-                                                <p><span className="font-medium">Required Run Rate:</span> {matchData.requiredRunRate}</p>
+                                                <p><span className="font-medium ml-2">Required Run Rate:</span> {matchData.requiredRunRate}</p>
                                             </div>
-                                        </div>
+                                        </Card>
                                     </div>
                                 </div>
 
@@ -1053,7 +1073,7 @@ const MatchDetails = () => {
                                 <div className="mb-6 font-bold text-black">
                                     <h3 className="text-xl font-bold mb-3 text-[#16638A]">Partnerships</h3>
                                     <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200">
+                                        <Table className="min-w-full divide-y divide-gray-200">
                                             <thead>
                                                 <tr>
                                                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partners</th>
@@ -1076,7 +1096,7 @@ const MatchDetails = () => {
                                                     </tr>
                                                 ))}
                                             </tbody>
-                                        </table>
+                                        </Table>
                                     </div>
                                 </div>
 
@@ -1084,7 +1104,7 @@ const MatchDetails = () => {
                                 <div>
                                     <h3 className="text-xl font-bold mb-3 text-[#16638A]">Key Statistics</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="bg-gray-50 text-black p-4 rounded-lg">
+                                        <Card className="bg-gray-50 text-black p-4 rounded-lg">
                                             <h4 className="font-medium mb-2">Most Runs</h4>
                                             <div className="space-y-2">
                                                 {[...matchData.team1.battingStats, ...matchData.team2.battingStats]
@@ -1097,8 +1117,8 @@ const MatchDetails = () => {
                                                         </div>
                                                     ))}
                                             </div>
-                                        </div>
-                                        <div className="bg-gray-50 text-black p-4 rounded-lg">
+                                        </Card>
+                                        <Card className="bg-gray-50 text-black p-4 rounded-lg">
                                             <h4 className="font-medium mb-2">Most Wickets</h4>
                                             <div className="space-y-2">
                                                 {matchData.team2.bowlingStats
@@ -1111,8 +1131,8 @@ const MatchDetails = () => {
                                                         </div>
                                                     ))}
                                             </div>
-                                        </div>
-                                        <div className="bg-gray-50 p-4 text-black rounded-lg">
+                                        </Card>
+                                        <Card className="bg-gray-50 p-4 text-black rounded-lg">
                                             <h4 className="font-medium mb-2">Best Strike Rates</h4>
                                             <div className="space-y-2">
                                                 {[...matchData.team1.battingStats, ...matchData.team2.battingStats]
@@ -1126,7 +1146,7 @@ const MatchDetails = () => {
                                                         </div>
                                                     ))}
                                             </div>
-                                        </div>
+                                        </Card>
                                     </div>
                                 </div>
                             </div>)}

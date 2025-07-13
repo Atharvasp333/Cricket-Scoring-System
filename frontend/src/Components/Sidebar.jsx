@@ -1,112 +1,121 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { FiHome, FiCalendar, FiAward, FiUser, FiLogOut, FiX } from 'react-icons/fi';
-import { useAuth } from '../contexts/AuthContext';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  FiX, 
+  FiHome, 
+  FiCalendar, 
+  FiAward, 
+  FiBarChart2, 
+  FiUser, 
+  FiSettings, 
+  FiLogOut 
+} from 'react-icons/fi';
+import Button from './Button';
+import Avatar from './Avatar';
 
-const Sidebar = ({ isOpen, toggleSidebar, darkMode }) => {
-  const { currentUser, userRole } = useAuth();
+const Sidebar = ({ isOpen, toggleSidebar, navItems, userMenuItems, userInitials, currentUser }) => {
+  const location = useLocation();
 
-  const isActive = (path) => {
-    const isPathActive = window.location.pathname === path;
-    return isPathActive 
-      ? darkMode 
-        ? 'text-primary-dark bg-neutral-dark' 
-        : 'text-white bg-blue-700' 
-      : darkMode 
-        ? 'text-text-primary-dark hover:bg-neutral-dark/50' 
-        : 'text-white hover:bg-blue-600';
+  const isActive = (paths) => {
+    return paths.some(path => location.pathname.startsWith(path))
+      ? 'bg-blue-700/20 text-white'
+      : 'text-gray-200 hover:bg-blue-700/10';
   };
 
   return (
-    <div className={`fixed inset-y-0 left-0 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
-      w-64 shadow-lg z-50 transition-transform duration-300 ease-in-out
-      ${darkMode ? 'bg-neutral-dark' : 'bg-[#16638A]'}`}>
+    <div 
+      className={`fixed inset-0 z-50 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
+      md:hidden transition-transform duration-300 ease-in-out`}
+    >
+      <div 
+        className="fixed inset-0 bg-black/50"
+        onClick={toggleSidebar}
+        aria-hidden="true"
+      />
       
-      <div className={`flex items-center justify-between p-4 ${darkMode ? 'border-b border-border-dark' : 'border-b border-blue-500'}`}>
-        <div className="flex items-center">
-          <img
-            src="https://zemo.co.in/images/ZemoLogoNeon.svg"
-            alt="Zemo Logo"
-            className="h-8 w-auto"
-          />
-        </div>
-        <button onClick={toggleSidebar} className={darkMode ? "text-text-primary-dark" : "text-white"}>
-          <FiX className="h-6 w-6" />
-        </button>
-      </div>
-      
-      <div className="p-4">
-        {currentUser && (
-          <div className={`flex items-center mb-6 p-2 rounded-lg ${darkMode ? 'bg-neutral-dark/50' : 'bg-blue-600'}`}>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 
-              ${darkMode ? 'bg-primary-dark text-neutral-dark' : 'bg-white text-[#16638A]'}`}>
-              {currentUser.photoURL ? (
-                <img src={currentUser.photoURL} alt="Profile" className="w-10 h-10 rounded-full" />
-              ) : (
-                <FiUser />
-              )}
-            </div>
-            <div>
-              <p className={`font-medium ${darkMode ? 'text-text-primary-dark' : 'text-white'}`}>
-                {currentUser.displayName || 'User'}
-              </p>
-              <p className={`text-xs ${darkMode ? 'text-text-muted-dark' : 'text-blue-100'}`}>
-                Role: {userRole || 'Viewer'}
-              </p>
-            </div>
+      <div className="relative flex h-full w-72 flex-col bg-blue-800 shadow-xl">
+        <div className="flex items-center justify-between p-4 border-b border-blue-700">
+          <div className="flex items-center space-x-2">
+            <img
+              src="/logo-white.svg"
+              alt="Cricket Scoring System"
+              className="h-8 w-auto"
+            />
+            <span className="text-white font-semibold">Cricket Scoring</span>
           </div>
-        )}
-        
-        <nav className="space-y-1">
-          <Link
-            to={userRole === 'organiser' ? '/organiser-homepage' : 
-                userRole === 'scorer' ? '/scorer-home' : 
-                userRole === 'player' ? '/player-home' :
-                '/viewer-home'}
-            className={`flex items-center p-3 rounded-lg transition-colors ${isActive('/viewer-home') || 
-              isActive('/scorer-home') || 
-              isActive('/organiser-homepage') ||
-              isActive('/player-home')}`}
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={toggleSidebar}
+            className="p-1 text-white hover:bg-blue-700/50 rounded-full"
+            aria-label="Close menu"
+            iconOnly
           >
-            <FiHome className="mr-3" />
-            <span>Home</span>
-          </Link>
-          
-          <Link
-            to={userRole === 'organiser' ? '/organiser/completed-matches' : 
-                userRole === 'scorer' ? '/completed-matches' : 
-                '/CompletedMatches'}
-            className={`flex items-center p-3 rounded-lg transition-colors ${isActive('/CompletedMatches') || 
-              isActive('/completed-matches') || 
-              isActive('/organiser/completed-matches')}`}
-            onClick={toggleSidebar}
-          >
-            <FiCalendar className="mr-3" />
-            <span>Matches</span>
-          </Link>
-          
-          <Link
-            to={userRole === 'organiser' ? '/organiser/completed-tournaments' : 
-                userRole === 'scorer' ? '/completed-tournaments' : 
-                '/CompletedTournaments'}
-            className={`flex items-center p-3 rounded-lg transition-colors ${isActive('/CompletedTournaments') || 
-              isActive('/completed-tournaments') || 
-              isActive('/organiser/completed-tournaments')}`}
-            onClick={toggleSidebar}
-          >
-            <FiAward className="mr-3" />
-            <span>Tournaments</span>
-          </Link>
-          
-          <Link
-            to="/player-stats"
-            className={`flex items-center p-3 rounded-lg transition-colors ${isActive('/player-stats')}`}
-            onClick={toggleSidebar}
-          >
-            <FiAward className="mr-3" />
-            <span>Player Stats</span>
-          </Link>
+            <FiX className="h-5 w-5" />
+          </Button>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto py-4">
+          <div className="space-y-1 px-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={`flex items-center px-3 py-3 text-sm font-medium rounded-md ${isActive(item.activePaths)}`}
+                onClick={toggleSidebar}
+              >
+                <span className="mr-3">{item.icon}</span>
+                {item.name}
+              </Link>
+            ))}
+          </div>
+
+          {currentUser && (
+            <div className="mt-8 pt-4 border-t border-blue-700">
+              <div className="px-4 mb-4">
+                <div className="flex items-center space-x-3">
+                  <Avatar 
+                    src={currentUser.photoURL} 
+                    alt={currentUser.displayName || currentUser.email}
+                    size="md"
+                    className="ring-2 ring-white"
+                  >
+                    {!currentUser.photoURL && userInitials}
+                  </Avatar>
+                  <div className="truncate">
+                    <p className="text-sm font-medium text-white">
+                      {currentUser.displayName || 'User'}
+                    </p>
+                    <p className="text-xs text-blue-200 truncate">
+                      {currentUser.email}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1 px-2">
+                {userMenuItems.map((item) => (
+                  item.type === 'divider' ? (
+                    <div key={`divider-${Math.random()}`} className="border-t border-blue-700 my-2" />
+                  ) : (
+                    <button
+                      key={item.label}
+                      onClick={() => {
+                        item.onClick();
+                        toggleSidebar();
+                      }}
+                      className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                        item.className || 'text-gray-200 hover:bg-blue-700/10 hover:text-white'
+                      }`}
+                    >
+                      <span className="mr-3">{item.icon}</span>
+                      {item.label}
+                    </button>
+                  )
+                ))}
+              </div>
+            </div>
+          )}
         </nav>
       </div>
     </div>

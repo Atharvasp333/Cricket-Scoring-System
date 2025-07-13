@@ -1,9 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronRight, UserPlus, X } from 'lucide-react';
 import { useSocket } from '../../contexts/SocketContext';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../utils/api';
+import { Components, Icons } from '../../exports';
+
+const { 
+  Card, 
+  Button, 
+  Input, 
+  Badge, 
+  Modal, 
+  LoadingSpinner 
+} = Components;
+
+const { 
+  FiSearch, 
+  FiUserPlus, 
+  FiX, 
+  FiChevronRight,
+  FiCalendar,
+  FiAward,
+  FiClock,
+  FiBarChart2
+} = Icons;
 
 const PlayerHome = () => {
   const navigate = useNavigate();
@@ -89,15 +109,15 @@ const PlayerHome = () => {
         if (currentUser && currentUser.uid) {
           // Check tournaments
           const isTournamentCaptain = tournamentsData.some(tournament => 
-            tournament.teams && tournament.teams.some(team => 
-              team.captains && team.captains.includes(currentUser.uid)
+            Array.isArray(tournament?.teams) && tournament.teams.some(team => 
+              Array.isArray(team?.captains) && team.captains.includes(currentUser.uid)
             )
           );
           
           // Check matches
           const isMatchCaptain = matchesData.some(match => 
-            (match.team1_captains && match.team1_captains.includes(currentUser.uid)) || 
-            (match.team2_captains && match.team2_captains.includes(currentUser.uid))
+            (Array.isArray(match.team1_captains) && match.team1_captains.includes(currentUser.uid)) || 
+            (Array.isArray(match.team2_captains) && match.team2_captains.includes(currentUser.uid))
           );
           
           setIsCaptain(isTournamentCaptain || isMatchCaptain);
@@ -113,14 +133,37 @@ const PlayerHome = () => {
               // Store the MongoDB user ID for later use
               setMongoUserId(userResponse.data._id);
               
-              // Fetch player stats
-              const statsResponse = await api.get(`/api/pstats/player/${userResponse.data._id}`);
-              setPlayerStats(statsResponse.data);
-              setStatsError(null);
+              try {
+                // Fetch player stats with error handling
+                const statsResponse = await api.get(`/api/player-stats/player/${userResponse.data._id}`);
+                if (statsResponse.data) {
+                  setPlayerStats(statsResponse.data);
+                  setStatsError(null);
+                }
+              } catch (err) {
+                if (err.response?.status === 404) {
+                  // Stats not found, initialize with default values
+                  setPlayerStats({
+                    matches: 0,
+                    runs: 0,
+                    wickets: 0,
+                    // Add other default stats fields as needed
+                  });
+                  setStatsError(null);
+                } else {
+                  console.error('Error fetching player stats:', err);
+                  setStatsError('Could not load your player statistics. Please try again later.');
+                }
+              }
               
               // Fetch user's registrations
-              const registrationsResponse = await api.get(`/api/registrations/user/${userResponse.data._id}`);
-              setUserRegistrations(registrationsResponse.data);
+              try {
+                const registrationsResponse = await api.get(`/api/registrations/user/${userResponse.data._id}`);
+                setUserRegistrations(registrationsResponse.data || []);
+              } catch (err) {
+                console.error('Error fetching registrations:', err);
+                setUserRegistrations([]);
+              }
             }
           } catch (err) {
             console.error('Error fetching player stats:', err);
@@ -256,7 +299,7 @@ const PlayerHome = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <button className="bg-gray-200 p-1 absolute right-4 top-1/2 transform -translate-y-1/2">
-              <Search className="text-gray-600" size={20} />
+              <FiSearch className="text-gray-600" size={20} />
             </button>
           </div>
         </div>
@@ -272,7 +315,7 @@ const PlayerHome = () => {
           {userRegistrations.length === 0 ? (
             <div className="text-center text-gray-500 font-medium py-8">
               You haven't registered for any matches or tournaments yet.
-              Look for the <UserPlus size={16} className="inline mx-1" /> icon to register!
+              Look for the <FiUserPlus size={16} className="inline mx-1" /> icon to register!
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -340,7 +383,7 @@ const PlayerHome = () => {
               className="bg-gray-200 px-2 flex items-center text-[#16638A] hover:text-[#0F4C75] font-medium"
               onClick={() => navigate('/player-stats')}
             >
-              View Detailed Stats <ChevronRight className="ml-1" size={16} />
+              View Detailed Stats <FiChevronRight className="ml-1" size={16} />
             </button>
           </div>
           
@@ -443,7 +486,7 @@ const PlayerHome = () => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-[#16638A]">My Upcoming Matches</h2>
             <button className="bg-gray-200 px-2 flex items-center text-[#16638A] hover:text-[#0F4C75] font-medium">
-              View All <ChevronRight className="ml-1" size={16} />
+              View All <FiChevronRight className="ml-1" size={16} />
             </button>
           </div>
           <div className="flex overflow-x-auto pb-4 space-x-4 scrollbar-hide">
@@ -463,14 +506,14 @@ const PlayerHome = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center">
-                        <span className="mr-3 text-lg">{match.team1?.logo || "🏏"}</span>
-                        <span className="font-semibold text-gray-800">{match.team1?.name || "Team 1"}</span>
+                        <span className="mr-3 text-lg">🏏</span>
+                        <span className="font-semibold text-gray-800">{match.team1_name || "Team 1"}</span>
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
                       <div className="flex items-center">
-                        <span className="mr-3 text-lg">{match.team2?.logo || "🏏"}</span>
-                        <span className="font-semibold text-gray-800">{match.team2?.name || "Team 2"}</span>
+                        <span className="mr-3 text-lg">🏏</span>
+                        <span className="font-semibold text-gray-800">{match.team2_name || "Team 2"}</span>
                       </div>
                     </div>
                   </div>
@@ -484,7 +527,7 @@ const PlayerHome = () => {
                         openRegistrationModal('match', match);
                       }}
                     >
-                      <UserPlus size={16} />
+                      <FiUserPlus size={16} />
                     </button>
                   </div>
                 </div>
@@ -519,18 +562,12 @@ const PlayerHome = () => {
                           <span className="mr-2">{match.team1?.logo || "🏏"}</span>
                           <span className="font-medium text-gray-800">{match.team1?.name || "Team 1"}</span>
                         </div>
-                        {match.team1?.score && (
-                          <span className="font-bold text-gray-900">{match.team1?.score}</span>
-                        )}
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center">
                           <span className="mr-2">{match.team2?.logo || "🏏"}</span>
                           <span className="font-medium text-gray-800">{match.team2?.name || "Team 2"}</span>
                         </div>
-                        {match.team2?.score && (
-                          <span className="font-bold text-gray-900">{match.team2?.score}</span>
-                        )}
                       </div>
                     </div>
                     <div className="mt-3 pt-2 border-t border-gray-200">
@@ -580,7 +617,7 @@ const PlayerHome = () => {
                               openRegistrationModal('tournament', tournament);
                             }}
                           >
-                            <UserPlus size={16} />
+                            <FiUserPlus size={16} />
                           </button>
                         </div>
                       ))}
@@ -624,7 +661,7 @@ const PlayerHome = () => {
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-[#16638A]">Cricket News</h2>
             <button className="bg-gray-200 px-2 flex items-center text-[#16638A] hover:text-[#0F4C75] font-medium" onClick={() => navigate('/old-news')}>
-              Previous News <ChevronRight className="ml-1" size={16} />
+              Previous News <FiChevronRight className="ml-1" size={16} />
             </button>
           </div>
           {loadingNews ? (
@@ -686,7 +723,7 @@ const PlayerHome = () => {
                 onClick={() => setShowRegistrationModal(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
-                <X size={24} />
+                <FiX size={24} />
               </button>
             </div>
             

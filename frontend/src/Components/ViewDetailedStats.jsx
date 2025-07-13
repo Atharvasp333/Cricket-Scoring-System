@@ -1,9 +1,14 @@
 import React from 'react';
+import { FiBarChart2 } from 'react-icons/fi';
 
-const ViewDetailedStats = () => {
+const ViewDetailedStats = ({ onClick, className = '' }) => {
   return (
-    <button className="text-black hover:bg-cyan-100 p-3 font-medium">
-      View Detailed Stats →
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800 ${className}`}
+    >
+      <FiBarChart2 className="mr-1 h-4 w-4" />
+      View Detailed Stats
     </button>
   );
 };

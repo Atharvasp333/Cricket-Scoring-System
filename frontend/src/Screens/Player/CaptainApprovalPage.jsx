@@ -1,9 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, X, ChevronLeft, Filter, RefreshCw, UserCheck, UserX } from 'lucide-react';
 import api from '../../utils/api';
 import { useSocket } from '../../contexts/SocketContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { Components, Icons } from '../../exports';
+
+const { 
+  Card, 
+  Button, 
+  Badge, 
+  Tabs, 
+  Tab, 
+  LoadingSpinner,
+  Modal
+} = Components;
+
+const { 
+  FiCheck, 
+  FiX, 
+  FiChevronLeft, 
+  FiFilter, 
+  FiRefreshCw, 
+  FiUserCheck, 
+  FiUserX,
+  FiClock
+} = Icons;
 
 const CaptainApprovalPage = () => {
   const navigate = useNavigate();
@@ -169,7 +190,7 @@ const CaptainApprovalPage = () => {
               onClick={() => navigate(-1)} 
               className="flex items-center text-gray-600 hover:text-gray-800 mb-4 md:mb-0"
             >
-              <ChevronLeft size={20} />
+              <FiChevronLeft size={20} />
               <span className="ml-1">Back</span>
             </button>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Captain Approval Dashboard</h1>
@@ -181,7 +202,7 @@ const CaptainApprovalPage = () => {
               onClick={fetchRegistrations} 
               className="flex items-center bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-50"
             >
-              <RefreshCw size={16} className="mr-2" />
+              <FiRefreshCw size={16} className="mr-2" />
               Refresh
             </button>
             
@@ -190,7 +211,7 @@ const CaptainApprovalPage = () => {
                 onClick={() => document.getElementById('statusDropdown').classList.toggle('hidden')}
                 className="flex items-center bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-50"
               >
-                <Filter size={16} className="mr-2" />
+                <FiFilter size={16} className="mr-2" />
                 {filter === 'all' ? 'All Status' : filter.charAt(0).toUpperCase() + filter.slice(1)}
               </button>
               <div id="statusDropdown" className="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
@@ -280,9 +301,9 @@ const CaptainApprovalPage = () => {
           <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
             <div className="flex justify-center mb-4">
               {filter === 'pending' ? (
-                <UserCheck className="h-16 w-16 text-gray-400" />
+                <FiUserCheck className="h-16 w-16 text-gray-400" />
               ) : filter === 'rejected' ? (
-                <UserX className="h-16 w-16 text-gray-400" />
+                <FiUserX className="h-16 w-16 text-gray-400" />
               ) : (
                 <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center">
                   <span className="text-gray-400 text-2xl">?</span>
@@ -384,13 +405,13 @@ const CaptainApprovalPage = () => {
                             onClick={() => handleStatusUpdate(registration._id, 'approved')}
                             className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-1.5 rounded-full transition-colors"
                           >
-                            <Check size={16} />
+                            <FiCheck size={16} />
                           </button>
                           <button
                             onClick={() => handleStatusUpdate(registration._id, 'rejected')}
                             className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-full transition-colors"
                           >
-                            <X size={16} />
+                            <FiX size={16} />
                           </button>
                         </div>
                       )}
@@ -399,7 +420,7 @@ const CaptainApprovalPage = () => {
                           onClick={() => handleStatusUpdate(registration._id, 'rejected')}
                           className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-full transition-colors"
                         >
-                          <X size={16} />
+                          <FiX size={16} />
                         </button>
                       )}
                       {registration.status === 'rejected' && (
@@ -407,7 +428,7 @@ const CaptainApprovalPage = () => {
                           onClick={() => handleStatusUpdate(registration._id, 'approved')}
                           className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-1.5 rounded-full transition-colors"
                         >
-                          <Check size={16} />
+                          <FiCheck size={16} />
                         </button>
                       )}
                     </td>

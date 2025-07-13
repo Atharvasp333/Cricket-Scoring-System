@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Components } from '../../exports';
 
-import Stepper from './components/Stepper';
-import BasicMatchInfo from './components/BasicMatchInfo';
-import TeamPlayerSelection from './components/TeamPlayerSelection';
-import MatchRules from './components/MatchRules';
-import ScorerAccess from './components/ScorerAccess';
-import Confirmation from './components/Confirmation';
-import Navbar from '../../Components/Navbar';
-import Footer from '../../Components/Footer';
+const { 
+  Navbar,
+  Footer,
+  Stepper,
+  BasicMatchInfo,
+  TeamPlayerSelection,
+  MatchRules,
+  ScorerAccess,
+  Confirmation
+} = Components;
 
 const CreateMatchPage = () => {
     const [step, setStep] = useState(1);

@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Components, Icons } from '../../exports';
+
+const { Card, LoadingSpinner, Button } = Components;
+const { FiCalendar, FiClock, FiArrowRight } = Icons;
 
 const OldNews = () => {
   const [newsData, setNewsData] = useState([]);
@@ -29,11 +33,11 @@ const OldNews = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 flex flex-col items-center">
       <div className="w-full max-w-6xl">
-        <button onClick={() => navigate(-1)} className="mb-6 text-[#16638A] hover:text-[#0F4C75] font-semibold">← Back</button>
+        <Button onClick={() => navigate(-1)} className="mb-6 text-[#16638A] hover:text-[#0F4C75] font-semibold">← Back</Button>
         <h1 className="text-3xl font-bold text-[#16638A] mb-8 text-center">Previous Cricket News</h1>
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#16638A]"></div>
+            <LoadingSpinner className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#16638A]"></LoadingSpinner>
             <span className="ml-4 text-[#16638A] font-medium">Loading news...</span>
           </div>
         ) : error ? (
@@ -43,7 +47,7 @@ const OldNews = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {newsData.map((item, index) => (
-              <div
+              <Card
                 key={item.url || item.title}
                 className={`bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer fade-in`}
                 onClick={() => window.open(item.url, '_blank')}
@@ -71,7 +75,7 @@ const OldNews = () => {
                     </span>
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}

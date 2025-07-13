@@ -1,5 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Components, Icons } from '../../exports';
+
+const { Card, Button, Table, Input, TextArea } = Components;
+const { FiCheck, FiX, FiUpload, FiAward, FiUsers } = Icons;
 
 const PostMatch = () => {
     const { matchId } = useParams();
@@ -39,8 +43,8 @@ const PostMatch = () => {
         momCandidates: ['Player A1', 'Player B1', 'Player A2', 'Player B2']
     };
 
-    const [selectedMOM, setSelectedMOM] = React.useState(null);
-    const [isFinalized, setIsFinalized] = React.useState(false);
+    const [selectedMOM, setSelectedMOM] = useState(null);
+    const [isFinalized, setIsFinalized] = useState(false);
 
     const handleMOMSelect = (player) => {
         setSelectedMOM(player);

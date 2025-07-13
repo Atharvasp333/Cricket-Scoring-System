@@ -1,8 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, X, ChevronLeft, Filter, RefreshCw, UserCheck, UserX } from 'lucide-react';
 import api from '../../utils/api';
 import { useSocket } from '../../contexts/SocketContext';
+import { Components, Icons } from '../../exports';
+
+const {
+  Card,
+  Button,
+  Badge,
+  Tabs,
+  Tab,
+  LoadingSpinner,
+  Modal,
+  Table
+} = Components;
+
+const {
+  Check,
+  X,
+  ChevronLeft,
+  Filter,
+  RefreshCw,
+  UserCheck,
+  UserX
+} = Icons;
 
 const RegistrationManagementPage = () => {
   const navigate = useNavigate();
@@ -199,7 +220,7 @@ const RegistrationManagementPage = () => {
           </div>
         ) : (
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
+            <Table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -309,7 +330,7 @@ const RegistrationManagementPage = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Table>
           </div>
         )}
       </div>

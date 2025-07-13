@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import {playersData} from '../../data/playersData'
+import { playersData } from '../../data/playersData';
+import { Components, Icons } from '../../exports';
+
+const { Card, Button, Select, Input, Tabs, Tab } = Components;
+const { FiSearch, FiFilter, FiArrowLeft, FiBarChart2, FiAward, FiCalendar, FiTrendingUp } = Icons;
 
 const PlayerDetailsPage = () => {
   const { playerId } = useParams();

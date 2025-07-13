@@ -1,6 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
+import { Components, Icons } from '../../exports';
+
+const { 
+  Button, 
+  Card, 
+  Modal, 
+  Select, 
+  Input, 
+  LoadingSpinner, 
+  Alert 
+} = Components;
+
+const { 
+  FiAlertCircle, 
+  FiCheck, 
+  FiX, 
+  FiSave,
+  FiRefreshCw,
+  FiPlus,
+  FiMinus
+} = Icons;
 
 const Scoring = () => {
   const { matchId } = useParams();
@@ -187,8 +208,16 @@ const Scoring = () => {
           setUiState(prev => ({ ...prev, showStartInningsModal: true }));
         } catch (createErr) {
           console.error('Failed to create new match state:', createErr);
-          // Show the start innings modal even if creation fails
-          setUiState(prev => ({ ...prev, showStartInningsModal: true }));
+          // If there's an error, try one more time with a delay
+          setTimeout(async () => {
+            try {
+              console.log('Retrying saving initial match state...');
+              await saveMatchState(newMatchState);
+              console.log('Initial match state saved successfully on retry');
+            } catch (retryErr) {
+              console.error('Failed to save initial match state on retry:', retryErr);
+            }
+          }, 1000);
         }
       } else {
         // For other errors, show the start innings modal
@@ -1040,12 +1069,12 @@ const Scoring = () => {
                   </div>
                 </div>
               </div>
-              <button 
+              <Button 
                 onClick={handleSwapBatsmen}
                 className="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm"
               >
                 Swap Batsmen
-              </button>
+              </Button>
             </div>
 
             {/* Bowler Info */}
@@ -1060,12 +1089,12 @@ const Scoring = () => {
                   </div>
                 </div>
               )}
-              <button 
+              <Button 
                 onClick={handleChangeBowler}
                 className="mt-2 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded text-sm"
               >
                 Change Bowler
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -1078,53 +1107,53 @@ const Scoring = () => {
               <h3 className="font-medium mb-2 text-blue-900">Runs</h3>
               <div className="flex flex-wrap gap-2">
                 {[0, 1, 2, 3, 4, 5, 6].map(runs => (
-                  <button
+                  <Button
                     key={runs}
                     onClick={() => handleRunsClick(runs)}
                     className={`py-2 px-4 rounded ${uiState.runsScored === runs ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
                   >
                     {runs}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
             
             {/* Extras and Wickets */}
             <div className="flex flex-wrap gap-4 mb-4">
-              <button
+              <Button
                 onClick={handleExtraClick}
                 className={`py-2 px-4 rounded ${uiState.isExtra ? 'bg-green-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
               >
                 Extra
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleWicketClick}
                 className={`py-2 px-4 rounded ${uiState.isWicket ? 'bg-red-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
               >
                 Wicket
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleBallTypeClick}
                 className={`py-2 px-4 rounded ${uiState.ballType ? 'bg-purple-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
               >
                 Ball Type
-              </button>
+              </Button>
             </div>
             
             {/* Submit and Undo */}
             <div className="flex flex-wrap gap-4">
-              <button
+              <Button
                 onClick={handleSubmitBall}
                 className="py-2 px-6 bg-green-600 hover:bg-green-700 text-white rounded font-medium"
               >
                 Submit Ball
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleUndoLastBall}
                 className="py-2 px-6 bg-yellow-600 hover:bg-yellow-700 text-white rounded font-medium"
               >
                 Undo Last Ball
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -1184,18 +1213,18 @@ const Scoring = () => {
             <h2 className="text-xl font-bold mb-4">Start Innings</h2>
             <p className="mb-4">Which team is batting first?</p>
             <div className="flex flex-col gap-3">
-              <button
+              <Button
                 onClick={() => handleStartInnings(0)}
                 className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded"
               >
                 {matchData.team1_name}
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => handleStartInnings(1)}
                 className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded"
               >
                 {matchData.team2_name}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1208,13 +1237,13 @@ const Scoring = () => {
             <h2 className="text-xl font-bold mb-4">Select Wicket Type</h2>
             <div className="grid grid-cols-2 gap-3">
               {['Bowled', 'Caught', 'LBW', 'Run Out', 'Stumped', 'Hit Wicket'].map(type => (
-                <button
+                <Button
                   key={type}
                   onClick={() => handleWicketTypeSelect(type)}
                   className="py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded"
                 >
                   {type}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -1230,13 +1259,13 @@ const Scoring = () => {
               {matchState.battingTeam?.players
                 .filter(player => !matchState.batsmen.some(b => b.name === player.name) || b.isOut)
                 .map(player => (
-                  <button
+                  <Button
                     key={player.name}
                     onClick={() => handleNewBatsmanSelect(player.name)}
                     className="w-full py-2 px-4 mb-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-left"
                   >
                     {player.name}
-                  </button>
+                  </Button>
                 ))}
             </div>
           </div>
@@ -1250,13 +1279,13 @@ const Scoring = () => {
             <h2 className="text-xl font-bold mb-4">Select Extra Type</h2>
             <div className="grid grid-cols-2 gap-3">
               {['wide', 'no-ball', 'bye', 'leg-bye'].map(type => (
-                <button
+                <Button
                   key={type}
                   onClick={() => handleExtraTypeSelect(type)}
                   className="py-2 px-4 bg-yellow-600 hover:bg-yellow-700 text-white rounded capitalize"
                 >
                   {type}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -1270,7 +1299,7 @@ const Scoring = () => {
             <h2 className="text-xl font-bold mb-4">Select Ball Type</h2>
             <div className="grid grid-cols-2 gap-3">
               {['Normal', 'Bouncer', 'Yorker', 'Full', 'Good Length', 'Short'].map(type => (
-                <button
+                <Button
                   key={type}
                   onClick={() => handleBallTypeSelect(type)}
                   className={`py-2 px-4 ${
@@ -1278,7 +1307,7 @@ const Scoring = () => {
                   } text-white rounded`}
                 >
                   {type}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -1294,13 +1323,13 @@ const Scoring = () => {
               {matchState.bowlingTeam?.players
                 .filter(player => player.name !== matchState.lastBowler)
                 .map(player => (
-                  <button
+                  <Button
                     key={player.name}
                     onClick={() => handleBowlerSelect(player.name)}
                     className="w-full py-2 px-4 mb-2 bg-red-600 hover:bg-red-700 text-white rounded text-left"
                   >
                     {player.name}
-                  </button>
+                  </Button>
                 ))}
             </div>
           </div>

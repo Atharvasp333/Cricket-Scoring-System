@@ -1,5 +1,9 @@
-import React from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import React from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Components, Icons } from '../../exports';
+
+const { Card, Button, Badge, Table } = Components;
+const { FiAward, FiUsers, FiBarChart2, FiHome } = Icons;
 
 const MatchSummary = () => {
   const { matchId } = useParams()

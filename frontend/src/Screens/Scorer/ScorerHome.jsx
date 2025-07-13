@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { auth } from '../../firebase';
 import api from '../../utils/api';
+import { Components, Icons } from '../../exports';
+
+const { Card, LoadingSpinner, EmptyState } = Components;
+const { FiClock, FiPlay, FiCalendar, FiAlertCircle } = Icons;
 
 const ScorerHome = () => {
   const [liveMatches, setLiveMatches] = useState([]);

@@ -1,4 +1,8 @@
 import React from 'react';
+import { Components, Icons } from '../../exports';
+
+const { Card, Button, EmptyState } = Components;
+const { FiAward, FiCalendar, FiClock, FiMapPin, FiDownload, FiEye } = Icons;
 
 const CompletedMatches = () => {
   // Mock data for completed matches

@@ -1,6 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
+import { Components, Icons } from '../../exports';
+
+const {
+  Card,
+  Button,
+  Tabs,
+  Tab,
+  LoadingSpinner,
+  Modal,
+  Table,
+  Badge
+} = Components;
+
+const {
+  FiEdit2,
+  FiTrash2,
+  FiClock,
+  FiCalendar,
+  FiMapPin,
+  FiUsers,
+  FiAward,
+  FiBarChart2,
+  FiPlus,
+  FiX,
+  FiCheck,
+  FiAlertTriangle,
+  FiDownload,
+  FiShare2
+} = Icons;
 
 const MatchDetailPage = () => {
     const { id } = useParams();
