@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
+import WagonWheel from '../Scorer/WagonWheel';
 import { Components, Icons } from '../../exports';
 
 const { 
@@ -75,7 +76,9 @@ const Scoring = () => {
     showExtraModal: false,
     showBallTypeModal: false,
     showChangeBowlerModal: false,
-    showStartInningsModal: false
+    showStartInningsModal: false,
+    showWagonWheel: false,
+    selectedShotDirection: null,
   });
 
   // Initialize match state
@@ -494,6 +497,24 @@ const Scoring = () => {
     setUiState(prev => ({ ...prev, showBallTypeModal: true }));
   };
 
+  // Handle wagon wheel button click
+  const handleShowWagonWheel = () => {
+    setUiState(prev => ({ ...prev, showWagonWheel: true }));
+  };
+
+  // Handle close wagon wheel
+  const handleCloseWagonWheel = () => {
+    setUiState(prev => ({ ...prev, showWagonWheel: false }));
+  };
+
+  // Handle shot direction selection
+  const handleShotDirectionSelect = (shotDirection) => {
+    setUiState(prev => ({
+      ...prev,
+      selectedShotDirection: shotDirection
+    }));
+  };
+
   // Handle wicket type selection
   const handleWicketTypeSelect = (type) => {
     setUiState(prev => ({
@@ -594,6 +615,21 @@ const Scoring = () => {
     setUiState(prev => ({ ...prev, showChangeBowlerModal: true }));
   }, []);
 
+  // Helper function to get ball display text
+  const getBallDisplayText = (runs, isExtra, extraType, isWicket, shotDirection) => {
+    if (isWicket) return 'W';
+    if (isExtra) {
+      switch (extraType) {
+        case 'wide': return runs > 0 ? `Wd+${runs}` : 'Wd';
+        case 'no-ball': return runs > 0 ? `Nb+${runs}` : 'Nb';
+        case 'bye': return runs > 0 ? `B+${runs}` : 'B';
+        case 'leg-bye': return runs > 0 ? `Lb+${runs}` : 'Lb';
+        default: return 'E';
+      }
+    }
+    return runs !== null ? runs.toString() : '';
+  };
+
   // Handle submit ball
   const handleSubmitBall = async () => {
     // Validation
@@ -683,7 +719,14 @@ const Scoring = () => {
       ballType: uiState.ballType,
       bowler: matchState.currentBowler.name,
       batsman: matchState.striker.name,
-      displayText: getBallDisplayText(uiState.runsScored, uiState.isExtra, uiState.extraType, uiState.isWicket),
+      shotDirection: uiState.selectedShotDirection,
+      displayText: getBallDisplayText(
+        uiState.runsScored, 
+        uiState.isExtra, 
+        uiState.extraType, 
+        uiState.isWicket,
+        uiState.selectedShotDirection
+      ),
       timestamp: new Date().toISOString()
     };
 
@@ -827,7 +870,8 @@ const Scoring = () => {
       extraType: '',
       isWicket: false,
       wicketType: '',
-      ballType: ''
+      ballType: '',
+      selectedShotDirection: null
     }));
 
     // Show new batsman modal if a wicket fell
@@ -847,21 +891,6 @@ const Scoring = () => {
     } catch (err) {
       console.error('Failed to save ball:', err);
     }
-  };
-
-  // Helper function to get ball display text
-  const getBallDisplayText = (runs, isExtra, extraType, isWicket) => {
-    if (isWicket) return 'W';
-    if (isExtra) {
-      switch (extraType) {
-        case 'wide': return runs > 0 ? `Wd+${runs}` : 'Wd';
-        case 'no-ball': return runs > 0 ? `Nb+${runs}` : 'Nb';
-        case 'bye': return runs > 0 ? `B+${runs}` : 'B';
-        case 'leg-bye': return runs > 0 ? `Lb+${runs}` : 'Lb';
-        default: return 'E';
-      }
-    }
-    return runs !== null ? runs.toString() : '';
   };
 
   // Handle undo last ball
@@ -1044,6 +1073,11 @@ const Scoring = () => {
                     <span className="font-medium text-blue-900">Ball Type:</span> {uiState.ballType}
                   </div>
                 )}
+                {uiState.selectedShotDirection && (
+                  <div className="mr-4 text-black mb-2">
+                    <span className="font-medium text-blue-900">Shot:</span> {uiState.selectedShotDirection.label}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1063,8 +1097,7 @@ const Scoring = () => {
                   <div className="font-medium">{matchState.nonStriker?.name}</div>
                   <div className="text-sm">
                     {matchState.nonStriker?.runs} ({matchState.nonStriker?.balls}) |
-                    {matchState.nonStriker?.fours}x
-                    4 | {matchState.nonStriker?.sixes}x6 |
+                    {matchState.nonStriker?.fours}x4 | {matchState.nonStriker?.sixes}x6 |
                     SR: {matchState.nonStriker?.strikeRate}
                   </div>
                 </div>
@@ -1118,7 +1151,7 @@ const Scoring = () => {
               </div>
             </div>
             
-            {/* Extras and Wickets */}
+            {/* Extras, Wickets, Ball Type, and Shot Direction */}
             <div className="flex flex-wrap gap-4 mb-4">
               <Button
                 onClick={handleExtraClick}
@@ -1137,6 +1170,12 @@ const Scoring = () => {
                 className={`py-2 px-4 rounded ${uiState.ballType ? 'bg-purple-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
               >
                 Ball Type
+              </Button>
+              <Button
+                onClick={handleShowWagonWheel}
+                className={`py-2 px-4 rounded ${uiState.selectedShotDirection ? 'bg-indigo-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+              >
+                Shot Direction
               </Button>
             </div>
             
@@ -1164,13 +1203,17 @@ const Scoring = () => {
               {matchState.currentOver.map((ball, index) => (
                 <div 
                   key={index} 
-                  className={`w-8 h-8 flex items-center justify-center rounded-full ${
+                  className={`w-8 h-8 flex items-center justify-center rounded-full relative ${
                     ball.isWicket ? 'bg-red-500 text-white' : 
                     ball.isExtra ? 'bg-yellow-500 text-black' : 
                     ball.runs > 0 ? 'bg-green-500 text-white' : 'bg-gray-300 text-black'
                   }`}
+                  title={ball.shotDirection ? `Shot: ${ball.shotDirection.label}` : ''}
                 >
                   {ball.displayText}
+                  {ball.shotDirection && (
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1189,13 +1232,17 @@ const Scoring = () => {
                     {over.map((ball, ballIndex) => (
                       <div 
                         key={ballIndex} 
-                        className={`w-6 h-6 flex items-center justify-center rounded-full text-xs ${
+                        className={`w-6 h-6 flex items-center justify-center rounded-full text-xs relative ${
                           ball.isWicket ? 'bg-red-500 text-white' : 
                           ball.isExtra ? 'bg-yellow-500 text-black' : 
                           ball.runs > 0 ? 'bg-green-500 text-white' : 'bg-gray-300 text-black'
                         }`}
+                        title={ball.shotDirection ? `Shot: ${ball.shotDirection.label}` : ''}
                       >
                         {ball.displayText}
+                        {ball.shotDirection && (
+                          <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1257,7 +1304,7 @@ const Scoring = () => {
             <h2 className="text-xl font-bold mb-4">Select New Batsman</h2>
             <div className="max-h-96 overflow-y-auto">
               {matchState.battingTeam?.players
-                .filter(player => !matchState.batsmen.some(b => b.name === player.name) || b.isOut)
+                .filter(player => !matchState.batsmen.some(b => b.name === player.name && !b.isOut))
                 .map(player => (
                   <Button
                     key={player.name}
@@ -1335,6 +1382,14 @@ const Scoring = () => {
           </div>
         </div>
       )}
+
+      {/* Wagon Wheel Modal */}
+      <WagonWheel
+        isVisible={uiState.showWagonWheel}
+        selectedShot={uiState.selectedShotDirection}
+        onShotSelect={handleShotDirectionSelect}
+        onClose={handleCloseWagonWheel}
+      />
     </div>
   );
 };
