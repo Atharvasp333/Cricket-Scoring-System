@@ -51,7 +51,7 @@ function App() {
             <ScrollToTop />
             <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
               <Navbar />
-              <main className="flex-grow container mx-auto px-4 py-6">
+              <main>
                 <Routes>
                   {/* Redirect root to viewer home for now */}
                   <Route path="/" element={<Navigate to="/viewer-home" />} />

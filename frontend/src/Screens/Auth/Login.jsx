@@ -104,17 +104,17 @@ const Login = () => {
   const redirectBasedOnRole = (role) => {
     switch(role) {
       case 'organizer':
-        navigate('/organizer/dashboard');
+        navigate('/organiser-homepage');
         break;
       case 'player':
-        navigate('/player/dashboard');
+        navigate('/player-home');
         break;
       case 'scorer':
-        navigate('/scorer/dashboard');
+        navigate('/scorer-home');
         break;
       case 'viewer':
       default:
-        navigate('/viewer/dashboard');
+        navigate('/viewer-home');
     }
   };
 
