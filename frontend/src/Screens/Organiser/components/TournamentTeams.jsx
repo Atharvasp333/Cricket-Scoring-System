@@ -21,13 +21,18 @@ const TeamCard = ({ team, index, handleChange, handleRemove }) => (
     
     <div className="border-t pt-4">
       <h3 className="text-md font-semibold mb-2 text-gray-800">Team Captain</h3>
+      {/* Dummy users array for selection (replace with real data/fetch) */}
       <UserSelect 
-        role="player" 
-        value={team.captains?.[0] || ''} 
-        onChange={(value) => handleChange(index, 'captains', value ? [value] : [])} 
-        label="Select Team Captain" 
-        placeholder="Select a player as captain" 
-        className="mb-2" 
+        users={[
+          { id: '662e00000000000000000001', name: 'Player 1' },
+          { id: '662e00000000000000000002', name: 'Player 2' },
+          { id: '662e00000000000000000003', name: 'Player 3' },
+          { id: '662e00000000000000000004', name: 'Player 4' }
+        ]}
+        selectedUsers={team.captains || []}
+        onSelect={(value) => handleChange(index, 'captains', value)}
+        placeholder="Select a player as captain"
+        className="mb-2"
       />
       <p className="text-sm text-gray-500">The captain will be able to approve player registrations for this team.</p>
     </div>

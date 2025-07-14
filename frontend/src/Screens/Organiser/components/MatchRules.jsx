@@ -1,4 +1,9 @@
 import React from 'react';
+import { Components } from '../../../exports';
+
+const {
+    FormField
+} = Components;
 
 const MatchRules = ({ data, setData, nextStep, prevStep }) => {
     const handleChange = (e) => {

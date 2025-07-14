@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Components } from '../../exports';
+import Stepper from './components/Stepper';
+import BasicMatchInfo from './components/BasicMatchInfo';
+import TeamPlayerSelection from './components/TeamPlayerSelection';
+import MatchRules from './components/MatchRules';
+import ScorerAccess from './components/ScorerAccess';
+import Confirmation from './components/Confirmation';
+import api from '../../utils/api';
 
 const { 
   Navbar,
-  Footer,
-  Stepper,
-  BasicMatchInfo,
-  TeamPlayerSelection,
-  MatchRules,
-  ScorerAccess,
-  Confirmation
+  Footer
 } = Components;
 
 const CreateMatchPage = () => {
@@ -35,10 +36,14 @@ const CreateMatchPage = () => {
 
     const navigate = useNavigate();
 
-    const nextStep = () => setStep(prev => prev + 1);
+    const nextStep = () => {
+        console.log('Moving to next step:', step + 1);
+        setStep(prev => prev + 1);
+    };
     const prevStep = () => setStep(prev => prev - 1);
 
     const submitMatch = async () => {
+        console.log('Submitting match:', matchData);
         // Validate required fields
         if (!matchData.match_name || !matchData.team1_name || !matchData.team2_name || !matchData.dateTime || !matchData.venue) {
             alert('Please fill in all required fields: Match Name, Team 1, Team 2, Venue, and Date/Time.');
@@ -66,30 +71,14 @@ const CreateMatchPage = () => {
         };
 
         try {
-            const response = await fetch('/api/matches', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-            
-            if (!response.ok) {
-                let errorMsg = 'Failed to create match';
-                try {
-                    const errorData = await response.json();
-                    errorMsg = errorData.error || errorMsg;
-                } catch (jsonErr) {
-                    try {
-                        const text = await response.text();
-                        if (text) errorMsg = text;
-                    } catch {}
-                }
-                console.error('Backend error:', errorMsg);
-                throw new Error(errorMsg);
+            const response = await api.post('/api/matches', payload);
+            if (!response || !response.data) {
+                throw new Error('No response from backend');
             }
-            
             alert('Match created successfully!');
-            navigate('/organiser-homepage');
+            navigate('/organiser-homepage', { state: { refresh: true } });
         } catch (err) {
+            console.error('Failed to create match:', err);
             alert('Failed to create match. ' + (err.message || 'Please try again.'));
         }
     };

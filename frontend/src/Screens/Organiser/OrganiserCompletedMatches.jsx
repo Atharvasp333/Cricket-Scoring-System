@@ -98,7 +98,7 @@ const OrganiserCompletedMatches = () => {
                         </div>
                         <div className="mt-4 md:mt-0">
                             <Link 
-                                to="/organiser" 
+                                to="/organiser-homepage" 
                                 className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors duration-200"
                             >
                                 ← Back to Dashboard

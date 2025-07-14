@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { Components } from '../../exports';
+import Stepper from './components/Stepper';
+import TournamentBasicInfo from './components/TournamentBasicInfo';
+import TournamentTeams from './components/TournamentTeams';
+import TournamentPlayerPool from './components/TournamentPlayerPool';
+import TournamentRules from './components/TournamentRules';
+import TournamentSchedule from './components/TournamentSchedule';
+import TournamentAccess from './components/TournamentAccess';
+import TournamentReview from './components/TournamentReview';
 
-const {
-  Stepper,
-  TournamentBasicInfo,
-  TournamentTeams,
-  TournamentPlayerPool,
-  TournamentRules,
-  TournamentSchedule,
-  TournamentAccess,
-  TournamentReview
-} = Components;
 
 const steps = [
   'Basic Info',

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../../utils/api';
 
 const TournamentReview = ({ data, prevStep }) => {
   const navigate = useNavigate();
@@ -9,18 +10,25 @@ const TournamentReview = ({ data, prevStep }) => {
   const handleSubmit = async () => {
     setSubmitting(true);
     setError('');
+    // Transform captains to only include id or _id
+    const payload = {
+      ...data,
+      teams: (data.teams || []).map(team => ({
+        ...team,
+        captains: (team.captains || []).map(c => typeof c === 'object' ? c.id || c._id : c)
+      }))
+    };
+    console.log('Tournament payload:', payload);
     try {
-      const response = await fetch('/api/tournaments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to create tournament');
-      // Show toast (replace with your toast system)
+      const response = await api.post('/api/tournaments', payload);
+      if (!response || !response.data) {
+        throw new Error('No response from backend');
+      }
       alert('Tournament created successfully!');
-      navigate('/organiser-homepage');
+      navigate('/organiser-homepage', { state: { refresh: true } });
     } catch (err) {
-      setError('Failed to create tournament. Please try again.');
+      setError('Failed to create tournament. ' + (err.response?.data?.error || err.message || 'Please try again.'));
+      console.error('Tournament creation error:', err);
     } finally {
       setSubmitting(false);
     }

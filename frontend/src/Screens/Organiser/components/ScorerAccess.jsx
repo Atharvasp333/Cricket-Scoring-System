@@ -1,4 +1,9 @@
 import React, { useState } from 'react';
+import { Components } from '../../../exports';
+
+const {
+    FormField
+} = Components;
 
 const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
     const [name, setName] = useState('');

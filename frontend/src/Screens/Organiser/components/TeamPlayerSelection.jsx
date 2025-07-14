@@ -28,6 +28,14 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
         }
     };
 
+    // Dummy users array for selection (replace with real data/fetch)
+    const users = [
+      { id: '662e00000000000000000001', name: 'Player 1' },
+      { id: '662e00000000000000000002', name: 'Player 2' },
+      { id: '662e00000000000000000003', name: 'Player 3' },
+      { id: '662e00000000000000000004', name: 'Player 4' }
+    ];
+
     return (
         <div>
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Player Registration</h2>
@@ -75,9 +83,11 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
                             <h4 className="font-semibold text-gray-700">Team Captain</h4>
                         </div>
                         <UserSelect 
+                            users={users}
                             role="player" 
                             value={data.team1_captains?.[0] || ''} 
-                            onChange={(value) => handleCaptainChange(1, value)} 
+                            selectedUsers={data.team1_captains || []}
+                            onSelect={(value) => handleCaptainChange(1, value)} 
                             placeholder="Select a player as captain" 
                             className="mb-2" 
                         />
@@ -105,9 +115,11 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
                             <h4 className="font-semibold text-gray-700">Team Captain</h4>
                         </div>
                         <UserSelect 
+                            users={users}
                             role="player" 
                             value={data.team2_captains?.[0] || ''} 
-                            onChange={(value) => handleCaptainChange(2, value)} 
+                            selectedUsers={data.team2_captains || []}
+                            onSelect={(value) => handleCaptainChange(2, value)} 
                             placeholder="Select a player as captain" 
                             className="mb-2" 
                         />

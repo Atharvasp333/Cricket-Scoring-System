@@ -30,6 +30,7 @@ export { default as SearchBar } from './SearchBar';
 export { default as Table } from './Table';
 export { default as Tabs } from './Tabs';
 export { default as ViewDetailedStats } from './ViewDetailedStats';
+export { default as EmptyState } from './EmptyState';
 
 // Feedback Components
 export { default as ErrorAlert } from './ErrorAlert';

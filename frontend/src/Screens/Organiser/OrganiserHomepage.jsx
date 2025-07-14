@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Components, Icons } from '../../exports';
 import api from '../../utils/api';
+
 
 const { 
   Button, 
@@ -27,32 +28,29 @@ const OrganiserHomepage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const fetchData = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const [tournamentsResponse, matchesResponse] = await Promise.all([
+                api.get('/api/tournaments'),
+                api.get('/api/matches')
+            ]);
+            setTournaments(tournamentsResponse.data);
+            setMatches(matchesResponse.data);
+            setLoading(false);
+        } catch (err) {
+            setError('Failed to load data. Please try again later.');
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            setError('');
-            try {
-                const [tournamentsResponse, matchesResponse] = await Promise.all([
-                    api.get('/api/tournaments'),
-                    api.get('/api/matches')
-                ]);
-                
-                const tournamentsData = tournamentsResponse.data;
-                const matchesData = matchesResponse.data;
-                
-                setTournaments(tournamentsData);
-                setMatches(matchesData);
-                setLoading(false);
-            } catch (err) {
-                console.error('Error fetching data:', err);
-                setError('Failed to load data. Please try again later.');
-                setLoading(false);
-            }
-        };
-
         fetchData();
-    }, []);
+    // Refresh if redirected from create pages
+    }, [location.state]);
 
     if (loading) {
         return (
@@ -99,7 +97,7 @@ const OrganiserHomepage = () => {
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold">Upcoming Matches</h2>
                     <Link 
-                        to="/organiser/matches" 
+                        to="/organiser/completed-matches" 
                         className="text-indigo-600 hover:text-indigo-800 text-sm flex items-center"
                     >
                         View All <FiChevronRight className="ml-1" />
@@ -152,7 +150,7 @@ const OrganiserHomepage = () => {
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold">Your Tournaments</h2>
                     <Link 
-                        to="/organiser/tournaments" 
+                        to="/organiser/completed-tournaments" 
                         className="text-indigo-600 hover:text-indigo-800 text-sm flex items-center"
                     >
                         View All <FiChevronRight className="ml-1" />
@@ -182,7 +180,7 @@ const OrganiserHomepage = () => {
                                     <Button 
                                         variant="outline" 
                                         size="sm"
-                                        onClick={() => navigate(`/organiser/tournaments/${tournament._id}`)}
+                                        onClick={() => navigate(`/organiser/tournament/${tournament._id}`)}
                                     >
                                         View
                                     </Button>

@@ -118,12 +118,12 @@ function App() {
                       <OrganiserHomepage />
                     </ProtectedRoute>
                   } />
-                  <Route path="/organiser/create-tournament" element={
+                  <Route path="/organiser/tournaments/create" element={
                     <ProtectedRoute allowedRoles={['organiser']}>
                       <CreateTournamentPage />
                     </ProtectedRoute>
                   } />
-                  <Route path="/organiser/create-match" element={
+                  <Route path="/organiser/matches/create" element={
                     <ProtectedRoute allowedRoles={['organiser']}>
                       <CreateMatchPage />
                     </ProtectedRoute>

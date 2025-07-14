@@ -20,6 +20,10 @@ const BasicMatchInfo = ({ data, setData, nextStep }) => {
         </div>
     );
 
+    // Debug logs
+    console.log('BasicMatchInfo data:', data);
+    console.log('isFormValid:', isFormValid);
+
     return (
         <div>
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Basic Match Information</h2>
@@ -114,7 +118,7 @@ const BasicMatchInfo = ({ data, setData, nextStep }) => {
 
             <div className="mt-8 flex justify-end">
                 <button
-                    onClick={nextStep}
+                    onClick={() => { console.log('Save & Continue clicked'); nextStep(); }}
                     disabled={!isFormValid}
                     className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all duration-300 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
