@@ -5,20 +5,13 @@ import { auth, googleProvider } from '../../firebase';
 import api from '../../utils/api';
 import { Components, Icons } from '../../exports';
 
-// Destructure components with their exact export names
 const {
   Button,
-  Alert,
   Card,
-  Tabs,
-  Tab,
-  FormCheckbox,
-  LoadingSpinner,
   GoogleSignInButton,
   FormField
 } = Components;
 
-// Destructure icons
 const {
   FiMail,
   FiLock,
@@ -30,15 +23,13 @@ const {
   FiArrowRight
 } = Icons;
 
-// Create a local alias for FormCheckbox
-const Checkbox = FormCheckbox;
+const Checkbox = Components.FormCheckbox;
 
 const Signup = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const googleUserData = location.state || {};
 
-  const [activeTab, setActiveTab] = useState('viewer');
   const [formData, setFormData] = useState({
     email: googleUserData.email || '',
     password: '',
@@ -46,21 +37,26 @@ const Signup = () => {
     displayName: googleUserData.displayName || '',
     phone: '',
     dob: '',
-    agreeToTerms: false
+    agreeToTerms: false,
+    role: '' // Initialize role as empty string
   });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
-
-  useEffect(() => {
-    console.log('Active tab (role) changed to:', activeTab);
-  }, [activeTab]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleRoleChange = (role) => {
+    setFormData(prev => ({
+      ...prev,
+      role: role
     }));
   };
 
@@ -85,6 +81,10 @@ const Signup = () => {
       setError('Display name is required');
       return false;
     }
+    if (!formData.role) {
+      setError('Please select a role');
+      return false;
+    }
     if (!formData.agreeToTerms) {
       setError('You must agree to the terms and conditions');
       return false;
@@ -101,7 +101,6 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      // Create user with email and password
       const userCredential = await createUserWithEmailAndPassword(
         auth, 
         formData.email, 
@@ -110,26 +109,38 @@ const Signup = () => {
 
       const user = userCredential.user;
 
-      // Save user data to our backend
-      await api.post('/api/users', {
-        uid: user.uid,
+      const userData = {
+        firebaseUID: user.uid,
         email: formData.email,
         displayName: formData.displayName,
-        phone: formData.phone,
-        dob: formData.dob,
-        role: activeTab,
+        phoneNumber: formData.phone,
+        dateOfBirth: formData.dob,
+        role: formData.role,
         photoURL: googleUserData.photoURL || ''
-      });
+      };
 
-      // Store role in sessionStorage for redirection
-      sessionStorage.setItem('userSignupRole', activeTab);
+      console.log('Submitting user data:', userData);
+
+      await api.post('/api/users', userData);
+
+      sessionStorage.setItem('userSignupRole', formData.role);
       
-      // Show success message
       setSuccess('Account created successfully! Redirecting...');
       
-      // Redirect based on role
       setTimeout(() => {
-        navigate(`/${activeTab}/dashboard`);
+        switch(formData.role) {
+          case 'player':
+            navigate('/player-home');
+            break;
+          case 'organizer':
+            navigate('/organiser-homepage');
+            break;
+          case 'scorer':
+            navigate('/scorer-home');
+            break;
+          default:
+            navigate('/viewer-home');
+        }
       }, 1500);
 
     } catch (error) {
@@ -142,13 +153,14 @@ const Signup = () => {
 
   const handleGoogleSignUp = async () => {
     try {
+      if (!formData.role) {
+        setError('Please select a role before signing up with Google');
+        return;
+      }
+      
       setLoading(true);
       setError('');
-      
-      // Use redirect instead of popup
-      const result = await signInWithRedirect(auth, googleProvider);
-      
-      // This will be handled by the auth state change listener in your app's root
+      await signInWithRedirect(auth, googleProvider);
     } catch (error) {
       console.error('Google sign-up error:', error);
       setError('Failed to sign up with Google. Please try again.');
@@ -172,17 +184,6 @@ const Signup = () => {
         </div>
 
         <Card className="p-6 md:p-8">
-          <Tabs 
-            activeTab={activeTab} 
-            onChange={setActiveTab}
-            className="mb-8"
-          >
-            <Tab label="Viewer" value="viewer" />
-            <Tab label="Player" value="player" />
-            <Tab label="Scorer" value="scorer" />
-            <Tab label="Organizer" value="organizer" />
-          </Tabs>
-
           {error && (
             <Alert type="error" className="mb-6">
               <FiAlertCircle className="h-5 w-5" />
@@ -197,12 +198,99 @@ const Signup = () => {
             </Alert>
           )}
 
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Your Role (Choose one)
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              <div 
+                className={`border rounded-lg p-4 cursor-pointer ${formData.role === 'viewer' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'}`}
+                onClick={() => handleRoleChange('viewer')}
+              >
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="role-viewer"
+                    name="role"
+                    checked={formData.role === 'viewer'}
+                    onChange={() => handleRoleChange('viewer')}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label htmlFor="role-viewer" className="ml-2 block text-sm font-medium text-gray-700">
+                    Viewer
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">Browse matches and view stats</p>
+              </div>
+
+              <div 
+                className={`border rounded-lg p-4 cursor-pointer ${formData.role === 'player' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'}`}
+                onClick={() => handleRoleChange('player')}
+              >
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="role-player"
+                    name="role"
+                    checked={formData.role === 'player'}
+                    onChange={() => handleRoleChange('player')}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label htmlFor="role-player" className="ml-2 block text-sm font-medium text-gray-700">
+                    Player
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">Play in matches and track performance</p>
+              </div>
+
+              <div 
+                className={`border rounded-lg p-4 cursor-pointer ${formData.role === 'scorer' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'}`}
+                onClick={() => handleRoleChange('scorer')}
+              >
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="role-scorer"
+                    name="role"
+                    checked={formData.role === 'scorer'}
+                    onChange={() => handleRoleChange('scorer')}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label htmlFor="role-scorer" className="ml-2 block text-sm font-medium text-gray-700">
+                    Scorer
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">Score matches and update stats</p>
+              </div>
+
+              <div 
+                className={`border rounded-lg p-4 cursor-pointer ${formData.role === 'organizer' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'}`}
+                onClick={() => handleRoleChange('organizer')}
+              >
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="role-organizer"
+                    name="role"
+                    checked={formData.role === 'organizer'}
+                    onChange={() => handleRoleChange('organizer')}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label htmlFor="role-organizer" className="ml-2 block text-sm font-medium text-gray-700">
+                    Organizer
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">Organize matches and tournaments</p>
+              </div>
+            </div>
+          </div>
+
           <div className="mt-6">
             <GoogleSignInButton
               onClick={handleGoogleSignUp}
               loading={loading}
               className="w-full"
-              text={`Sign up with Google as ${String(activeTab || 'user').charAt(0).toUpperCase()}${String(activeTab || 'user').slice(1)}`}
+              text={`Sign up with Google as ${formData.role ? formData.role.charAt(0).toUpperCase() + formData.role.slice(1) : 'user'}`}
             />
           </div>
 

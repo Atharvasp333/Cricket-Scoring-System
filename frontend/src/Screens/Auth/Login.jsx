@@ -104,6 +104,7 @@ const Login = () => {
   const redirectBasedOnRole = (role) => {
     switch(role) {
       case 'organizer':
+      case 'organiser':
         navigate('/organiser-homepage');
         break;
       case 'player':
