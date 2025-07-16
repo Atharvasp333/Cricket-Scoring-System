@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -16,7 +15,11 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!isMounted) return;
+      
       setCurrentUser(user);
       
       if (user) {
@@ -24,35 +27,67 @@ export const AuthProvider = ({ children }) => {
           // First check localStorage for role (set during signup)
           const localRole = localStorage.getItem('userRole');
           
-          // Then try to get user data from backend
-          const response = await api.get(`/api/users/${user.uid}`);
-          const userData = response.data;
+          // Try to get user data from backend with retry logic
+          let userData = null;
+          let retries = 0;
+          const maxRetries = 3;
           
-          if (userData && userData.role) {
-            setUserRole(userData.role);
-            localStorage.setItem('userRole', userData.role);
-          } else if (localRole) {
-            setUserRole(localRole);
-          } else {
-            // Default to viewer if no role found
-            setUserRole('viewer');
-            localStorage.setItem('userRole', 'viewer');
+          while (retries < maxRetries) {
+            try {
+              const response = await api.get(`/api/users/${user.uid}`);
+              if (response.data) {
+                // Handle both direct role and nested data.role
+                userData = response.data.data || response.data;
+                console.log('Fetched user data:', userData);
+                break;
+              }
+            } catch (error) {
+              console.error(`Attempt ${retries + 1} - Error fetching user data:`, error);
+              if (retries === maxRetries - 1) {
+                console.error('Max retries reached, using local role');
+              }
+              // Wait before retrying
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            retries++;
           }
+          
+          // Handle different possible response formats
+          let role = null;
+          if (userData?.role) {
+            role = userData.role;
+          } else if (userData?.data?.role) {
+            role = userData.data.role;
+          } else if (localRole) {
+            role = localRole;
+          } else {
+            role = 'viewer';
+          }
+          
+          console.log('Setting user role to:', role);
+          setUserRole(role);
+          localStorage.setItem('userRole', role);
         } catch (error) {
-          console.error('Error fetching user data:', error);
+          console.error('Error in auth state change:', error);
           // Fallback to localStorage role or default to viewer
           const fallbackRole = localStorage.getItem('userRole') || 'viewer';
           setUserRole(fallbackRole);
         }
       } else {
+        // User signed out
         setUserRole(null);
-        localStorage.removeItem('userRole');
+        // Don't remove userRole from localStorage here as it's needed for future logins
       }
       
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
     });
   
-    return unsubscribe;
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const value = {

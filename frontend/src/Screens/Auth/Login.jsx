@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
 import { auth, googleProvider } from '../../firebase';
 import api from '../../utils/api';
 import { Components, Icons } from '../../exports';
@@ -51,16 +51,52 @@ const Login = () => {
       // Sign in with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
       const user = userCredential.user;
+      
+      // Wait for auth state to be fully initialized
+      await new Promise((resolve) => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          if (currentUser && currentUser.uid === user.uid) {
+            unsubscribe();
+            resolve();
+          }
+        });
+      });
 
-      // Get user data from our backend
-      const response = await api.get(`/api/users/${user.uid}`);
-      const userData = response.data;
+      // Get user data from our backend with retry logic
+      let userData = null;
+      let retries = 0;
+      const maxRetries = 3;
       
-      // Store role in sessionStorage for consistency
-      sessionStorage.setItem('userSignupRole', userData.role);
+      while (retries < maxRetries && !userData) {
+        try {
+          const response = await api.get(`/api/users/${user.uid}`);
+          if (response.data) {
+            userData = response.data.data || response.data;
+            // Set role in localStorage as soon as we have it
+            if (userData.role) {
+              localStorage.setItem('userRole', userData.role);
+              // Force a small delay to ensure localStorage is updated
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            break;
+          }
+        } catch (error) {
+          console.error(`Attempt ${retries + 1} - Error fetching user data:`, error);
+          if (retries === maxRetries - 1) {
+            throw new Error('Failed to fetch user data after multiple attempts');
+          }
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        retries++;
+      }
       
-      // Redirect based on user role
+      if (!userData) {
+        throw new Error('User data not found');
+      }
+      
       redirectBasedOnRole(userData.role);
+      
     } catch (error) {
       console.error('Login error:', error);
       setError('Invalid email or password. Please try again.');
@@ -78,20 +114,44 @@ const Login = () => {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
-      // Check if user exists in our database
-      try {
-        const response = await api.get(`/api/users/${user.uid}`);
-        const userData = response.data;
-        redirectBasedOnRole(userData.role);
-      } catch (error) {
-        // User not found, redirect to signup with Google data
-        navigate('/signup', {
-          state: {
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL
+      // Check if user exists in our database with retry logic
+      let userData = null;
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (retries < maxRetries) {
+        try {
+          const response = await api.get(`/api/users/${user.uid}`);
+          if (response.data) {
+            userData = response.data;
+            // Set role in localStorage as soon as we have it
+            if (userData.role) {
+              localStorage.setItem('userRole', userData.role);
+            }
+            break;
           }
-        });
+        } catch (error) {
+          console.error(`Attempt ${retries + 1} - Error fetching user data:`, error);
+          if (retries === maxRetries - 1) {
+            // User not found, redirect to signup with Google data
+            navigate('/signup', {
+              state: {
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL
+              },
+              replace: true
+            });
+            return;
+          }
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        retries++;
+      }
+      
+      if (userData) {
+        redirectBasedOnRole(userData.role);
       }
     } catch (error) {
       console.error('Google sign-in error:', error);
@@ -102,21 +162,27 @@ const Login = () => {
   };
 
   const redirectBasedOnRole = (role) => {
+    // Set the role in localStorage before navigation
+    localStorage.setItem('userRole', role);
+    
+    // Determine the correct home route based on role
+    let homeRoute = '/viewer-home';
     switch(role) {
-      case 'organizer':
       case 'organiser':
-        navigate('/organiser-homepage');
-        break;
-      case 'player':
-        navigate('/player-home');
+        homeRoute = '/organiser-homepage';
         break;
       case 'scorer':
-        navigate('/scorer-home');
+        homeRoute = '/scorer-home';
         break;
-      case 'viewer':
+      case 'player':
+        homeRoute = '/player-home';
+        break;
       default:
-        navigate('/viewer-home');
+        homeRoute = '/viewer-home';
     }
+    
+    // Force a full page reload to ensure AuthContext picks up the role
+    window.location.href = homeRoute;
   };
 
   return (

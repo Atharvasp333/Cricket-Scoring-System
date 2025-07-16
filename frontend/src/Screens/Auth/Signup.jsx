@@ -9,7 +9,10 @@ const {
   Button,
   Card,
   GoogleSignInButton,
-  FormField
+  FormField,
+  LoadingSpinner,
+  ErrorAlert,
+  SuccessAlert,
 } = Components;
 
 const {
@@ -95,12 +98,17 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     
     if (!validateForm()) return;
     
     setLoading(true);
 
     try {
+      // First, set the role in localStorage before creating the user
+      localStorage.setItem('userRole', formData.role);
+      
+      // Create user in Firebase
       const userCredential = await createUserWithEmailAndPassword(
         auth, 
         formData.email, 
@@ -109,42 +117,80 @@ const Signup = () => {
 
       const user = userCredential.user;
 
+      // Prepare user data for backend
       const userData = {
         firebaseUID: user.uid,
         email: formData.email,
         displayName: formData.displayName,
-        phoneNumber: formData.phone,
-        dateOfBirth: formData.dob,
+        phoneNumber: formData.phone || '',
+        dateOfBirth: formData.dob || '',
         role: formData.role,
         photoURL: googleUserData.photoURL || ''
       };
 
       console.log('Submitting user data:', userData);
 
-      await api.post('/api/users', userData);
-
-      sessionStorage.setItem('userSignupRole', formData.role);
-      
-      setSuccess('Account created successfully! Redirecting...');
-      
-      setTimeout(() => {
-        switch(formData.role) {
-          case 'player':
-            navigate('/player-home');
-            break;
-          case 'organizer':
-            navigate('/organiser-homepage');
-            break;
-          case 'scorer':
-            navigate('/scorer-home');
-            break;
-          default:
-            navigate('/viewer-home');
+      try {
+        const response = await api.post('/api/users', userData);
+        console.log('User created successfully:', response.data);
+        
+        // Update the role in localStorage with the confirmed role from the server
+        if (response.data.data?.role) {
+          localStorage.setItem('userRole', response.data.data.role);
+        } else if (response.data.role) {
+          // Handle case where role is at the top level
+          localStorage.setItem('userRole', response.data.role);
         }
-      }, 1500);
+        
+        setSuccess('Account created successfully! Redirecting...');
+        
+        // Get the correct home route based on role
+        const getHomeRoute = (role) => {
+          switch(role) {
+            case 'organiser':
+              return '/organiser-homepage';
+            case 'scorer':
+              return '/scorer-home';
+            case 'player':
+              return '/player-home';
+            default:
+              return '/viewer-home';
+          }
+        };
+        
+        // Redirect after a short delay
+        setTimeout(() => {
+          const homeRoute = getHomeRoute(response.data.data?.role || response.data.role || formData.role);
+          window.location.href = homeRoute;
+        }, 1500);
 
+      } catch (apiError) {
+        console.error('API Error:', apiError);
+        // Delete the Firebase user if API call fails
+        await user.delete();
+        
+        if (apiError.response) {
+          // Server responded with an error status code
+          if (apiError.response.data && apiError.response.data.error) {
+            setError(apiError.response.data.error);
+          } else if (apiError.response.data && apiError.response.data.message) {
+            setError(apiError.response.data.message);
+          } else {
+            setError('Failed to create user profile. Please try again.');
+          }
+        } else if (apiError.request) {
+          // Request was made but no response received
+          setError('No response from server. Please check your connection.');
+        } else {
+          // Something else happened
+          setError(apiError.message || 'An error occurred during signup');
+        }
+        
+        localStorage.removeItem('userRole');
+      }
     } catch (error) {
       console.error('Signup error:', error);
+      localStorage.removeItem('userRole');
       setError(error.message || 'Failed to create account. Please try again.');
     } finally {
       setLoading(false);
@@ -185,17 +231,17 @@ const Signup = () => {
 
         <Card className="p-6 md:p-8">
           {error && (
-            <Alert type="error" className="mb-6">
+            <ErrorAlert className="mb-6">
               <FiAlertCircle className="h-5 w-5" />
               <span>{error}</span>
-            </Alert>
+            </ErrorAlert>
           )}
 
           {success && (
-            <Alert type="success" className="mb-6">
+            <SuccessAlert className="mb-6">
               <FiCheck className="h-5 w-5" />
               <span>{success}</span>
-            </Alert>
+            </SuccessAlert>
           )}
 
           <div className="mb-6">
@@ -264,23 +310,23 @@ const Signup = () => {
               </div>
 
               <div 
-                className={`border rounded-lg p-4 cursor-pointer ${formData.role === 'organizer' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'}`}
-                onClick={() => handleRoleChange('organizer')}
+                className={`border rounded-lg p-4 cursor-pointer ${formData.role === 'organiser' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'}`}
+                onClick={() => handleRoleChange('organiser')}
               >
                 <div className="flex items-center">
                   <input
                     type="radio"
-                    id="role-organizer"
+                    id="role-organiser"
                     name="role"
-                    checked={formData.role === 'organizer'}
-                    onChange={() => handleRoleChange('organizer')}
+                    checked={formData.role === 'organiser'}
+                    onChange={() => handleRoleChange('organiser')}
                     className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
                   />
-                  <label htmlFor="role-organizer" className="ml-2 block text-sm font-medium text-gray-700">
-                    Organizer
+                  <label htmlFor="role-organiser" className="ml-2 block text-sm font-medium text-gray-700">
+                    Organiser
                   </label>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">Organize matches and tournaments</p>
+                <p className="mt-1 text-xs text-gray-500">Organise matches and tournaments</p>
               </div>
             </div>
           </div>
