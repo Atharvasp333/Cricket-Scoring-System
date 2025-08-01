@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Components } from '../../../exports';
 
 const {
@@ -9,6 +9,12 @@ const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
+    const [isValid, setIsValid] = useState(false);
+
+    // Check if at least one scorer is added
+    useEffect(() => {
+        setIsValid(data.scorers && data.scorers.length > 0);
+    }, [data.scorers]);
 
     const handleInvite = (e) => {
         e.preventDefault();
@@ -16,9 +22,28 @@ const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
             setError('Email is required.');
             return;
         }
+        
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setError('Please enter a valid email address.');
+            return;
+        }
+        
+        // Check if this email already exists in the scorers list
+        const emailExists = data.scorers.some(scorer => {
+            if (typeof scorer === 'string') return scorer === email;
+            return scorer.email === email;
+        });
+        
+        if (emailExists) {
+            setError('This email has already been added.');
+            return;
+        }
+        
         setData(prev => ({
             ...prev,
-            scorers: [...prev.scorers, { name, email }]
+            scorers: [...prev.scorers, { name: name || 'Scorer', email }]
         }));
         setName('');
         setEmail('');
@@ -44,12 +69,12 @@ const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
                         <input type="text" id="scorerName" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. John Doe" className="mt-1 block text-gray-700 w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
                     </div>
                     <div>
-                        <label htmlFor="scorerEmail" className="block text-sm font-medium text-gray-700">Email</label>
+                        <label htmlFor="scorerEmail" className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
                         <input type="email" id="scorerEmail" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g. john.doe@example.com" className="mt-1 block text-gray-700 w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
                         {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
                     </div>
                     <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
-                        Send Invitation
+                        Add Scorer
                     </button>
                 </form>
 
@@ -60,10 +85,18 @@ const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
                             {data.scorers.map((scorer, index) => (
                                 <li key={index} className="px-4 py-3 flex items-center justify-between text-sm hover:bg-gray-50">
                                     <div className="flex items-center">
-                                        <span className="font-medium text-gray-800">{scorer.name || 'No Name'}</span>
-                                        <span className="ml-2 text-gray-500">({scorer.email})</span>
+                                        <span className="font-medium text-gray-800">
+                                            {typeof scorer === 'object' ? scorer.name || 'No Name' : 'Scorer'}
+                                        </span>
+                                        <span className="ml-2 text-gray-500">
+                                            ({typeof scorer === 'object' ? scorer.email : scorer})
+                                        </span>
                                     </div>
-                                    <button onClick={() => removeScorer(index)} className="font-semibold text-red-600 hover:text-red-800 transition-colors duration-200">
+                                    <button 
+                                        type="button"
+                                        onClick={() => removeScorer(index)} 
+                                        className="font-semibold text-red-600 hover:text-red-800 transition-colors duration-200"
+                                    >
                                         Remove
                                     </button>
                                 </li>
@@ -71,6 +104,12 @@ const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
                             {data.scorers.length === 0 && <li className="px-4 py-4 text-sm text-gray-500 text-center">No scorers invited yet.</li>}
                         </ul>
                     </div>
+                    
+                    {!isValid && (
+                        <p className="text-red-500 text-sm mt-2">
+                            You must add at least one scorer to continue.
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -78,7 +117,11 @@ const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
                 <button onClick={prevStep} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg transition-all duration-300">
                     Back
                 </button>
-                <button onClick={nextStep} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
+                <button 
+                    onClick={nextStep} 
+                    disabled={!isValid}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
                     Save & Continue
                 </button>
             </div>

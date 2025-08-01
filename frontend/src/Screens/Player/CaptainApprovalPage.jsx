@@ -37,7 +37,10 @@ const CaptainApprovalPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all'); // all, pending, approved, rejected
-  const [activeTab, setActiveTab] = useState('tournaments'); // tournaments, matches
+  const [activeTab, setActiveTab] = useState('matches'); // tournaments, matches
+  const [selectedRegistration, setSelectedRegistration] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   
   // Fetch teams where the current user is a captain
   useEffect(() => {
@@ -56,7 +59,10 @@ const CaptainApprovalPage = () => {
         const tournamentTeams = [];
         tournaments.forEach(tournament => {
           tournament.teams.forEach(team => {
-            if (team.captains && team.captains.includes(currentUser.uid)) {
+            if (team.captains && team.captains.some(captain => 
+              (typeof captain === 'object' && captain.firebaseUID === currentUser.uid) || 
+              captain === currentUser.uid
+            )) {
               tournamentTeams.push({
                 type: 'tournament',
                 id: tournament._id,
@@ -69,7 +75,41 @@ const CaptainApprovalPage = () => {
         
         const matchTeams = [];
         matches.forEach(match => {
-          if (match.team1_captains && match.team1_captains.includes(currentUser.uid)) {
+          console.log('Checking match for captain:', match.match_name, match);
+          
+          // Check team1_captains with support for nested arrays
+          let isTeam1Captain = false;
+          if (Array.isArray(match.team1_captains)) {
+            for (const captainEntry of match.team1_captains) {
+              if (Array.isArray(captainEntry)) {
+                // Handle nested array structure
+                for (const captain of captainEntry) {
+                  if (typeof captain === 'object') {
+                    if (captain && captain.firebaseUID && currentUser && captain.firebaseUID === currentUser.uid) {
+                      isTeam1Captain = true;
+                      break;
+                    }
+                  } else if (currentUser && captain === currentUser.uid) {
+                    isTeam1Captain = true;
+                    break;
+                  }
+                }
+              } else if (typeof captainEntry === 'object') {
+                if (captainEntry && captainEntry.firebaseUID && currentUser && captainEntry.firebaseUID === currentUser.uid) {
+                  isTeam1Captain = true;
+                  break;
+                }
+              } else if (currentUser && captainEntry === currentUser.uid) {
+                isTeam1Captain = true;
+                break;
+              }
+              
+              if (isTeam1Captain) break;
+            }
+          }
+          
+          if (isTeam1Captain) {
+            console.log('User is a captain for team1:', match.team1_name);
             matchTeams.push({
               type: 'match',
               id: match._id,
@@ -77,7 +117,40 @@ const CaptainApprovalPage = () => {
               teamName: match.team1_name
             });
           }
-          if (match.team2_captains && match.team2_captains.includes(currentUser.uid)) {
+          
+          // Check team2_captains with support for nested arrays
+          let isTeam2Captain = false;
+          if (Array.isArray(match.team2_captains)) {
+            for (const captainEntry of match.team2_captains) {
+              if (Array.isArray(captainEntry)) {
+                // Handle nested array structure
+                for (const captain of captainEntry) {
+                  if (typeof captain === 'object') {
+                    if (captain && captain.firebaseUID && currentUser && captain.firebaseUID === currentUser.uid) {
+                      isTeam2Captain = true;
+                      break;
+                    }
+                  } else if (currentUser && captain === currentUser.uid) {
+                    isTeam2Captain = true;
+                    break;
+                  }
+                }
+              } else if (typeof captainEntry === 'object') {
+                if (captainEntry && captainEntry.firebaseUID && currentUser && captainEntry.firebaseUID === currentUser.uid) {
+                  isTeam2Captain = true;
+                  break;
+                }
+              } else if (currentUser && captainEntry === currentUser.uid) {
+                isTeam2Captain = true;
+                break;
+              }
+              
+              if (isTeam2Captain) break;
+            }
+          }
+          
+          if (isTeam2Captain) {
+            console.log('User is a captain for team2:', match.team2_name);
             matchTeams.push({
               type: 'match',
               id: match._id,
@@ -112,7 +185,20 @@ const CaptainApprovalPage = () => {
     if (!socket) return;
     
     socket.on('registrationAdded', (newRegistration) => {
-      setRegistrations(prev => [...prev, newRegistration]);
+      // Check if registration is for one of the captain's teams
+      const isForCaptainTeam = captainTeams.some(team => {
+        if (team.type === 'tournament' && newRegistration.tournamentId === team.id) {
+          return newRegistration.team === team.teamName;
+        }
+        if (team.type === 'match' && newRegistration.matchId === team.id) {
+          return newRegistration.team === team.teamName;
+        }
+        return false;
+      });
+      
+      if (isForCaptainTeam) {
+        setRegistrations(prev => [...prev, newRegistration]);
+      }
     });
     
     socket.on('registrationUpdated', (updatedRegistration) => {
@@ -131,13 +217,27 @@ const CaptainApprovalPage = () => {
       socket.off('registrationUpdated');
       socket.off('registrationRemoved');
     };
-  }, [socket]);
+  }, [socket, captainTeams]);
   
   const fetchRegistrations = async () => {
     try {
       setLoading(true);
       const response = await api.get('/api/registrations');
-      setRegistrations(response.data);
+      
+      // Filter registrations for teams where the user is a captain
+      const captainRegistrations = response.data.filter(reg => {
+        return captainTeams.some(team => {
+          if (team.type === 'tournament' && reg.tournamentId === team.id) {
+            return reg.team === team.teamName;
+          }
+          if (team.type === 'match' && reg.matchId === team.id) {
+            return reg.team === team.teamName;
+          }
+          return false;
+        });
+      });
+      
+      setRegistrations(captainRegistrations);
       setError(null);
     } catch (err) {
       console.error('Error fetching registrations:', err);
@@ -149,296 +249,344 @@ const CaptainApprovalPage = () => {
   
   const handleStatusUpdate = async (id, status) => {
     try {
+      setActionLoading(true);
       await api.put(`/api/registrations/${id}/status`, { 
         status, 
         approverRole: 'captain' // Captain is making the approval
       });
-      // The socket will handle updating the UI
+      
+      // Update local state
+      setRegistrations(prev => 
+        prev.map(reg => 
+          reg._id === id ? { ...reg, status, approvedBy: 'captain' } : reg
+        )
+      );
+      
+      // Close modal if open
+      if (showDetailsModal) {
+        setShowDetailsModal(false);
+      }
+      
+      // Success message
+      alert(`Registration ${status === 'approved' ? 'approved' : 'rejected'} successfully!`);
     } catch (err) {
       console.error('Error updating registration status:', err);
-      setError('Failed to update registration status. Please try again.');
+      alert(`Failed to ${status} registration. Please try again.`);
+    } finally {
+      setActionLoading(false);
     }
   };
   
-  // Filter registrations for teams where user is captain
+  // Filter registrations
   const filteredRegistrations = registrations.filter(reg => {
-    // First check if registration matches the active tab and filter
     if (filter !== 'all' && reg.status !== filter) return false;
     if (activeTab === 'tournaments' && reg.registrationType !== 'tournament') return false;
     if (activeTab === 'matches' && reg.registrationType !== 'match') return false;
-    
-    // Then check if the registration is for a team where the user is captain
-    const isCaptainOfTeam = captainTeams.some(team => {
-      if (team.type === 'tournament' && reg.registrationType === 'tournament') {
-        return team.id === reg.tournamentId && team.teamName === reg.team;
-      } else if (team.type === 'match' && reg.registrationType === 'match') {
-        return team.id === reg.matchId && team.teamName === reg.team;
-      }
-      return false;
-    });
-    
-    return isCaptainOfTeam;
+    return true;
   });
   
+  // View registration details
+  const viewRegistrationDetails = (registration) => {
+    setSelectedRegistration(registration);
+    setShowDetailsModal(true);
+  };
+  
+  // Get event name from registration
+  const getEventName = (registration) => {
+    const team = captainTeams.find(t => {
+      if (registration.registrationType === 'tournament') {
+        return t.type === 'tournament' && t.id === registration.tournamentId;
+      } else {
+        return t.type === 'match' && t.id === registration.matchId;
+      }
+    });
+    
+    return team ? team.name : 'Unknown Event';
+  };
+  
+  // Render status badge
+  const renderStatusBadge = (status) => {
+    switch (status) {
+      case 'pending':
+        return <Badge color="yellow" icon={<FiClock />}>Pending</Badge>;
+      case 'approved':
+        return <Badge color="green" icon={<FiCheck />}>Approved</Badge>;
+      case 'rejected':
+        return <Badge color="red" icon={<FiX />}>Rejected</Badge>;
+      default:
+        return <Badge color="gray">Unknown</Badge>;
+    }
+  };
+  
+  // Render empty state
+  const renderEmptyState = () => (
+    <div className="text-center py-12">
+      <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
+        <FiUserX size={48} />
+      </div>
+      <h3 className="text-lg font-medium text-gray-900 mb-2">No registration requests</h3>
+      <p className="text-gray-500 mb-6">
+        {filter !== 'all' 
+          ? `No ${filter} registration requests found.` 
+          : 'There are no player registration requests for your teams yet.'}
+      </p>
+      <Button onClick={fetchRegistrations} variant="outline" className="mx-auto">
+        <FiRefreshCw className="mr-2" />
+        Refresh
+      </Button>
+    </div>
+  );
+  
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+        <LoadingSpinner size="lg" />
+        <p className="mt-4 text-gray-600">Loading captain dashboard...</p>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 max-w-lg w-full">
+          <p className="font-bold">Error</p>
+          <p>{error}</p>
+        </div>
+        <Button onClick={() => window.location.reload()} variant="outline">
+          <FiRefreshCw className="mr-2" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
+  
+  if (captainTeams.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded mb-4 max-w-lg w-full">
+          <p className="font-bold">Not a Captain</p>
+          <p>You are not currently assigned as a captain for any team.</p>
+        </div>
+        <Button onClick={() => navigate('/player-home')} variant="outline">
+          <FiChevronLeft className="mr-2" />
+          Back to Home
+        </Button>
+      </div>
+    );
+  }
+  
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <button 
-              onClick={() => navigate(-1)} 
-              className="flex items-center text-gray-600 hover:text-gray-800 mb-4 md:mb-0"
-            >
-              <FiChevronLeft size={20} />
-              <span className="ml-1">Back</span>
-            </button>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Captain Approval Dashboard</h1>
-            <p className="text-gray-600 mt-2">Review and manage player registration requests for your teams</p>
+            <h1 className="text-2xl font-bold text-gray-900">Captain Approval Dashboard</h1>
+            <p className="text-gray-600">Manage player registration requests for your teams</p>
+          </div>
+          <Button onClick={() => navigate('/player-home')} variant="outline">
+            <FiChevronLeft className="mr-2" />
+            Back to Home
+          </Button>
+        </div>
+        
+        <div className="bg-white shadow rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Your Teams</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {captainTeams.map((team, index) => (
+              <Card key={index} className="p-4">
+                <h3 className="font-semibold">{team.name}</h3>
+                <p className="text-sm text-gray-600">Team: {team.teamName}</p>
+                <Badge color={team.type === 'match' ? 'blue' : 'purple'} className="mt-2">
+                  {team.type === 'match' ? 'Match' : 'Tournament'}
+                </Badge>
+              </Card>
+            ))}
+          </div>
+        </div>
+        
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          <div className="p-4 border-b">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+              <h2 className="text-lg font-semibold">Registration Requests</h2>
+              <div className="flex space-x-2">
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+                <Button onClick={fetchRegistrations} variant="outline" size="sm">
+                  <FiRefreshCw />
+                </Button>
+              </div>
+            </div>
           </div>
           
-          <div className="flex items-center space-x-3 mt-4 md:mt-0">
-            <button 
-              onClick={fetchRegistrations} 
-              className="flex items-center bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-50"
-            >
-              <FiRefreshCw size={16} className="mr-2" />
-              Refresh
-            </button>
-            
-            <div className="relative inline-block text-left">
-              <button 
-                onClick={() => document.getElementById('statusDropdown').classList.toggle('hidden')}
-                className="flex items-center bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-50"
-              >
-                <FiFilter size={16} className="mr-2" />
-                {filter === 'all' ? 'All Status' : filter.charAt(0).toUpperCase() + filter.slice(1)}
-              </button>
-              <div id="statusDropdown" className="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-                <div className="py-1">
-                  <button 
-                    onClick={() => {
-                      setFilter('all');
-                      document.getElementById('statusDropdown').classList.add('hidden');
-                    }} 
-                    className={`block px-4 py-2 text-sm w-full text-left ${filter === 'all' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} hover:bg-gray-100`}
-                  >
-                    All Status
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setFilter('pending');
-                      document.getElementById('statusDropdown').classList.add('hidden');
-                    }} 
-                    className={`block px-4 py-2 text-sm w-full text-left ${filter === 'pending' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} hover:bg-gray-100`}
-                  >
-                    Pending
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setFilter('approved');
-                      document.getElementById('statusDropdown').classList.add('hidden');
-                    }} 
-                    className={`block px-4 py-2 text-sm w-full text-left ${filter === 'approved' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} hover:bg-gray-100`}
-                  >
-                    Approved
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setFilter('rejected');
-                      document.getElementById('statusDropdown').classList.add('hidden');
-                    }} 
-                    className={`block px-4 py-2 text-sm w-full text-left ${filter === 'rejected' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} hover:bg-gray-100`}
-                  >
-                    Rejected
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-6">
-          <button
-            onClick={() => setActiveTab('tournaments')}
-            className={`py-3 px-6 font-medium text-sm ${activeTab === 'tournaments' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            Tournament Teams
-          </button>
-          <button
-            onClick={() => setActiveTab('matches')}
-            className={`py-3 px-6 font-medium text-sm ${activeTab === 'matches' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            Match Teams
-          </button>
-        </div>
-        
-        {/* Content */}
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
-          </div>
-        ) : captainTeams.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-400 text-2xl">!</span>
-              </div>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              You are not a captain of any team
-            </h3>
-            <p className="text-gray-600">
-              You need to be assigned as a captain by an organizer to approve player registrations.
-            </p>
-          </div>
-        ) : filteredRegistrations.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-            <div className="flex justify-center mb-4">
-              {filter === 'pending' ? (
-                <FiUserCheck className="h-16 w-16 text-gray-400" />
-              ) : filter === 'rejected' ? (
-                <FiUserX className="h-16 w-16 text-gray-400" />
-              ) : (
-                <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center">
-                  <span className="text-gray-400 text-2xl">?</span>
-                </div>
-              )}
-            </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              No {filter !== 'all' ? filter : ''} registrations found
-            </h3>
-            <p className="text-gray-600">
-              {filter === 'pending' 
-                ? 'There are no pending registration requests to review for your teams.' 
-                : filter === 'approved' 
-                ? 'You haven\'t approved any registration requests yet.' 
-                : filter === 'rejected' 
-                ? 'You haven\'t rejected any registration requests yet.' 
-                : 'There are no registration requests to display for your teams.'}
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Player
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {activeTab === 'tournaments' ? 'Tournament' : 'Match'}
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role & Position
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredRegistrations.map((registration) => (
-                  <tr key={registration._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                          <span className="text-gray-600 font-medium">
-                            {registration.playerName.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{registration.playerName}</div>
-                          <div className="text-sm text-gray-500">{registration.team || 'No team specified'}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {activeTab === 'tournaments' 
-                          ? registration.tournamentName || 'Tournament' 
-                          : registration.matchName || 'Match'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{registration.role}</div>
-                      <div className="text-xs text-gray-500">
-                        {registration.isCaptain && 'Captain'}
-                        {registration.isCaptain && registration.isWicketKeeper && ' & '}
-                        {registration.isWicketKeeper && 'Wicket-Keeper'}
-                        {!registration.isCaptain && !registration.isWicketKeeper && 'Regular Player'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                          ${registration.status === 'approved' ? 'bg-green-100 text-green-800' : 
-                            registration.status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                            'bg-yellow-100 text-yellow-800'}`}>
-                          {registration.status.charAt(0).toUpperCase() + registration.status.slice(1)}
-                        </span>
-                        {registration.status !== 'pending' && registration.approvedBy && (
-                          <span className="text-xs text-gray-500 mt-1">
-                            by {registration.approvedBy.charAt(0).toUpperCase() + registration.approvedBy.slice(1)}
+          <Tabs>
+            <Tab 
+              label="Matches" 
+              active={activeTab === 'matches'} 
+              onClick={() => setActiveTab('matches')}
+              badge={registrations.filter(r => r.registrationType === 'match').length}
+            />
+            <Tab 
+              label="Tournaments" 
+              active={activeTab === 'tournaments'} 
+              onClick={() => setActiveTab('tournaments')}
+              badge={registrations.filter(r => r.registrationType === 'tournament').length}
+            />
+          </Tabs>
+          
+          {filteredRegistrations.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredRegistrations.map((registration) => (
+                    <tr key={registration._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-gray-900">{registration.playerName}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{registration.team}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{registration.role}</div>
+                        {registration.isWicketKeeper && (
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                            WK
                           </span>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(registration.registrationDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      {registration.status === 'pending' && (
-                        <div className="flex justify-end space-x-2">
-                          <button
-                            onClick={() => handleStatusUpdate(registration._id, 'approved')}
-                            className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-1.5 rounded-full transition-colors"
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{getEventName(registration)}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {renderStatusBadge(registration.status)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <Button 
+                            onClick={() => viewRegistrationDetails(registration)} 
+                            variant="outline" 
+                            size="sm"
                           >
-                            <FiCheck size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleStatusUpdate(registration._id, 'rejected')}
-                            className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-full transition-colors"
-                          >
-                            <FiX size={16} />
-                          </button>
+                            View
+                          </Button>
+                          {registration.status === 'pending' && (
+                            <>
+                              <Button 
+                                onClick={() => handleStatusUpdate(registration._id, 'approved')} 
+                                color="green" 
+                                size="sm"
+                              >
+                                <FiCheck className="mr-1" />
+                                Approve
+                              </Button>
+                              <Button 
+                                onClick={() => handleStatusUpdate(registration._id, 'rejected')} 
+                                color="red" 
+                                size="sm"
+                              >
+                                <FiX className="mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
                         </div>
-                      )}
-                      {registration.status === 'approved' && (
-                        <button
-                          onClick={() => handleStatusUpdate(registration._id, 'rejected')}
-                          className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-full transition-colors"
-                        >
-                          <FiX size={16} />
-                        </button>
-                      )}
-                      {registration.status === 'rejected' && (
-                        <button
-                          onClick={() => handleStatusUpdate(registration._id, 'approved')}
-                          className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-1.5 rounded-full transition-colors"
-                        >
-                          <FiCheck size={16} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            renderEmptyState()
+          )}
+        </div>
       </div>
+      
+      {/* Registration Details Modal */}
+      {showDetailsModal && selectedRegistration && (
+        <Modal
+          isOpen={showDetailsModal}
+          onClose={() => setShowDetailsModal(false)}
+          title="Registration Details"
+        >
+          <div className="space-y-4">
+            <div className="border-b pb-4">
+              <h3 className="font-semibold text-lg mb-2">{getEventName(selectedRegistration)}</h3>
+              {renderStatusBadge(selectedRegistration.status)}
+              {selectedRegistration.approvedBy && (
+                <p className="text-sm text-gray-500 mt-1">
+                  {selectedRegistration.status === 'approved' ? 'Approved' : 'Rejected'} by: {selectedRegistration.approvedBy}
+                </p>
+              )}
+            </div>
+            
+            <div>
+              <h4 className="font-medium mb-2">Player Information</h4>
+              <dl className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+                <div className="sm:col-span-1">
+                  <dt className="text-sm font-medium text-gray-500">Name</dt>
+                  <dd className="mt-1 text-sm text-gray-900">{selectedRegistration.playerName}</dd>
+                </div>
+                <div className="sm:col-span-1">
+                  <dt className="text-sm font-medium text-gray-500">Team</dt>
+                  <dd className="mt-1 text-sm text-gray-900">{selectedRegistration.team}</dd>
+                </div>
+                <div className="sm:col-span-1">
+                  <dt className="text-sm font-medium text-gray-500">Role</dt>
+                  <dd className="mt-1 text-sm text-gray-900">{selectedRegistration.role}</dd>
+                </div>
+                <div className="sm:col-span-1">
+                  <dt className="text-sm font-medium text-gray-500">Wicket Keeper</dt>
+                  <dd className="mt-1 text-sm text-gray-900">{selectedRegistration.isWicketKeeper ? 'Yes' : 'No'}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-sm font-medium text-gray-500">Registration Date</dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    {new Date(selectedRegistration.registrationDate).toLocaleString()}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+            
+            {selectedRegistration.status === 'pending' && (
+              <div className="border-t pt-4 flex justify-end space-x-3">
+                <Button
+                  onClick={() => handleStatusUpdate(selectedRegistration._id, 'rejected')}
+                  color="red"
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? <LoadingSpinner size="sm" /> : 'Reject'}
+                </Button>
+                <Button
+                  onClick={() => handleStatusUpdate(selectedRegistration._id, 'approved')}
+                  color="green"
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? <LoadingSpinner size="sm" /> : 'Approve'}
+                </Button>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

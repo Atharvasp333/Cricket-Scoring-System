@@ -1,8 +1,53 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPlus, Users, Crown } from 'lucide-react';
 import UserSelect from '../../../Components/UserSelect';
+import api from '../../../utils/api';
+import { Components } from '../../../exports';
+
+const { LoadingSpinner } = Components;
 
 const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [players, setPlayers] = useState([]);
+
+    // Fetch players with 'player' role from the database
+    useEffect(() => {
+        const fetchPlayers = async () => {
+            try {
+                setLoading(true);
+                const response = await api.get('/api/users/role/player');
+                if (response.data && response.data.success) {
+                    // Transform the data to match the expected format for UserSelect
+                    const formattedPlayers = response.data.data.map(player => ({
+                        id: player._id,
+                        name: player.displayName,
+                        email: player.email,
+                        firebaseUID: player.firebaseUID
+                    }));
+                    setPlayers(formattedPlayers);
+                } else {
+                    setPlayers([]);
+                    console.warn('Unexpected API response format:', response.data);
+                }
+            } catch (err) {
+                console.error('Error fetching players:', err);
+                setError('Failed to load players. Using sample data instead.');
+                // Fallback to sample data
+                setPlayers([
+                    { id: '662e00000000000000000001', name: 'Player 1' },
+                    { id: '662e00000000000000000002', name: 'Player 2' },
+                    { id: '662e00000000000000000003', name: 'Player 3' },
+                    { id: '662e00000000000000000004', name: 'Player 4' }
+                ]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPlayers();
+    }, []);
+
     // Initialize empty player arrays and captain arrays if they don't exist
     const handleContinue = () => {
         if (!data.team1_players) {
@@ -28,17 +73,17 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
         }
     };
 
-    // Dummy users array for selection (replace with real data/fetch)
-    const users = [
-      { id: '662e00000000000000000001', name: 'Player 1' },
-      { id: '662e00000000000000000002', name: 'Player 2' },
-      { id: '662e00000000000000000003', name: 'Player 3' },
-      { id: '662e00000000000000000004', name: 'Player 4' }
-    ];
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center py-20">
+                <LoadingSpinner size="lg" />
+            </div>
+        );
+    }
 
     return (
         <div>
-            <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Player Registration</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Team Captains Selection</h2>
             
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
                 <div className="flex items-start">
@@ -46,17 +91,17 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
                         <UserPlus className="h-6 w-6 text-blue-600" />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-lg text-blue-800 mb-2">Self-Registration System</h3>
+                        <h3 className="font-semibold text-lg text-blue-800 mb-2">Captain Selection System</h3>
                         <p className="text-blue-700 mb-4">
-                            Players can now register themselves for matches! Once your match is created, players will be able to:
+                            Select captains for each team from registered players in the system. Captains will:
                         </p>
                         <ul className="list-disc pl-5 text-blue-700 mb-4 space-y-2">
-                            <li>View your match on their dashboard</li>
-                            <li>Submit registration requests with their player details</li>
-                            <li>Specify their role, team preference, and special positions</li>
+                            <li>Be notified about their selection on their dashboard</li>
+                            <li>Have the ability to approve or reject player registration requests</li>
+                            <li>Manage their team during matches</li>
                         </ul>
                         <p className="text-blue-700 mb-2">
-                            You'll be able to review and approve player registrations from the match management page after creation.
+                            Players will be able to register for teams after match creation, and captains (or you) can approve their requests.
                         </p>
                     </div>
                 </div>
@@ -71,11 +116,8 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
                         <h3 className="font-semibold text-lg text-gray-800">{data.team1_name || 'Team 1'}</h3>
                     </div>
                     <p className="text-gray-600 mb-4">
-                        Players will be able to register for this team after match creation.
+                        Select a captain for {data.team1_name || 'Team 1'} from registered players.
                     </p>
-                    <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500 mb-4">
-                        Players will specify their role and position when registering.
-                    </div>
                     
                     <div className="border-t pt-4 mt-4">
                         <div className="flex items-center mb-2">
@@ -83,7 +125,7 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
                             <h4 className="font-semibold text-gray-700">Team Captain</h4>
                         </div>
                         <UserSelect 
-                            users={users}
+                            users={players}
                             role="player" 
                             value={data.team1_captains?.[0] || ''} 
                             selectedUsers={data.team1_captains || []}
@@ -91,7 +133,7 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
                             placeholder="Select a player as captain" 
                             className="mb-2" 
                         />
-                        <p className="text-xs text-gray-500">The captain will be able to approve player registrations for this team.</p>
+                        <p className="text-xs text-gray-500">The captain will be notified and will be able to approve player registrations for this team.</p>
                     </div>
                 </div>
                 
@@ -103,11 +145,8 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
                         <h3 className="font-semibold text-lg text-gray-800">{data.team2_name || 'Team 2'}</h3>
                     </div>
                     <p className="text-gray-600 mb-4">
-                        Players will be able to register for this team after match creation.
+                        Select a captain for {data.team2_name || 'Team 2'} from registered players.
                     </p>
-                    <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-500 mb-4">
-                        Players will specify their role and position when registering.
-                    </div>
                     
                     <div className="border-t pt-4 mt-4">
                         <div className="flex items-center mb-2">
@@ -115,7 +154,7 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
                             <h4 className="font-semibold text-gray-700">Team Captain</h4>
                         </div>
                         <UserSelect 
-                            users={users}
+                            users={players}
                             role="player" 
                             value={data.team2_captains?.[0] || ''} 
                             selectedUsers={data.team2_captains || []}
@@ -123,7 +162,7 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
                             placeholder="Select a player as captain" 
                             className="mb-2" 
                         />
-                        <p className="text-xs text-gray-500">The captain will be able to approve player registrations for this team.</p>
+                        <p className="text-xs text-gray-500">The captain will be notified and will be able to approve player registrations for this team.</p>
                     </div>
                 </div>
             </div>
@@ -131,10 +170,11 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
             <div className="bg-white rounded-lg p-4 border border-blue-200 mt-4 mb-8">
                 <h4 className="font-semibold text-gray-800 mb-2">How it works:</h4>
                 <ol className="list-decimal pl-5 text-gray-700 space-y-1">
+                    <li>Select captains for both teams</li>
                     <li>Create your match</li>
-                    <li>Players submit registration requests for their preferred team</li>
-                    <li>You review and approve/reject requests</li>
-                    <li>Approved players are automatically added to the match</li>
+                    <li>Captains are notified of their selection</li>
+                    <li>Players can register for teams</li>
+                    <li>Captains and organizers can approve/reject player requests</li>
                 </ol>
             </div>
             

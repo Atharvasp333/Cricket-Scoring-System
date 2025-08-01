@@ -4,18 +4,18 @@ const TeamSchema = new mongoose.Schema({
   name: { type: String, required: true },
   coach: { type: String, required: true },
   logo: { type: String }, // Store as URL or base64 string
-  captains: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Array of captain user IDs
+  captains: [{ type: mongoose.Schema.Types.Mixed }], // Allow both ObjectId and plain objects
 });
 
 const PlayerSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Reference to User model
+  userId: { type: mongoose.Schema.Types.Mixed }, // Allow both ObjectId and string
   name: String,
   role: String,
   team: String,
   isCaptain: Boolean,
   isWicketKeeper: Boolean,
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
-  approvedBy: { type: String, enum: ['captain', 'organiser'], default: null },
+  approvedBy: { type: String, enum: ['captain', 'organiser', null], default: null },
 });
 
 const AccessSchema = new mongoose.Schema({
@@ -31,6 +31,7 @@ const TournamentSchema = new mongoose.Schema({
   endDate: { type: String, required: true },
   location: { type: String, required: true },
   banner: { type: String }, // Store as URL or base64 string
+  organizerId: { type: String, required: true }, // Use String instead of ObjectId for Firebase UID
   teams: [TeamSchema],
   players: [PlayerSchema],
   maxPlayers: Number,
@@ -45,7 +46,7 @@ const TournamentSchema = new mongoose.Schema({
   maxMatchesPerDay: Number,
   access: [AccessSchema],
   status: { type: String, enum: ['Upcoming', 'Live', 'completed'], default: 'Upcoming' },
-  winner: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
+  winner: { type: mongoose.Schema.Types.Mixed }, // Allow both ObjectId and string
 }, { timestamps: true });
 
 export default mongoose.model('Tournament', TournamentSchema);

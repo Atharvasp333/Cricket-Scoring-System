@@ -89,14 +89,28 @@ const Confirmation = ({ data, prevStep, submit }) => {
                             </dd>
                         </div>
                         <div className="sm:px-6">
-                            <DetailItem label="Total Overs" value={data.total_overs} />
-                            <DetailItem label="Powerplay Overs" value={data.powerplay_overs} />
-                            <DetailItem label="DRS Enabled" value={data.drs_enabled ? 'Yes' : 'No'} />
+                            <DetailItem label="Total Overs" value={data.overs} />
+                            <DetailItem label="Powerplay Overs" value={data.powerplayOvers} />
+                            <DetailItem label="DRS Enabled" value={data.drsEnabled ? 'Yes' : 'No'} />
                         </div>
                         <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                             <dt className="text-sm font-medium text-gray-500">Invited Scorers</dt>
                             <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                {data.scorers && data.scorers.length > 0 ? data.scorers.join(', ') : 'None'}
+                                {data.scorers && data.scorers.length > 0 ? (
+                                    <ul className="divide-y divide-gray-200 rounded-md border border-gray-200">
+                                        {data.scorers.map((scorer, index) => (
+                                            <li key={index} className="flex items-center py-2 pl-3 pr-4 text-sm">
+                                                {typeof scorer === 'object' ? (
+                                                    <span>{scorer.name || 'No Name'} ({scorer.email})</span>
+                                                ) : (
+                                                    <span>{scorer}</span>
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <span className="text-red-500">No scorers added (required)</span>
+                                )}
                             </dd>
                         </div>
                     </dl>

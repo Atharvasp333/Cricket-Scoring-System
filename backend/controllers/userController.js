@@ -32,15 +32,7 @@
 //       role, 
 //       photoURL, 
 //       firebaseUID, 
-//       battingStyle, 
-//       bowlingStyle, 
-//       bowlerType, 
-//       phoneNumber,
-//       dateOfBirth,
-//       height,
-//       weight,
-//       bio,
-//       address 
+//       phoneNumber
 //     } = req.body;
     
 //     // Required field checks
@@ -53,9 +45,9 @@
 //     console.log('Role received:', role);
     
 //     // Validate role
-//     const validRoles = ['viewer', 'scorer', 'organiser','player'];
+//     const validRoles = ['viewer', 'scorer', 'organiser', 'player'];
 //     const validatedRole = validRoles.includes(role) ? role : 'viewer';
-//     console.log('Validated role:', validatedRole, '(original was:', role, ')');
+//     console.log('Validated role:', validatedRole, '(original was:', role, ')')
 
 //     // Check if user already exists
 //     let user = await User.findOne({ firebaseUID });
@@ -65,83 +57,42 @@
 //       console.log('Updating existing user with role:', validatedRole);
 //       user.email = email || user.email;
 //       user.displayName = displayName || user.displayName;
-//       user.role = validatedRole; // Use validated role
+//       user.role = validatedRole;
 //       user.photoURL = photoURL || user.photoURL;
-      
-//       // Update player-specific fields if role is player
-//       if (validatedRole === 'player') {
-//         user.battingStyle = battingStyle || user.battingStyle;
-//         user.bowlingStyle = bowlingStyle || user.bowlingStyle;
-//         user.bowlerType = bowlerType || user.bowlerType;
-//         user.phoneNumber = phoneNumber || user.phoneNumber;
-//         user.dateOfBirth = dateOfBirth || user.dateOfBirth;
-//         user.height = height || user.height;
-//         user.weight = weight || user.weight;
-//         user.bio = bio || user.bio;
-//         user.address = address || user.address;
-//       }
+//       user.phoneNumber = phoneNumber || user.phoneNumber;
       
 //       await user.save();
-//       return res.status(200).json(user);
+//       return res.status(200).json({ 
+//         message: 'User updated successfully',
+//         data: user
+//       });
 //     }
 
 //     // Create new user
 //     console.log('Creating new user with validated role:', validatedRole);
     
-//     const userData = {
+//     const newUser = new User({
 //       email,
 //       displayName,
-//       role: validatedRole, // Use validated role
+//       role: validatedRole,
 //       photoURL,
-//       firebaseUID
-//     };
-    
-//     // Add player-specific fields if role is player
-//     if (validatedRole === 'player') {
-//       userData.battingStyle = battingStyle;
-//       userData.bowlingStyle = bowlingStyle;
-//       userData.bowlerType = bowlerType;
-//       userData.phoneNumber = phoneNumber;
-//       userData.dateOfBirth = dateOfBirth;
-//       userData.height = height;
-//       userData.weight = weight;
-//       userData.bio = bio;
-//       userData.address = address;
-//     }
-    
-//     const newUser = new User(userData);
+//       firebaseUID,
+//       phoneNumber: phoneNumber || ''
+//     });
+
 //     await newUser.save();
-
-//     // If role is player, also create a Player document
-//     if (validatedRole === 'player') {
-//       const playerData = {
-//         name: displayName,
-//         role: 'player',
-//         photoURL: photoURL,
-//         battingStyle: battingStyle,
-//         bowlingStyle: bowlingStyle,
-//         bowlerType: bowlerType,
-//         phoneNumber: phoneNumber,
-//         dateOfBirth: dateOfBirth,
-//         height: height,
-//         weight: weight,
-//         bio: bio,
-//         address: address
-//       };
-//       try {
-//         await Player.create(playerData);
-//         console.log('Player document created for user:', displayName);
-//       } catch (err) {
-//         console.error('Error creating Player document:', err);
-//       }
-//     }
-
-//     console.log('New user created successfully with role:', newUser.role);
-//     return res.status(201).json(newUser);
+    
+//     res.status(201).json({
+//       message: 'User created successfully',
+//       data: newUser
+//     });
 //   } catch (error) {
-//     console.error('Error creating/updating user:', error);
-//     console.error('Request body was:', req.body);
-//     res.status(500).json({ message: 'Server error', error: error.message, stack: error.stack });
+//     console.error('Error in createOrUpdateUser:', error);
+//     res.status(500).json({ 
+//       message: 'Server error', 
+//       error: error.message,
+//       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+//     });
 //   }
 // };
 
@@ -189,182 +140,61 @@
 import User from '../models/User.js';
 import Player from '../models/Player.js';
 
-// Get users by role
-export const getUsersByRole = async (req, res) => {
-  try {
-    const { role } = req.params;
-    
-    // Validate role
-    const validRoles = ['viewer', 'scorer', 'organiser', 'player'];
-    if (!validRoles.includes(role)) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'Invalid role specified',
-        validRoles
-      });
-    }
-    
-    const users = await User.find({ role })
-      .select('_id displayName email role createdAt')
-      .sort({ createdAt: -1 });
-    
-    res.status(200).json({
-      success: true,
-      count: users.length,
-      data: users
-    });
-  } catch (error) {
-    console.error('Error fetching users by role:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Server error',
-      error: error.message 
-    });
-  }
-};
-
-// Create or update user after Firebase authentication
+// Create or update user
 export const createOrUpdateUser = async (req, res) => {
   try {
-    const { 
-      email, 
-      displayName, 
-      role = 'viewer', 
-      photoURL = '', 
-      firebaseUID, 
-      // Player-specific fields
-      battingStyle = 'Right-handed',
-      bowlingStyle = 'Right-arm',
-      bowlerType = 'Medium',
-      phoneNumber = '',
-      dateOfBirth = '',
-      height = '',
-      weight = '',
-      bio = '',
-      address = ''
-    } = req.body;
+    const { firebaseUID, email, displayName, role, photoURL } = req.body;
     
     // Validate required fields
-    if (!email || !displayName || !firebaseUID) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required fields: email, displayName, firebaseUID'
+    if (!firebaseUID || !email || !displayName) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required fields' 
       });
     }
     
-    // Validate role
-    const validRoles = ['viewer', 'scorer', 'organiser', 'player'];
-    const validatedRole = validRoles.includes(role) ? role : 'viewer';
-
-    // Check if user exists
+    // Find user by Firebase UID
     let user = await User.findOne({ firebaseUID });
-
+    
     if (user) {
       // Update existing user
       user.email = email;
       user.displayName = displayName;
-      user.role = validatedRole;
-      user.photoURL = photoURL;
-      
-      // Update player-specific fields if role is player
-      if (validatedRole === 'player') {
-        user.battingStyle = battingStyle;
-        user.bowlingStyle = bowlingStyle;
-        user.bowlerType = bowlerType;
-        user.phoneNumber = phoneNumber;
-        user.dateOfBirth = dateOfBirth;
-        user.height = height;
-        user.weight = weight;
-        user.bio = bio;
-        user.address = address;
-      }
+      if (role) user.role = role;
+      if (photoURL) user.photoURL = photoURL;
       
       await user.save();
       
-      // Update Player document if role is player
-      if (validatedRole === 'player') {
-        await Player.findOneAndUpdate(
-          { user: user._id },
-          {
-            name: displayName,
-            photoURL,
-            battingStyle,
-            bowlingStyle,
-            bowlerType,
-            phoneNumber,
-            dateOfBirth,
-            height,
-            weight,
-            bio,
-            address
-          },
-          { upsert: true, new: true }
-        );
-      }
-      
-      return res.status(200).json({
-        success: true,
-        data: user
+      console.log(`User updated: ${user._id}`);
+      res.json({ 
+        success: true, 
+        message: 'User updated successfully', 
+        data: user 
       });
-    }
-
-    // Create new user
-    const userData = {
-      email,
-      displayName,
-      role: validatedRole,
-      photoURL,
-      firebaseUID
-    };
-    
-    // Add player-specific fields if role is player
-    if (validatedRole === 'player') {
-      Object.assign(userData, {
-        battingStyle,
-        bowlingStyle,
-        bowlerType,
-        phoneNumber,
-        dateOfBirth,
-        height,
-        weight,
-        bio,
-        address
-      });
-    }
-    
-    const newUser = await User.create(userData);
-
-    // Create Player document if role is player
-    if (validatedRole === 'player') {
-      await Player.create({
-        user: newUser._id,
-        name: displayName,
+    } else {
+      // Create new user
+      user = new User({
+        firebaseUID,
         email,
-        photoURL,
-        battingStyle,
-        bowlingStyle,
-        bowlerType,
-        phoneNumber,
-        dateOfBirth,
-        height,
-        weight,
-        bio,
-        address,
-        firebaseUID
+        displayName,
+        role: role || 'viewer', // Default role
+        photoURL: photoURL || '',
+      });
+      
+      await user.save();
+      
+      console.log(`User created: ${user._id}`);
+      res.status(201).json({ 
+        success: true, 
+        message: 'User created successfully', 
+        data: user 
       });
     }
-
-    res.status(201).json({
-      success: true,
-      data: newUser
-    });
-  } catch (error) {
-    console.error('Error in createOrUpdateUser:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error creating/updating user',
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+  } catch (err) {
+    console.error('Error in createOrUpdateUser:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: err.message 
     });
   }
 };
@@ -378,33 +208,48 @@ export const getUserByFirebaseUID = async (req, res) => {
     
     if (!user) {
       return res.status(404).json({ 
-        success: false,
-        message: 'User not found' 
+        success: false, 
+        error: 'User not found' 
       });
     }
-
-    // If user is a player, get player data too
-    if (user.role === 'player') {
-      const player = await Player.findOne({ firebaseUID });
-      return res.status(200).json({
-        success: true,
-        data: {
-          user,
-          player
-        }
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: user
+    
+    res.json({ 
+      success: true, 
+      data: user 
     });
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
+  } catch (err) {
+    console.error('Error in getUserByFirebaseUID:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: err.message 
+    });
+  }
+};
+
+// Get users by role
+export const getUsersByRole = async (req, res) => {
+  try {
+    const { role } = req.params;
+    
+    if (!['player', 'scorer', 'organiser', 'viewer'].includes(role)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid role specified' 
+      });
+    }
+    
+    const users = await User.find({ role });
+    
+    res.json({ 
+      success: true, 
+      count: users.length,
+      data: users 
+    });
+  } catch (err) {
+    console.error('Error in getUsersByRole:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: err.message 
     });
   }
 };

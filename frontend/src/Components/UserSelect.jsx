@@ -8,6 +8,8 @@ const UserSelect = ({
   onSelect,
   placeholder = 'Select users...',
   className = '',
+  value,
+  role,
 }) => {
   const availableUsers = users.filter(
     (user) => !selectedUsers.some((selected) => selected.id === user.id)
@@ -49,7 +51,7 @@ const UserSelect = ({
         <div className="mt-2 flex flex-wrap gap-2">
           {selectedUsers.map((user) => (
             <span
-              key={user.id}
+              key={user.id || `user-${Math.random()}`}
               className="inline-flex items-center rounded-full bg-indigo-100 py-1 pl-3 pr-2 text-sm font-medium text-indigo-700"
             >
               {user.name}
@@ -71,24 +73,27 @@ const UserSelect = ({
 UserSelect.propTypes = {
   users: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       name: PropTypes.string.isRequired,
     })
   ).isRequired,
   selectedUsers: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       name: PropTypes.string.isRequired,
     })
-  ).isRequired,
+  ),
   onSelect: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
   className: PropTypes.string,
+  value: PropTypes.any,
+  role: PropTypes.string,
 };
 
 UserSelect.defaultProps = {
   placeholder: 'Select users...',
   className: '',
+  selectedUsers: [],
 };
 
 export default UserSelect;

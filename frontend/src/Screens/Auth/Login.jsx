@@ -52,50 +52,21 @@ const Login = () => {
       const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
       const user = userCredential.user;
       
-      // Wait for auth state to be fully initialized
-      await new Promise((resolve) => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-          if (currentUser && currentUser.uid === user.uid) {
-            unsubscribe();
-            resolve();
-          }
-        });
-      });
-
-      // Get user data from our backend with retry logic
-      let userData = null;
-      let retries = 0;
-      const maxRetries = 3;
+      // Get user data from our backend
+      const response = await api.get(`/api/users/${user.uid}`);
       
-      while (retries < maxRetries && !userData) {
-        try {
-          const response = await api.get(`/api/users/${user.uid}`);
-          if (response.data) {
-            userData = response.data.data || response.data;
-            // Set role in localStorage as soon as we have it
-            if (userData.role) {
-              localStorage.setItem('userRole', userData.role);
-              // Force a small delay to ensure localStorage is updated
-              await new Promise(resolve => setTimeout(resolve, 100));
-            }
-            break;
-          }
-        } catch (error) {
-          console.error(`Attempt ${retries + 1} - Error fetching user data:`, error);
-          if (retries === maxRetries - 1) {
-            throw new Error('Failed to fetch user data after multiple attempts');
-          }
-          // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-        retries++;
+      if (!response.data?.success) {
+        throw new Error('Failed to fetch user data');
       }
       
-      if (!userData) {
-        throw new Error('User data not found');
-      }
+      const userData = response.data.data;
+      const role = userData?.role || 'viewer';
       
-      redirectBasedOnRole(userData.role);
+      // Set role in localStorage and state
+      localStorage.setItem('userRole', role);
+      
+      // Redirect based on role
+      redirectBasedOnRole(role);
       
     } catch (error) {
       console.error('Login error:', error);
@@ -162,11 +133,11 @@ const Login = () => {
   };
 
   const redirectBasedOnRole = (role) => {
-    // Set the role in localStorage before navigation
+    // Ensure role is set in localStorage
     localStorage.setItem('userRole', role);
     
     // Determine the correct home route based on role
-    let homeRoute = '/viewer-home';
+    let homeRoute = '/';
     switch(role) {
       case 'organiser':
         homeRoute = '/organiser-homepage';
@@ -178,7 +149,7 @@ const Login = () => {
         homeRoute = '/player-home';
         break;
       default:
-        homeRoute = '/viewer-home';
+        homeRoute = '/';
     }
     
     // Force a full page reload to ensure AuthContext picks up the role

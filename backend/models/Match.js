@@ -10,34 +10,39 @@ const MatchSchema = new mongoose.Schema({
   venue: { type: String, required: true },
   team1_name: { type: String, required: true }, // Direct team name
   team2_name: { type: String, required: true }, // Direct team name
-  team1_captains: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Array of captain user IDs for team 1
-  team2_captains: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Array of captain user IDs for team 2
+  organizerId: { type: String, required: true }, // Use String instead of ObjectId for Firebase UID
+  team1_captains: [{ 
+    type: mongoose.Schema.Types.Mixed // Allow both ObjectId and plain objects
+  }],
+  team2_captains: [{ 
+    type: mongoose.Schema.Types.Mixed // Allow both ObjectId and plain objects
+  }],
   team1_players: [
     {
-      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Reference to User model
+      userId: { type: mongoose.Schema.Types.Mixed }, // Allow both ObjectId and string
       name: { type: String, required: true },
       role: { type: String, enum: ['Batsman', 'Bowler', 'All-Rounder'], required: true },
       isCaptain: { type: Boolean, default: false },
       isWicketKeeper: { type: Boolean, default: false },
       status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
-      approvedBy: { type: String, enum: ['captain', 'organiser'], default: null },
+      approvedBy: { type: String, enum: ['captain', 'organiser', null], default: null },
     }
   ],
   team2_players: [
     {
-      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Reference to User model
+      userId: { type: mongoose.Schema.Types.Mixed }, // Allow both ObjectId and string
       name: { type: String, required: true },
       role: { type: String, enum: ['Batsman', 'Bowler', 'All-Rounder'], required: true },
       isCaptain: { type: Boolean, default: false },
       isWicketKeeper: { type: Boolean, default: false },
       status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
-      approvedBy: { type: String, enum: ['captain', 'organiser'], default: null },
+      approvedBy: { type: String, enum: ['captain', 'organiser', null], default: null },
     }
   ],
   total_overs: { type: Number, required: true },
   powerplay_overs: { type: Number, required: true },
   drs_enabled: { type: Boolean, default: false },
-  scorers: [{ type: String, required: true }],
+  scorers: [{ type: String, required: true }], // Keep as string array for simplicity
 }, { timestamps: true });
 
 export default mongoose.model('Match', MatchSchema);

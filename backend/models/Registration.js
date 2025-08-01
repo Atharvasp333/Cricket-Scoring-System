@@ -28,8 +28,16 @@ const RegistrationSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Match'
   },
-  team: {
+  // Store the names for easier reference in the frontend
+  tournamentName: {
     type: String
+  },
+  matchName: {
+    type: String
+  },
+  team: {
+    type: String,
+    required: true
   },
   isCaptain: {
     type: Boolean,
@@ -46,7 +54,7 @@ const RegistrationSchema = new mongoose.Schema({
   },
   approvedBy: {
     type: String,
-    enum: ['captain', 'organiser'],
+    enum: ['captain', 'organiser', null],
     default: null
   },
   registrationDate: {

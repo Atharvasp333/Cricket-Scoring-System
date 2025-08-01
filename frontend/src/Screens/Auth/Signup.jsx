@@ -39,8 +39,6 @@ const Signup = () => {
     confirmPassword: '',
     displayName: googleUserData.displayName || '',
     phone: '',
-    dob: '',
-    agreeToTerms: false,
     role: '' // Initialize role as empty string
   });
 
@@ -88,10 +86,6 @@ const Signup = () => {
       setError('Please select a role');
       return false;
     }
-    if (!formData.agreeToTerms) {
-      setError('You must agree to the terms and conditions');
-      return false;
-    }
     return true;
   };
 
@@ -123,7 +117,6 @@ const Signup = () => {
         email: formData.email,
         displayName: formData.displayName,
         phoneNumber: formData.phone || '',
-        dateOfBirth: formData.dob || '',
         role: formData.role,
         photoURL: googleUserData.photoURL || ''
       };
@@ -135,12 +128,8 @@ const Signup = () => {
         console.log('User created successfully:', response.data);
         
         // Update the role in localStorage with the confirmed role from the server
-        if (response.data.data?.role) {
-          localStorage.setItem('userRole', response.data.data.role);
-        } else if (response.data.role) {
-          // Handle case where role is at the top level
-          localStorage.setItem('userRole', response.data.role);
-        }
+        const confirmedRole = response.data.data?.role || response.data.role || formData.role;
+        localStorage.setItem('userRole', confirmedRole);
         
         setSuccess('Account created successfully! Redirecting...');
         
@@ -154,13 +143,13 @@ const Signup = () => {
             case 'player':
               return '/player-home';
             default:
-              return '/viewer-home';
+              return '/';
           }
         };
         
         // Redirect after a short delay
         setTimeout(() => {
-          const homeRoute = getHomeRoute(response.data.data?.role || response.data.role || formData.role);
+          const homeRoute = getHomeRoute(confirmedRole);
           window.location.href = homeRoute;
         }, 1500);
 
@@ -408,15 +397,6 @@ const Signup = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="Enter your phone number"
-              />
-
-              <FormField
-                id="dob"
-                name="dob"
-                type="date"
-                label="Date of Birth"
-                value={formData.dob}
-                onChange={handleChange}
               />
             </div>
 

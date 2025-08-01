@@ -22,7 +22,8 @@ const {
   FiCalendar,
   FiAward,
   FiClock,
-  FiBarChart2
+  FiBarChart2,
+  FiUserCheck
 } = Icons;
 
 const PlayerHome = () => {
@@ -60,6 +61,11 @@ const PlayerHome = () => {
   });
   const [userRegistrations, setUserRegistrations] = useState([]);
 
+  // State for captain notifications
+  const [captainMatches, setCaptainMatches] = useState([]);
+  const [captainTournaments, setCaptainTournaments] = useState([]);
+  const [loadingCaptain, setLoadingCaptain] = useState(true);
+
   // Helper functions for data normalization
   const normalizeMatch = (match) => ({
     ...match,
@@ -95,30 +101,117 @@ const PlayerHome = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch matches
+        // Fetch matches - use the available endpoint for players
         const matchesResponse = await api.get('/api/matches');
         const matchesData = matchesResponse.data.map(normalizeMatch);
         setMatches(matchesData);
         
-        // Fetch tournaments
+        // Fetch tournaments - use the available endpoint for players
         const tournamentsResponse = await api.get('/api/tournaments');
         const tournamentsData = tournamentsResponse.data.map(normalizeTournament);
         setTournaments(tournamentsData);
         
         // Check if user is a captain of any team
         if (currentUser && currentUser.uid) {
-          // Check tournaments
-          const isTournamentCaptain = tournamentsData.some(tournament => 
-            Array.isArray(tournament?.teams) && tournament.teams.some(team => 
-              Array.isArray(team?.captains) && team.captains.includes(currentUser.uid)
-            )
-          );
+          // Safely check tournaments
+          let isTournamentCaptain = false;
+          for (const tournament of tournamentsData) {
+            if (!Array.isArray(tournament?.teams)) continue;
+            
+            for (const team of tournament.teams) {
+              if (!team || !Array.isArray(team.captains)) continue;
+              
+              for (const captain of team.captains) {
+                if (typeof captain === 'object') {
+                  if (captain && captain.firebaseUID && currentUser && captain.firebaseUID === currentUser.uid) {
+                    isTournamentCaptain = true;
+                    break;
+                  }
+                } else if (currentUser && captain === currentUser.uid) {
+                  isTournamentCaptain = true;
+                  break;
+                }
+              }
+              if (isTournamentCaptain) break;
+            }
+            if (isTournamentCaptain) break;
+          }
           
-          // Check matches
-          const isMatchCaptain = matchesData.some(match => 
-            (Array.isArray(match.team1_captains) && match.team1_captains.includes(currentUser.uid)) || 
-            (Array.isArray(match.team2_captains) && match.team2_captains.includes(currentUser.uid))
-          );
+          // Safely check matches
+          let isMatchCaptain = false;
+          for (const match of matchesData) {
+            console.log('Checking match for captain:', match.match_name, 'team1_captains:', match.team1_captains, 'team2_captains:', match.team2_captains);
+            
+            // Check team 1 captains
+            if (Array.isArray(match.team1_captains)) {
+              for (const captainEntry of match.team1_captains) {
+                // Handle the case where captainEntry is an array (nested array)
+                if (Array.isArray(captainEntry)) {
+                  for (const captain of captainEntry) {
+                    if (typeof captain === 'object') {
+                      console.log('Comparing captain object:', captain, 'with current user:', currentUser?.uid);
+                      if (captain && captain.firebaseUID && currentUser && captain.firebaseUID === currentUser.uid) {
+                        console.log('Found match! User is team1 captain');
+                        isMatchCaptain = true;
+                        break;
+                      }
+                    } else if (currentUser && captain === currentUser.uid) {
+                      console.log('Found match! User is team1 captain (string comparison)');
+                      isMatchCaptain = true;
+                      break;
+                    }
+                  }
+                } else if (typeof captainEntry === 'object') {
+                  console.log('Comparing captain object:', captainEntry, 'with current user:', currentUser?.uid);
+                  if (captainEntry && captainEntry.firebaseUID && currentUser && captainEntry.firebaseUID === currentUser.uid) {
+                    console.log('Found match! User is team1 captain');
+                    isMatchCaptain = true;
+                    break;
+                  }
+                } else if (currentUser && captainEntry === currentUser.uid) {
+                  console.log('Found match! User is team1 captain (string comparison)');
+                  isMatchCaptain = true;
+                  break;
+                }
+              }
+            }
+            
+            // Check team 2 captains if not already found
+            if (!isMatchCaptain && Array.isArray(match.team2_captains)) {
+              for (const captainEntry of match.team2_captains) {
+                // Handle the case where captainEntry is an array (nested array)
+                if (Array.isArray(captainEntry)) {
+                  for (const captain of captainEntry) {
+                    if (typeof captain === 'object') {
+                      console.log('Comparing captain object:', captain, 'with current user:', currentUser?.uid);
+                      if (captain && captain.firebaseUID && currentUser && captain.firebaseUID === currentUser.uid) {
+                        console.log('Found match! User is team2 captain');
+                        isMatchCaptain = true;
+                        break;
+                      }
+                    } else if (currentUser && captain === currentUser.uid) {
+                      console.log('Found match! User is team2 captain (string comparison)');
+                      isMatchCaptain = true;
+                      break;
+                    }
+                  }
+                } else if (typeof captainEntry === 'object') {
+                  console.log('Comparing captain object:', captainEntry, 'with current user:', currentUser?.uid);
+                  if (captainEntry && captainEntry.firebaseUID && currentUser && captainEntry.firebaseUID === currentUser.uid) {
+                    console.log('Found match! User is team2 captain');
+                    isMatchCaptain = true;
+                    break;
+                  }
+                } else if (currentUser && captainEntry === currentUser.uid) {
+                  console.log('Found match! User is team2 captain (string comparison)');
+                  isMatchCaptain = true;
+                  break;
+                }
+              }
+            }
+            
+            if (isMatchCaptain) break;
+          }
           
           setIsCaptain(isTournamentCaptain || isMatchCaptain);
         }
@@ -129,13 +222,13 @@ const PlayerHome = () => {
           try {
             // Get the MongoDB user document using Firebase UID
             const userResponse = await api.get(`/api/users/${currentUser.uid}`);
-            if (userResponse.data && userResponse.data._id) {
+            if (userResponse.data && userResponse.data.success && userResponse.data.data) {
               // Store the MongoDB user ID for later use
-              setMongoUserId(userResponse.data._id);
+              setMongoUserId(userResponse.data.data._id);
               
               try {
                 // Fetch player stats with error handling
-                const statsResponse = await api.get(`/api/player-stats/player/${userResponse.data._id}`);
+                const statsResponse = await api.get(`/api/player-stats/player/${userResponse.data.data._id}`);
                 if (statsResponse.data) {
                   setPlayerStats(statsResponse.data);
                   setStatsError(null);
@@ -158,15 +251,18 @@ const PlayerHome = () => {
               
               // Fetch user's registrations
               try {
-                const registrationsResponse = await api.get(`/api/registrations/user/${userResponse.data._id}`);
+                const registrationsResponse = await api.get(`/api/registrations/user/${userResponse.data.data._id}`);
                 setUserRegistrations(registrationsResponse.data || []);
               } catch (err) {
                 console.error('Error fetching registrations:', err);
                 setUserRegistrations([]);
               }
+            } else {
+              console.error('Invalid user response format:', userResponse.data);
+              setStatsError('Could not load your player data. Please try again later.');
             }
           } catch (err) {
-            console.error('Error fetching player stats:', err);
+            console.error('Error fetching user data:', err);
             setStatsError('Could not load your player statistics. Please try again later.');
           }
         }
@@ -235,6 +331,117 @@ const PlayerHome = () => {
       socket.off('registrationRemoved');
     };
   }, [socket, currentUser]);
+
+  // Fetch matches and tournaments where the player is a captain
+  useEffect(() => {
+    const fetchCaptainData = async () => {
+      if (!currentUser) return;
+      
+      try {
+        setLoadingCaptain(true);
+        
+        // Fetch matches where user is a captain
+        const matchesResponse = await api.get('/api/matches');
+        const captainMatchesData = matchesResponse.data.filter(match => {
+          // Safely check if user is a captain for team 1
+          let isTeam1Captain = false;
+          if (Array.isArray(match.team1_captains)) {
+            for (const captainEntry of match.team1_captains) {
+              if (Array.isArray(captainEntry)) {
+                // Handle nested array structure
+                for (const captain of captainEntry) {
+                  if (typeof captain === 'object') {
+                    if (captain && captain.firebaseUID && currentUser && captain.firebaseUID === currentUser.uid) {
+                      isTeam1Captain = true;
+                      break;
+                    }
+                  } else if (currentUser && captain === currentUser.uid) {
+                    isTeam1Captain = true;
+                    break;
+                  }
+                }
+              } else if (typeof captainEntry === 'object') {
+                if (captainEntry && captainEntry.firebaseUID && currentUser && captainEntry.firebaseUID === currentUser.uid) {
+                  isTeam1Captain = true;
+                  break;
+                }
+              } else if (currentUser && captainEntry === currentUser.uid) {
+                isTeam1Captain = true;
+                break;
+              }
+              
+              if (isTeam1Captain) break;
+            }
+          }
+          
+          // Safely check if user is a captain for team 2
+          let isTeam2Captain = false;
+          if (Array.isArray(match.team2_captains)) {
+            for (const captainEntry of match.team2_captains) {
+              if (Array.isArray(captainEntry)) {
+                // Handle nested array structure
+                for (const captain of captainEntry) {
+                  if (typeof captain === 'object') {
+                    if (captain && captain.firebaseUID && currentUser && captain.firebaseUID === currentUser.uid) {
+                      isTeam2Captain = true;
+                      break;
+                    }
+                  } else if (currentUser && captain === currentUser.uid) {
+                    isTeam2Captain = true;
+                    break;
+                  }
+                }
+              } else if (typeof captainEntry === 'object') {
+                if (captainEntry && captainEntry.firebaseUID && currentUser && captainEntry.firebaseUID === currentUser.uid) {
+                  isTeam2Captain = true;
+                  break;
+                }
+              } else if (currentUser && captainEntry === currentUser.uid) {
+                isTeam2Captain = true;
+                break;
+              }
+              
+              if (isTeam2Captain) break;
+            }
+          }
+            
+          return isTeam1Captain || isTeam2Captain;
+        }).map(normalizeMatch);
+        
+        // Fetch tournaments where user is a captain
+        const tournamentsResponse = await api.get('/api/tournaments');
+        const captainTournamentsData = tournamentsResponse.data.filter(tournament => {
+          // Safely check if user is a captain for any team in the tournament
+          if (!Array.isArray(tournament.teams)) return false;
+          
+          return tournament.teams.some(team => {
+            if (!team || !Array.isArray(team.captains)) return false;
+            
+            return team.captains.some(captain => {
+              if (typeof captain === 'object') {
+                return captain && captain.firebaseUID && currentUser && captain.firebaseUID === currentUser.uid;
+              } else {
+                return currentUser && captain === currentUser.uid;
+              }
+            });
+          });
+        }).map(normalizeTournament);
+        
+        setCaptainMatches(captainMatchesData);
+        setCaptainTournaments(captainTournamentsData);
+        
+        // Update isCaptain state
+        setIsCaptain(captainMatchesData.length > 0 || captainTournamentsData.length > 0);
+        
+      } catch (error) {
+        console.error('Error fetching captain data:', error);
+      } finally {
+        setLoadingCaptain(false);
+      }
+    };
+    
+    fetchCaptainData();
+  }, [currentUser]);
 
   // --- ORGANIZE BY STATUS ---
   const organizeMatches = (status) =>
@@ -520,15 +727,26 @@ const PlayerHome = () => {
                   <div className="mt-4 pt-3 border-t border-gray-100">
                     <div className="text-sm text-center text-blue-600 font-semibold mb-2">{match.time || "TBD"}</div>
                     <div className="text-xs text-gray-500 text-center">{match.venue}</div>
-                    <button 
-                      className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full hover:bg-green-600 transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openRegistrationModal('match', match);
-                      }}
-                    >
-                      <FiUserPlus size={16} />
-                    </button>
+                    <div className="mt-3 flex justify-between items-center">
+                      <button 
+                        className="text-blue-600 text-xs hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/match-details/${match._id}`);
+                        }}
+                      >
+                        View Details
+                      </button>
+                      <button 
+                        className="bg-green-500 text-white p-1 rounded-full hover:bg-green-600 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openRegistrationModal('match', match);
+                        }}
+                      >
+                        <FiUserPlus size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -712,206 +930,342 @@ const PlayerHome = () => {
       </section>
 
       {/* Registration Modal */}
-      {showRegistrationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-800">
-                Register for {registrationType === 'tournament' ? 'Tournament' : 'Match'}
-              </h2>
-              <button 
-                onClick={() => setShowRegistrationModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FiX size={24} />
-              </button>
-            </div>
-            
-            <div className="mb-4">
-              <h3 className="font-semibold text-gray-700 mb-2">
-                {registrationType === 'tournament' ? registrationItem?.name : registrationItem?.match_name}
-              </h3>
-              <p className="text-sm text-gray-600">
-                {registrationType === 'tournament' 
-                  ? `${registrationItem?.startDate} to ${registrationItem?.endDate}` 
-                  : `${registrationItem?.date} at ${registrationItem?.time}`}
-              </p>
-            </div>
-            
-            {registrationStatus.success ? (
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                <p>Registration submitted successfully! The organizer will review your request.</p>
-                <button 
-                  onClick={() => {
-                    setShowRegistrationModal(false);
-                    setRegistrationStatus({ loading: false, success: false, error: null });
-                  }}
-                  className="mt-4 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleRegistrationSubmit}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-1">Player Name</label>
-                    <input 
-                      type="text" 
-                      value={registrationForm.playerName} 
-                      onChange={(e) => setRegistrationForm({...registrationForm, playerName: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-1">Role</label>
-                    <select 
-                      value={registrationForm.role} 
-                      onChange={(e) => setRegistrationForm({...registrationForm, role: e.target.value})}
-                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select Role</option>
-                      <option value="Batsman">Batsman</option>
-                      <option value="Bowler">Bowler</option>
-                      <option value="All-Rounder">All-Rounder</option>
-                      <option value="Wicket-Keeper">Wicket-Keeper</option>
-                    </select>
-                  </div>
-                  
-                  {registrationType === 'match' && (
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-1">Team</label>
-                      <select 
-                        value={registrationForm.team} 
-                        onChange={(e) => setRegistrationForm({...registrationForm, team: e.target.value})}
-                        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      >
-                        <option value="">Select Team</option>
-                        <option value={registrationItem?.team1_name}>{registrationItem?.team1_name}</option>
-                        <option value={registrationItem?.team2_name}>{registrationItem?.team2_name}</option>
-                      </select>
-                    </div>
-                  )}
-                  
-                  <div className="flex space-x-4">
-                    <label className="flex items-center">
-                      <input 
-                        type="checkbox" 
-                        checked={registrationForm.isCaptain} 
-                        onChange={(e) => setRegistrationForm({...registrationForm, isCaptain: e.target.checked})}
-                        className="mr-2"
-                      />
-                      Captain
-                    </label>
-                    <label className="flex items-center">
-                      <input 
-                        type="checkbox" 
-                        checked={registrationForm.isWicketKeeper} 
-                        onChange={(e) => setRegistrationForm({...registrationForm, isWicketKeeper: e.target.checked})}
-                        className="mr-2"
-                      />
-                      Wicket-Keeper
-                    </label>
-                  </div>
-                  
-                  {registrationStatus.error && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                      <p>{registrationStatus.error}</p>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-end space-x-3 pt-4">
-                    <button 
-                      type="button" 
-                      onClick={() => setShowRegistrationModal(false)}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-300"
-                      disabled={registrationStatus.loading}
-                    >
-                      {registrationStatus.loading ? 'Submitting...' : 'Register'}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            )}
+      <Modal
+        isOpen={showRegistrationModal}
+        onClose={() => setShowRegistrationModal(false)}
+        title={`Register for ${registrationType === 'tournament' ? 'Tournament' : 'Match'}`}
+      >
+        {registrationItem && (
+          <div className="mb-4 bg-blue-50 p-3 rounded-lg">
+            <h3 className="font-semibold text-lg text-blue-800 mb-1">
+              {registrationType === 'tournament' ? registrationItem.name : registrationItem.match_name}
+            </h3>
+            <p className="text-sm text-blue-600">
+              {registrationType === 'tournament' 
+                ? `${registrationItem.startDate} to ${registrationItem.endDate}` 
+                : `${registrationItem.date} at ${registrationItem.time}`}
+            </p>
+            <p className="text-sm text-blue-600 mt-1">
+              {registrationType === 'match' 
+                ? `${registrationItem.team1_name} vs ${registrationItem.team2_name}` 
+                : ''}
+            </p>
           </div>
-        </div>
+        )}
+        
+        <form onSubmit={handleRegistrationSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="playerName" className="block text-sm font-medium text-gray-700">Player Name</label>
+            <Input
+              id="playerName"
+              type="text"
+              value={registrationForm.playerName}
+              onChange={(e) => setRegistrationForm({...registrationForm, playerName: e.target.value})}
+              required
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
+            <select
+              id="role"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              value={registrationForm.role}
+              onChange={(e) => setRegistrationForm({...registrationForm, role: e.target.value})}
+              required
+            >
+              <option value="">Select Role</option>
+              <option value="Batsman">Batsman</option>
+              <option value="Bowler">Bowler</option>
+              <option value="All-Rounder">All-Rounder</option>
+              <option value="Wicket-Keeper">Wicket-Keeper</option>
+            </select>
+          </div>
+          
+          <div>
+            <label htmlFor="team" className="block text-sm font-medium text-gray-700">Team</label>
+            <select
+              id="team"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              value={registrationForm.team}
+              onChange={(e) => setRegistrationForm({...registrationForm, team: e.target.value})}
+              required
+            >
+              <option value="">Select Team</option>
+              {registrationType === 'match' && registrationItem && (
+                <>
+                  <option value={registrationItem.team1_name}>{registrationItem.team1_name}</option>
+                  <option value={registrationItem.team2_name}>{registrationItem.team2_name}</option>
+                </>
+              )}
+              {registrationType === 'tournament' && registrationItem && registrationItem.teams && 
+                registrationItem.teams.map((team, index) => (
+                  <option key={index} value={team.name || team}>{team.name || team}</option>
+                ))
+              }
+            </select>
+          </div>
+          
+          <div className="flex items-center">
+            <input
+              id="isWicketKeeper"
+              type="checkbox"
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              checked={registrationForm.isWicketKeeper}
+              onChange={(e) => setRegistrationForm({...registrationForm, isWicketKeeper: e.target.checked})}
+            />
+            <label htmlFor="isWicketKeeper" className="ml-2 block text-sm text-gray-700">
+              Register as Wicket Keeper
+            </label>
+          </div>
+          
+          {registrationStatus.error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              {registrationStatus.error}
+            </div>
+          )}
+          
+          {registrationStatus.success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+              Registration submitted successfully! Waiting for approval.
+            </div>
+          )}
+          
+          <div className="flex justify-end space-x-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowRegistrationModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={registrationStatus.loading || registrationStatus.success}
+            >
+              {registrationStatus.loading ? <LoadingSpinner size="sm" /> : 'Submit Registration'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {isCaptain && (
+        <section className="mb-8">
+          <h2 className="text-xl font-bold mb-4">Captain Responsibilities</h2>
+          
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center mb-2">
+              <div className="bg-amber-100 p-2 rounded-full mr-3">
+                <Icons.FiAward className="h-5 w-5 text-amber-600" />
+              </div>
+              <h3 className="font-semibold text-lg text-amber-800">You are a Team Captain!</h3>
+            </div>
+            <p className="text-amber-700 mb-4">
+              You have been selected as a captain for one or more teams. As a captain, you can:
+            </p>
+            <ul className="list-disc pl-5 text-amber-700 mb-4 space-y-1">
+              <li>Approve or reject player registration requests</li>
+              <li>Manage your team during matches</li>
+              <li>View team statistics and performance</li>
+            </ul>
+            
+            <Button
+              onClick={() => navigate('/captain-approval')}
+              variant="secondary"
+              className="mt-2 w-full sm:w-auto"
+            >
+              <Icons.FiUserCheck className="mr-2" />
+              Manage Player Requests
+            </Button>
+          </div>
+          
+          {captainMatches.length > 0 && (
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold mb-2">Your Matches as Captain</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {captainMatches.slice(0, 3).map((match) => (
+                  <Card key={match._id} className="p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-semibold">{match.match_name}</h4>
+                        <div className="flex items-center text-sm text-gray-600 mt-1">
+                          <Icons.FiCalendar className="mr-1" />
+                          {match.date}
+                        </div>
+                        <Badge color={match.status === 'Live' ? 'green' : match.status === 'completed' ? 'blue' : 'yellow'}>
+                          {match.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {captainTournaments.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Your Tournaments as Captain</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {captainTournaments.slice(0, 3).map((tournament) => (
+                  <Card key={tournament._id} className="p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-semibold">{tournament.name}</h4>
+                        <div className="flex items-center text-sm text-gray-600 mt-1">
+                          <Icons.FiCalendar className="mr-1" />
+                          {tournament.startDate} - {tournament.endDate}
+                        </div>
+                        <Badge color={tournament.status === 'Live' ? 'green' : tournament.status === 'completed' ? 'blue' : 'yellow'}>
+                          {tournament.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
       )}
     </div>
   );
   
   // Function to open registration modal
   function openRegistrationModal(type, item) {
-    setRegistrationType(type);
-    setRegistrationItem(item);
+    console.log('Opening registration modal for:', type, item);
+    
+    // Reset form
+    let initialTeam = '';
+    
+    if (type === 'match') {
+      initialTeam = item.team1_name || '';
+    } else if (type === 'tournament' && item.teams) {
+      // Handle different team formats
+      if (Array.isArray(item.teams) && item.teams.length > 0) {
+        if (typeof item.teams[0] === 'string') {
+          initialTeam = item.teams[0];
+        } else if (typeof item.teams[0] === 'object' && item.teams[0].name) {
+          initialTeam = item.teams[0].name;
+        }
+      }
+    }
+    
     setRegistrationForm({
       playerName: currentUser?.displayName || '',
       role: '',
-      team: '',
-      isCaptain: false,
-      isWicketKeeper: false
+      team: initialTeam,
+      isCaptain: false, // Players cannot request to be captains
+      isWicketKeeper: false // Players can request to be wicket keepers
     });
+    
+    // Set registration type and item
+    setRegistrationType(type);
+    setRegistrationItem(item);
     setShowRegistrationModal(true);
+    
+    // Reset registration status
+    setRegistrationStatus({
+      loading: false,
+      success: false,
+      error: null
+    });
   }
   
   // Function to handle registration form submission
   async function handleRegistrationSubmit(e) {
     e.preventDefault();
-    setRegistrationStatus({ loading: true, success: false, error: null });
+    
+    if (!mongoUserId) {
+      setRegistrationStatus({
+        loading: false,
+        success: false,
+        error: 'User ID not found. Please try again later.'
+      });
+      return;
+    }
+    
+    // Validate form
+    if (!registrationForm.playerName || !registrationForm.role || !registrationForm.team) {
+      setRegistrationStatus({
+        loading: false,
+        success: false,
+        error: 'Please fill in all required fields.'
+      });
+      return;
+    }
     
     try {
-      // Check if user is already registered
-      const isAlreadyRegistered = userRegistrations.some(reg => {
+      setRegistrationStatus({
+        loading: true,
+        success: false,
+        error: null
+      });
+      
+      // Check if user already registered for this event
+      const existingRegistration = userRegistrations.find(reg => {
         if (registrationType === 'tournament') {
-          return reg.tournamentId === registrationItem._id && reg.status !== 'rejected';
+          return reg.tournamentId === registrationItem._id && reg.team === registrationForm.team;
         } else {
-          return reg.matchId === registrationItem._id && reg.status !== 'rejected';
+          return reg.matchId === registrationItem._id && reg.team === registrationForm.team;
         }
       });
       
-      if (isAlreadyRegistered) {
-        throw new Error('You have already registered for this event');
-      }
-      
-      // Check if we have the MongoDB user ID
-      if (!mongoUserId) {
-        throw new Error('User ID not available. Please refresh the page and try again.');
+      if (existingRegistration) {
+        setRegistrationStatus({
+          loading: false,
+          success: false,
+          error: 'You have already registered for this event with this team.'
+        });
+        return;
       }
       
       const payload = {
         userId: mongoUserId,
         playerName: registrationForm.playerName,
         role: registrationForm.role,
-        registrationType,
         team: registrationForm.team,
-        isCaptain: registrationForm.isCaptain,
+        isCaptain: false, // Players cannot request to be captains
         isWicketKeeper: registrationForm.isWicketKeeper,
+        registrationType: registrationType,
+        status: 'pending'
       };
       
+      // Add tournament or match ID based on registration type
       if (registrationType === 'tournament') {
         payload.tournamentId = registrationItem._id;
+        payload.tournamentName = registrationItem.name;
       } else {
         payload.matchId = registrationItem._id;
+        payload.matchName = registrationItem.match_name;
       }
       
+      console.log('Sending registration payload:', payload);
+      
+      // Send registration request
       const response = await api.post('/api/registrations', payload);
-      setUserRegistrations(prev => [...prev, response.data]);
-      setRegistrationStatus({ loading: false, success: true, error: null });
-    } catch (err) {
-      console.error('Registration error:', err);
-      setRegistrationStatus({ 
-        loading: false, 
-        success: false, 
-        error: err.response?.data?.error || err.message || 'Failed to register. Please try again.'
+      
+      // Update registration status
+      setRegistrationStatus({
+        loading: false,
+        success: true,
+        error: null
+      });
+      
+      // Add to user registrations
+      setUserRegistrations([...userRegistrations, response.data]);
+      
+      // Close modal after a delay
+      setTimeout(() => {
+        setShowRegistrationModal(false);
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Error submitting registration:', error);
+      setRegistrationStatus({
+        loading: false,
+        success: false,
+        error: error.response?.data?.error || 'Failed to submit registration. You may have already registered for this event.'
       });
     }
   }

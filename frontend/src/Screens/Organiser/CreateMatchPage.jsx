@@ -50,25 +50,44 @@ const CreateMatchPage = () => {
             return;
         }
         
+        // Ensure we have at least one scorer
+        if (!matchData.scorers || matchData.scorers.length === 0) {
+            alert('Please add at least one scorer to the match.');
+            return;
+        }
+        
+        // Extract email addresses from scorer objects
+        const scorerEmails = matchData.scorers.map(scorer => {
+            if (typeof scorer === 'string') return scorer;
+            return scorer.email || '';
+        }).filter(email => email); // Filter out any empty emails
+        
+        if (scorerEmails.length === 0) {
+            alert('Please add at least one valid scorer email to the match.');
+            return;
+        }
+        
         const payload = {
             match_name: matchData.match_name,
             match_type: matchData.match_type,
             date: matchData.dateTime.split('T')[0],
-            time: matchData.dateTime.split('T')[1] || '',
+            time: matchData.dateTime.split('T')[1] || '00:00',
             teams: [matchData.team1_name, matchData.team2_name], // Array of team names
             team1_name: matchData.team1_name, // Direct team name
             team2_name: matchData.team2_name, // Direct team name
             venue: matchData.venue,
-            team1_players: matchData.team1_players,
-            team2_players: matchData.team2_players,
-            team1_captains: matchData.team1_captains,
-            team2_captains: matchData.team2_captains,
-            total_overs: matchData.overs,
-            powerplay_overs: matchData.powerplayOvers,
-            drs_enabled: matchData.drsEnabled,
-            scorers: matchData.scorers.map(s => s.email),
+            team1_players: matchData.team1_players || [],
+            team2_players: matchData.team2_players || [],
+            team1_captains: matchData.team1_captains || [],
+            team2_captains: matchData.team2_captains || [],
+            total_overs: parseInt(matchData.overs, 10) || 20,
+            powerplay_overs: parseInt(matchData.powerplayOvers, 10) || 6,
+            drs_enabled: Boolean(matchData.drsEnabled),
+            scorers: scorerEmails,
             status: 'Upcoming',
         };
+
+        console.log('Final payload to send:', payload);
 
         try {
             const response = await api.post('/api/matches', payload);
@@ -79,7 +98,8 @@ const CreateMatchPage = () => {
             navigate('/organiser-homepage', { state: { refresh: true } });
         } catch (err) {
             console.error('Failed to create match:', err);
-            alert('Failed to create match. ' + (err.message || 'Please try again.'));
+            const errorMessage = err.response?.data?.error || err.response?.data?.details || err.message || 'Please try again.';
+            alert('Failed to create match: ' + errorMessage);
         }
     };
 

@@ -11,8 +11,32 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+  const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || null);
   const [loading, setLoading] = useState(true);
+
+  const fetchUserRole = async (user) => {
+    if (!user) return null;
+    
+    try {
+      // Try to get user data from backend
+      const response = await api.get(`/api/users/${user.uid}`);
+      
+      if (response.data && response.data.success) {
+        const userData = response.data.data;
+        // Ensure we have a role, default to 'viewer' if not found
+        const role = userData?.role || 'viewer';
+        console.log('Fetched user role:', role);
+        return role;
+      }
+      
+      console.warn('Unexpected API response format:', response.data);
+      return 'viewer';
+      
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+      return localStorage.getItem('userRole') || 'viewer';
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -20,61 +44,26 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!isMounted) return;
       
-      setCurrentUser(user);
-      
       if (user) {
         try {
-          // First check localStorage for role (set during signup)
-          const localRole = localStorage.getItem('userRole');
-          
-          // Try to get user data from backend with retry logic
-          let userData = null;
-          let retries = 0;
-          const maxRetries = 3;
-          
-          while (retries < maxRetries) {
-            try {
-              const response = await api.get(`/api/users/${user.uid}`);
-              if (response.data) {
-                // Handle both direct role and nested data.role
-                userData = response.data.data || response.data;
-                console.log('Fetched user data:', userData);
-                break;
-              }
-            } catch (error) {
-              console.error(`Attempt ${retries + 1} - Error fetching user data:`, error);
-              if (retries === maxRetries - 1) {
-                console.error('Max retries reached, using local role');
-              }
-              // Wait before retrying
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-            retries++;
+          const role = await fetchUserRole(user);
+          if (isMounted) {
+            setCurrentUser(user);
+            setUserRole(role);
+            localStorage.setItem('userRole', role);
+            // Force a small delay to ensure state is updated
+            await new Promise(resolve => setTimeout(resolve, 100));
           }
-          
-          // Handle different possible response formats
-          let role = null;
-          if (userData?.role) {
-            role = userData.role;
-          } else if (userData?.data?.role) {
-            role = userData.data.role;
-          } else if (localRole) {
-            role = localRole;
-          } else {
-            role = 'viewer';
-          }
-          
-          console.log('Setting user role to:', role);
-          setUserRole(role);
-          localStorage.setItem('userRole', role);
         } catch (error) {
           console.error('Error in auth state change:', error);
-          // Fallback to localStorage role or default to viewer
-          const fallbackRole = localStorage.getItem('userRole') || 'viewer';
-          setUserRole(fallbackRole);
+          if (isMounted) {
+            const fallbackRole = localStorage.getItem('userRole') || 'viewer';
+            setUserRole(fallbackRole);
+          }
         }
       } else {
         // User signed out
+        setCurrentUser(null);
         setUserRole(null);
         // Don't remove userRole from localStorage here as it's needed for future logins
       }
@@ -94,7 +83,10 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     userRole,
     loading,
-    setUserRole // Expose setter function
+    setUserRole: (role) => {
+      setUserRole(role);
+      localStorage.setItem('userRole', role);
+    }
   };
 
   return (
