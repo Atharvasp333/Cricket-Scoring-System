@@ -27,10 +27,10 @@ async function sendScorerEmail(to, match) {
   const mailOptions = {
     from: process.env.EMAIL_USER, // Use the sender's email
     to,
-    subject: `You have been assigned to score: ${match.match_name || 'a match'}`,
+    subject: `Dear ${to.name || 'Scorer'}, You have been assigned to score: ${match.match_name || 'a match'}`,
     html: `
       <div style="font-family: Arial, sans-serif;">
-        <p>You have been invited to score the following match:</p>
+        <p>Dear ${to.name || 'Scorer'}, You have been invited to score the following match:</p>
         ${matchDetails}
         <p>
           <a href="${scorerHomeUrl}" style="display:inline-block;padding:10px 20px;background:#1976d2;color:#fff;text-decoration:none;border-radius:4px;">Go to Scorer Homepage</a>
