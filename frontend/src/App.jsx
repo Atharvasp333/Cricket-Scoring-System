@@ -128,6 +128,11 @@ function App() {
                       <CreateMatchPage />
                     </ProtectedRoute>
                   } />
+                  <Route path="/organiser/matches/edit/:id" element={
+                    <ProtectedRoute allowedRoles={['organiser']}>
+                      <CreateMatchPage isEdit={true} />
+                    </ProtectedRoute>
+                  } />
 
                   {/* Player Routes - Protected */}
                   <Route path="/player-home" element={

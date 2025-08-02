@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Components } from '../../exports';
 import Stepper from './components/Stepper';
 import BasicMatchInfo from './components/BasicMatchInfo';
@@ -35,11 +35,54 @@ const defaultMatchData = {
 const CreateMatchPage = ({ initialData, isEdit = false, onSubmit: externalOnSubmit }) => {
     const [step, setStep] = useState(1);
     const [matchData, setMatchData] = useState(initialData || defaultMatchData);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const { id } = useParams();
 
     useEffect(() => {
         if (initialData) setMatchData(initialData);
     }, [initialData]);
+
+    // Fetch match data if in edit mode
+    useEffect(() => {
+        const fetchMatchData = async () => {
+            if (isEdit && id) {
+                setLoading(true);
+                try {
+                    const response = await api.get(`/api/matches/${id}`);
+                    if (response.data) {
+                        // Transform the data to match the form structure
+                        const match = response.data;
+                        setMatchData({
+                            match_name: match.match_name || '',
+                            match_type: match.match_type || '',
+                            team1_name: match.team1_name || '',
+                            team2_name: match.team2_name || '',
+                            venue: match.venue || '',
+                            dateTime: match.date && match.time ? `${match.date}T${match.time}` : '',
+                            team1_players: match.team1_players || [],
+                            team2_players: match.team2_players || [],
+                            team1_captains: match.team1_captains || [],
+                            team2_captains: match.team2_captains || [],
+                            overs: match.total_overs || 20,
+                            powerplayOvers: match.powerplay_overs || 6,
+                            drsEnabled: match.drs_enabled || false,
+                            drsReviews: 2,
+                            scorers: match.scorers ? match.scorers.map(email => ({ email, name: '' })) : [],
+                            status: match.status || 'Upcoming',
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching match data:', error);
+                    alert('Failed to load match data for editing');
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchMatchData();
+    }, [isEdit, id]);
 
     const nextStep = () => setStep(prev => prev + 1);
     const prevStep = () => setStep(prev => prev - 1);
@@ -97,7 +140,14 @@ const CreateMatchPage = ({ initialData, isEdit = false, onSubmit: externalOnSubm
         console.log('Final payload to send:', payload);
 
         try {
-            const response = await api.post('/api/matches', payload);
+            let response;
+            if (isEdit && id) {
+                // Edit mode: PUT
+                response = await api.put(`/api/matches/${id}`, payload);
+            } else {
+                // Create mode: POST
+                response = await api.post('/api/matches', payload);
+            }
             if (!response || !response.data) {
                 throw new Error('No response from backend');
             }
@@ -137,6 +187,18 @@ const CreateMatchPage = ({ initialData, isEdit = false, onSubmit: externalOnSubm
                 return <div>Step not found</div>;
         }
     };
+
+    if (loading) {
+        return (
+            <div className="container mx-auto p-4 sm:p-8">
+                <div className="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+                    <div className="flex justify-center items-center h-64">
+                        <div className="text-lg text-gray-600">Loading match data...</div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>

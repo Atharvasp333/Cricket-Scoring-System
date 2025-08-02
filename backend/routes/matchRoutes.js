@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 });
 
 async function sendScorerEmail(to, match) {
-  const scorerHomeUrl = 'http://localhost:5173/scorer/home'; // Update with actual URL if needed
+  const scorerHomeUrl = 'http://localhost:5173/scorer-home'; // Update with actual URL if needed
   const matchDetails = `
     <h2>Match Invitation</h2>
     <p><b>Match:</b> ${match.match_name || ''}</p>
@@ -25,7 +25,7 @@ async function sendScorerEmail(to, match) {
     <p><b>Venue:</b> ${match.venue || ''}</p>
   `;
   const mailOptions = {
-    from: 'process.env.EMAIL_USER', // Use the sender's email
+    from: process.env.EMAIL_USER, // Use the sender's email
     to,
     subject: `You have been assigned to score: ${match.match_name || 'a match'}`,
     html: `
@@ -95,8 +95,10 @@ router.post('/', verifyToken, async (req, res) => {
       for (const scorerEmail of match.scorers) {
         try {
           await sendScorerEmail(scorerEmail, match);
+          console.log(`Email sent successfully to scorer: ${scorerEmail}`);
         } catch (e) {
           console.error('Failed to send scorer email:', scorerEmail, e);
+          // Don't fail the entire request if email fails
         }
       }
     }
@@ -210,6 +212,9 @@ router.put('/:id', verifyToken, async (req, res) => {
     console.log(`Updating match ${req.params.id} for organizer ${req.user.uid}`);
     console.log('Update data:', JSON.stringify(req.body, null, 2));
     
+    // Get the original match to compare scorers
+    const originalMatch = await Match.findById(req.params.id);
+    
     const match = await Match.findOneAndUpdate(
       { 
         _id: req.params.id,
@@ -222,6 +227,25 @@ router.put('/:id', verifyToken, async (req, res) => {
     if (!match) {
       console.log(`Match ${req.params.id} not found or access denied for update`);
       return res.status(404).json({ error: 'Match not found or access denied' });
+    }
+    
+    // Send emails to new scorers if scorers were changed
+    if (req.body.scorers && Array.isArray(req.body.scorers) && originalMatch) {
+      const originalScorers = originalMatch.scorers || [];
+      const newScorers = req.body.scorers;
+      
+      // Find new scorers that weren't in the original list
+      const addedScorers = newScorers.filter(scorer => !originalScorers.includes(scorer));
+      
+      for (const scorerEmail of addedScorers) {
+        try {
+          await sendScorerEmail(scorerEmail, match);
+          console.log(`Email sent successfully to new scorer: ${scorerEmail}`);
+        } catch (e) {
+          console.error('Failed to send scorer email:', scorerEmail, e);
+          // Don't fail the entire request if email fails
+        }
+      }
     }
     
     console.log(`Match ${match._id} updated successfully`);
