@@ -212,8 +212,28 @@ router.put('/:id', verifyToken, async (req, res) => {
     console.log(`Updating match ${req.params.id} for organizer ${req.user.uid}`);
     console.log('Update data:', JSON.stringify(req.body, null, 2));
     
-    // Get the original match to compare scorers
+    // Get the original match to check status and compare scorers
     const originalMatch = await Match.findById(req.params.id);
+    
+    if (!originalMatch) {
+      console.log(`Match ${req.params.id} not found`);
+      return res.status(404).json({ error: 'Match not found' });
+    }
+    
+    // Check if the match is live - prevent updates for live matches
+    if (originalMatch.status === 'Live') {
+      console.log(`Cannot update match ${req.params.id} - match is live`);
+      return res.status(403).json({ 
+        error: 'Cannot update match details while match is live',
+        details: 'Match updates are not allowed during live matches for data integrity'
+      });
+    }
+    
+    // Check if user is the organizer
+    if (originalMatch.organizerId !== req.user.uid) {
+      console.log(`Access denied for match ${req.params.id} - user ${req.user.uid} is not the organizer`);
+      return res.status(403).json({ error: 'Access denied - only the organizer can update this match' });
+    }
     
     const match = await Match.findOneAndUpdate(
       { 
@@ -225,8 +245,8 @@ router.put('/:id', verifyToken, async (req, res) => {
     );
     
     if (!match) {
-      console.log(`Match ${req.params.id} not found or access denied for update`);
-      return res.status(404).json({ error: 'Match not found or access denied' });
+      console.log(`Match ${req.params.id} not found during update`);
+      return res.status(404).json({ error: 'Match not found' });
     }
     
     // Send emails to new scorers if scorers were changed
@@ -257,17 +277,45 @@ router.put('/:id', verifyToken, async (req, res) => {
 });
 
 // Delete a match by ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
   try {
-    const match = await Match.findByIdAndDelete(req.params.id);
+    // First check if the match exists and get its status
+    const match = await Match.findById(req.params.id);
     if (!match) {
       return res.status(404).json({ error: 'Match not found' });
     }
+    
+    // Check if user is the organizer
+    if (match.organizerId !== req.user.uid) {
+      return res.status(403).json({ error: 'Access denied - only the organizer can delete this match' });
+    }
+    
+    // Prevent deletion of live matches
+    if (match.status === 'Live') {
+      return res.status(403).json({ 
+        error: 'Cannot delete match while it is live',
+        details: 'Match deletion is not allowed during live matches for data integrity'
+      });
+    }
+    
+    // Prevent deletion of completed matches
+    if (match.status === 'completed') {
+      return res.status(403).json({ 
+        error: 'Cannot delete completed matches',
+        details: 'Completed matches cannot be deleted to preserve match history'
+      });
+    }
+    
+    // Delete the match
+    await Match.findByIdAndDelete(req.params.id);
+    
     // Emit socket event for deleted match
     const io = req.app.get('io');
     if (io) io.emit('matchDeleted', req.params.id);
+    
     res.json({ message: 'Match deleted successfully' });
   } catch (err) {
+    console.error('Error deleting match:', err);
     res.status(500).json({ error: err.message });
   }
 });

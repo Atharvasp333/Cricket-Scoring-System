@@ -51,8 +51,23 @@ const CreateMatchPage = ({ initialData, isEdit = false, onSubmit: externalOnSubm
                 try {
                     const response = await api.get(`/api/matches/${id}`);
                     if (response.data) {
-                        // Transform the data to match the form structure
                         const match = response.data;
+                        
+                        // Check if match is live and prevent editing
+                        if (match.status === 'Live') {
+                            alert('Cannot edit match details while the match is live. Please wait until the match is completed.');
+                            navigate('/organiser-homepage');
+                            return;
+                        }
+                        
+                        // Check if match is completed and prevent editing
+                        if (match.status === 'completed') {
+                            alert('Cannot edit completed matches.');
+                            navigate('/organiser-homepage');
+                            return;
+                        }
+                        
+                        // Transform the data to match the form structure
                         setMatchData({
                             match_name: match.match_name || '',
                             match_type: match.match_type || '',
@@ -75,6 +90,7 @@ const CreateMatchPage = ({ initialData, isEdit = false, onSubmit: externalOnSubm
                 } catch (error) {
                     console.error('Error fetching match data:', error);
                     alert('Failed to load match data for editing');
+                    navigate('/organiser-homepage');
                 } finally {
                     setLoading(false);
                 }
@@ -82,10 +98,26 @@ const CreateMatchPage = ({ initialData, isEdit = false, onSubmit: externalOnSubm
         };
 
         fetchMatchData();
-    }, [isEdit, id]);
+    }, [isEdit, id, navigate]);
 
     const nextStep = () => setStep(prev => prev + 1);
     const prevStep = () => setStep(prev => prev - 1);
+    
+    const handleCancelEdit = () => {
+        const message = isEdit 
+            ? 'Are you sure you want to cancel editing? All unsaved changes will be lost.'
+            : 'Are you sure you want to cancel creating this match? All entered data will be lost.';
+            
+        if (window.confirm(message)) {
+            if (isEdit) {
+                // If in edit mode, go back to match details page
+                navigate(`/organiser/matches/${id}`);
+            } else {
+                // If in create mode, go back to organizer homepage
+                navigate('/organiser-homepage');
+            }
+        }
+    };
 
     const submitMatch = async () => {
         console.log('Submitting match:', matchData);
@@ -165,24 +197,33 @@ const CreateMatchPage = ({ initialData, isEdit = false, onSubmit: externalOnSubm
                 console.error('Error response status:', err.response.status);
                 console.error('Error response headers:', err.response.headers);
             }
-            const errorMessage = err.response?.data?.error || err.response?.data?.details || err.message || 'Please try again.';
-            alert('Failed to create match: ' + errorMessage);
-            alert('Failed to ' + (isEdit ? 'update' : 'create') + ' match. ' + (err.message || 'Please try again.'));
+            
+            // Handle specific error cases
+            if (err.response?.status === 403) {
+                const errorMessage = err.response?.data?.error || 'Access denied';
+                alert(errorMessage);
+                if (err.response?.data?.details) {
+                    console.log('Error details:', err.response.data.details);
+                }
+            } else {
+                const errorMessage = err.response?.data?.error || err.response?.data?.details || err.message || 'Please try again.';
+                alert('Failed to ' + (isEdit ? 'update' : 'create') + ' match: ' + errorMessage);
+            }
         }
     };
 
     const renderStep = () => {
         switch (step) {
             case 1:
-                return <BasicMatchInfo data={matchData} setData={setMatchData} nextStep={nextStep} />;
+                return <BasicMatchInfo data={matchData} setData={setMatchData} nextStep={nextStep} onCancel={handleCancelEdit} />;
             case 2:
-                return <TeamPlayerSelection data={matchData} setData={setMatchData} nextStep={nextStep} prevStep={prevStep} />;
+                return <TeamPlayerSelection data={matchData} setData={setMatchData} nextStep={nextStep} prevStep={prevStep} onCancel={handleCancelEdit} />;
             case 3:
-                return <MatchRules data={matchData} setData={setMatchData} nextStep={nextStep} prevStep={prevStep} />;
+                return <MatchRules data={matchData} setData={setMatchData} nextStep={nextStep} prevStep={prevStep} onCancel={handleCancelEdit} />;
             case 4:
-                return <ScorerAccess data={matchData} setData={setMatchData} nextStep={nextStep} prevStep={prevStep} />;
+                return <ScorerAccess data={matchData} setData={setMatchData} nextStep={nextStep} prevStep={prevStep} onCancel={handleCancelEdit} />;
             case 5:
-                return <Confirmation data={matchData} prevStep={prevStep} submit={submitMatch} isEdit={isEdit} />;
+                return <Confirmation data={matchData} prevStep={prevStep} submit={submitMatch} isEdit={isEdit} onCancel={handleCancelEdit} />;
             default:
                 return <div>Step not found</div>;
         }

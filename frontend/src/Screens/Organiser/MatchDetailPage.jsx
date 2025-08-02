@@ -75,7 +75,17 @@ const MatchDetailPage = () => {
                 navigate('/organiser-homepage');
             } catch (err) {
                 console.error('Error deleting match:', err);
-                setError('Failed to delete match. Please try again later.');
+                
+                // Handle specific error cases
+                if (err.response?.status === 403) {
+                    const errorMessage = err.response?.data?.error || 'Access denied';
+                    alert(errorMessage);
+                    if (err.response?.data?.details) {
+                        console.log('Error details:', err.response.data.details);
+                    }
+                } else {
+                    setError('Failed to delete match. Please try again later.');
+                }
             }
         }
     };
@@ -167,18 +177,37 @@ const MatchDetailPage = () => {
                             <p className="mt-1 max-w-2xl text-sm text-gray-500">{match.match_type}</p>
                         </div>
                         <div className="flex space-x-3">
-                            <button
-                                onClick={handleEditMatch}
-                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            >
-                                Edit Match
-                            </button>
-                            <button
-                                onClick={handleDeleteMatch}
-                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                            >
-                                Delete Match
-                            </button>
+                            {match.status !== 'Live' && match.status !== 'completed' && (
+                                <button
+                                    onClick={handleEditMatch}
+                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    Edit Match
+                                </button>
+                            )}
+                            {match.status === 'Live' && (
+                                <div className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-gray-400 cursor-not-allowed">
+                                    Edit Disabled (Live Match)
+                                </div>
+                            )}
+                            {match.status === 'completed' && (
+                                <div className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-gray-400 cursor-not-allowed">
+                                    Edit Disabled (Completed)
+                                </div>
+                            )}
+                            {match.status !== 'Live' && match.status !== 'completed' && (
+                                <button
+                                    onClick={handleDeleteMatch}
+                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                >
+                                    Delete Match
+                                </button>
+                            )}
+                            {(match.status === 'Live' || match.status === 'completed') && (
+                                <div className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-gray-400 cursor-not-allowed">
+                                    Delete Disabled
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
@@ -196,11 +225,21 @@ const MatchDetailPage = () => {
                                 <dd className="mt-1 text-sm text-gray-900">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                                         match.status === 'Live' ? 'bg-green-100 text-green-800' : 
-                                        match.status === 'Completed' ? 'bg-blue-100 text-blue-800' : 
+                                        match.status === 'completed' ? 'bg-blue-100 text-blue-800' : 
                                         'bg-yellow-100 text-yellow-800'
                                     }`}>
                                         {match.status}
                                     </span>
+                                    {match.status === 'Live' && (
+                                        <div className="mt-1 text-xs text-red-600">
+                                            ⚠️ Match editing is disabled while live
+                                        </div>
+                                    )}
+                                    {match.status === 'completed' && (
+                                        <div className="mt-1 text-xs text-gray-600">
+                                            📝 Match editing is disabled for completed matches
+                                        </div>
+                                    )}
                                 </dd>
                             </div>
                             <div className="sm:col-span-1">

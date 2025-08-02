@@ -6,7 +6,7 @@ const {
     FormField
 } = Components;
 
-const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
+const ScorerAccess = ({ data, setData, nextStep, prevStep, onCancel }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
@@ -119,16 +119,21 @@ const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
             </div>
 
             <div className="mt-8 flex justify-between">
-                <button onClick={prevStep} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg transition-all duration-300">
-                    Back
+                <button onClick={onCancel} className="bg-gray-500 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all duration-300 hover:bg-gray-600">
+                    Cancel
                 </button>
-                <button 
-                    onClick={nextStep} 
-                    disabled={!isValid}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                    Save & Continue
-                </button>
+                <div className="flex space-x-3">
+                    <button onClick={prevStep} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg transition-all duration-300">
+                        Back
+                    </button>
+                    <button 
+                        onClick={nextStep} 
+                        disabled={!isValid}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                        Save & Continue
+                    </button>
+                </div>
             </div>
         </div>
     );

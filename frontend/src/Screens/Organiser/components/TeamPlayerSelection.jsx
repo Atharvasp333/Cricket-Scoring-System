@@ -6,7 +6,7 @@ import { Components } from '../../../exports';
 
 const { LoadingSpinner } = Components;
 
-const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
+const TeamPlayerSelection = ({ data, setData, nextStep, prevStep, onCancel }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [players, setPlayers] = useState([]);
@@ -230,15 +230,20 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
             </div>
             
             <div className="mt-8 flex justify-between">
-                <button onClick={prevStep} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg transition-all duration-300">
-                    Back
+                <button onClick={onCancel} className="bg-gray-500 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all duration-300 hover:bg-gray-600">
+                    Cancel
                 </button>
-                <button
-                    onClick={handleContinue}
-                    className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all duration-300 hover:bg-indigo-700"
-                >
-                    Continue
-                </button>
+                <div className="flex space-x-3">
+                    <button onClick={prevStep} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg transition-all duration-300">
+                        Back
+                    </button>
+                    <button
+                        onClick={handleContinue}
+                        className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all duration-300 hover:bg-indigo-700"
+                    >
+                        Continue
+                    </button>
+                </div>
             </div>
         </div>
     );

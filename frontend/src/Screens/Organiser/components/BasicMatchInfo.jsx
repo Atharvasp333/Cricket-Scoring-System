@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const BasicMatchInfo = ({ data, setData, nextStep }) => {
+const BasicMatchInfo = ({ data, setData, nextStep, onCancel }) => {
     const [isFormValid, setIsFormValid] = useState(false);
 
     useEffect(() => {
@@ -116,7 +116,13 @@ const BasicMatchInfo = ({ data, setData, nextStep }) => {
                 </div>
             </div>
 
-            <div className="mt-8 flex justify-end">
+            <div className="mt-8 flex justify-between">
+                <button
+                    onClick={onCancel}
+                    className="bg-gray-500 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-all duration-300 hover:bg-gray-600"
+                >
+                    Cancel
+                </button>
                 <button
                     onClick={() => { console.log('Save & Continue clicked'); nextStep(); }}
                     disabled={!isFormValid}
