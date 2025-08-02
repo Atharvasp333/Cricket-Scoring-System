@@ -117,7 +117,7 @@ const MatchSetup = () => {
       try {
         setLoading(true);
         // Update match status to Live
-        await api.put(`/api/matches/${matchId}`, {
+        await api.put(`/api/matchStates/${matchId}/status`, {
           status: 'Live'
         });
 

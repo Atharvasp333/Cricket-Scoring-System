@@ -227,10 +227,17 @@ router.put('/:id/status', verifyToken, async (req, res) => {
         const tournament = await Tournament.findById(registration.tournamentId);
         if (tournament) {
           // Check if player already exists in the tournament
-          const playerExists = tournament.players.some(p => 
-            (p.userId && p.userId.equals(registration.userId)) || 
-            p.name === registration.playerName
-          );
+          const playerExists = tournament.players.some(p => {
+            // Compare userId as strings to handle both ObjectId and string types
+            const playerIdMatches = p.userId && 
+              (p.userId.toString() === registration.userId.toString() || 
+               p.userId === registration.userId.toString());
+            
+            // Also check by name as a fallback
+            const nameMatches = p.name === registration.playerName;
+            
+            return playerIdMatches || nameMatches;
+          });
           
           if (!playerExists) {
             // Check if we're at the squad limit (15 players per team)
@@ -259,10 +266,17 @@ router.put('/:id/status', verifyToken, async (req, res) => {
           const teamKey = registration.team === match.team1_name ? 'team1_players' : 'team2_players';
           
           // Check if player already exists in the match
-          const playerExists = match[teamKey].some(p => 
-            (p.userId && p.userId.equals(registration.userId)) || 
-            p.name === registration.playerName
-          );
+          const playerExists = match[teamKey].some(p => {
+            // Compare userId as strings to handle both ObjectId and string types
+            const playerIdMatches = p.userId && 
+              (p.userId.toString() === registration.userId.toString() || 
+               p.userId === registration.userId.toString());
+            
+            // Also check by name as a fallback
+            const nameMatches = p.name === registration.playerName;
+            
+            return playerIdMatches || nameMatches;
+          });
           
           if (!playerExists) {
             // Check if we're at the squad limit (15 players per team)
