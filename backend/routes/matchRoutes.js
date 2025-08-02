@@ -1,8 +1,45 @@
 import express from 'express';
 import Match from '../models/Match.js';
 import { verifyToken } from '../middleware/authMiddleware.js';
+import nodemailer from 'nodemailer';
 
 const router = express.Router();
+
+// Simple mailer utility (for demo, use environment variables for real credentials)
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER, // set in .env
+    pass: process.env.EMAIL_PASS  // set in .env
+  }
+});
+
+async function sendScorerEmail(to, match) {
+  const scorerHomeUrl = 'http://localhost:5173/scorer/home'; // Update with actual URL if needed
+  const matchDetails = `
+    <h2>Match Invitation</h2>
+    <p><b>Match:</b> ${match.match_name || ''}</p>
+    <p><b>Teams:</b> ${Array.isArray(match.teams) ? match.teams.join(' vs ') : ''}</p>
+    <p><b>Date:</b> ${match.date || ''}</p>
+    <p><b>Time:</b> ${match.time || ''}</p>
+    <p><b>Venue:</b> ${match.venue || ''}</p>
+  `;
+  const mailOptions = {
+    from: 'process.env.EMAIL_USER', // Use the sender's email
+    to,
+    subject: `You have been assigned to score: ${match.match_name || 'a match'}`,
+    html: `
+      <div style="font-family: Arial, sans-serif;">
+        <p>You have been invited to score the following match:</p>
+        ${matchDetails}
+        <p>
+          <a href="${scorerHomeUrl}" style="display:inline-block;padding:10px 20px;background:#1976d2;color:#fff;text-decoration:none;border-radius:4px;">Go to Scorer Homepage</a>
+        </p>
+      </div>
+    `
+  };
+  await transporter.sendMail(mailOptions);
+}
 
 // Create a new match
 router.post('/', verifyToken, async (req, res) => {
@@ -53,6 +90,16 @@ router.post('/', verifyToken, async (req, res) => {
     }
     
     await match.save();
+    // Email notification to scorer(s)
+    if (match.scorers && Array.isArray(match.scorers)) {
+      for (const scorerEmail of match.scorers) {
+        try {
+          await sendScorerEmail(scorerEmail, match);
+        } catch (e) {
+          console.error('Failed to send scorer email:', scorerEmail, e);
+        }
+      }
+    }
     // Emit socket event for new match
     const io = req.app.get('io');
     if (io) io.emit('matchAdded', match);
@@ -182,6 +229,22 @@ router.put('/:id', verifyToken, async (req, res) => {
   } catch (err) {
     console.error('Error updating match:', err);
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Delete a match by ID
+router.delete('/:id', async (req, res) => {
+  try {
+    const match = await Match.findByIdAndDelete(req.params.id);
+    if (!match) {
+      return res.status(404).json({ error: 'Match not found' });
+    }
+    // Emit socket event for deleted match
+    const io = req.app.get('io');
+    if (io) io.emit('matchDeleted', req.params.id);
+    res.json({ message: 'Match deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

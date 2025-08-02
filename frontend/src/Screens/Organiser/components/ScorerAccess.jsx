@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Components } from '../../../exports';
 
+
 const {
     FormField
 } = Components;
@@ -63,7 +64,11 @@ const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
             
             <div className="max-w-lg mx-auto">
                 <form onSubmit={handleInvite} className="p-6 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Invite Scorer</h3>
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold text-gray-900">Invite Scorer</h3>
+                        
+                    </div>
+                    
                     <div>
                         <label htmlFor="scorerName" className="block text-sm font-medium text-gray-700">Name (Optional)</label>
                         <input type="text" id="scorerName" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. John Doe" className="mt-1 block text-gray-700 w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
@@ -82,7 +87,7 @@ const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
                     <h3 className="text-lg font-semibold text-gray-900">Invited Scorers</h3>
                     <div className="mt-2 border border-gray-200 rounded-xl overflow-hidden">
                         <ul className="divide-y divide-gray-200">
-                            {data.scorers.map((scorer, index) => (
+                            {(data.scorers || []).map((scorer, index) => (
                                 <li key={index} className="px-4 py-3 flex items-center justify-between text-sm hover:bg-gray-50">
                                     <div className="flex items-center">
                                         <span className="font-medium text-gray-800">
@@ -101,7 +106,7 @@ const ScorerAccess = ({ data, setData, nextStep, prevStep }) => {
                                     </button>
                                 </li>
                             ))}
-                            {data.scorers.length === 0 && <li className="px-4 py-4 text-sm text-gray-500 text-center">No scorers invited yet.</li>}
+                            {(data.scorers || []).length === 0 && <li className="px-4 py-4 text-sm text-gray-500 text-center">No scorers invited yet.</li>}
                         </ul>
                     </div>
                     

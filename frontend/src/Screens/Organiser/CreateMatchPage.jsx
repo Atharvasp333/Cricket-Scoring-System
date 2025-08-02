@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Components } from '../../exports';
 import Stepper from './components/Stepper';
@@ -14,32 +14,34 @@ const {
   Footer
 } = Components;
 
-const CreateMatchPage = () => {
-    const [step, setStep] = useState(1);
-    const [matchData, setMatchData] = useState({
-        match_name: '',
-        match_type: '',
-        team1_name: '',
-        team2_name: '',
-        venue: '',
-        dateTime: '',
-        team1_players: [],
-        team2_players: [],
-        team1_captains: [],
-        team2_captains: [],
-        overs: 20,
-        powerplayOvers: 6,
-        drsEnabled: false,
-        drsReviews: 2,
-        scorers: [],
-    });
+const defaultMatchData = {
+    match_name: '',
+    match_type: '',
+    team1_name: '',
+    team2_name: '',
+    venue: '',
+    dateTime: '',
+    team1_players: [],
+    team2_players: [],
+    team1_captains: [],
+    team2_captains: [],
+    overs: 20,
+    powerplayOvers: 6,
+    drsEnabled: false,
+    drsReviews: 2,
+    scorers: [],
+};
 
+const CreateMatchPage = ({ initialData, isEdit = false, onSubmit: externalOnSubmit }) => {
+    const [step, setStep] = useState(1);
+    const [matchData, setMatchData] = useState(initialData || defaultMatchData);
     const navigate = useNavigate();
 
-    const nextStep = () => {
-        console.log('Moving to next step:', step + 1);
-        setStep(prev => prev + 1);
-    };
+    useEffect(() => {
+        if (initialData) setMatchData(initialData);
+    }, [initialData]);
+
+    const nextStep = () => setStep(prev => prev + 1);
     const prevStep = () => setStep(prev => prev - 1);
 
     const submitMatch = async () => {
@@ -99,8 +101,12 @@ const CreateMatchPage = () => {
             if (!response || !response.data) {
                 throw new Error('No response from backend');
             }
-            alert('Match created successfully!');
-            navigate('/organiser-homepage', { state: { refresh: true } });
+            alert(isEdit ? 'Match updated successfully!' : 'Match created successfully!');
+            if (externalOnSubmit) {
+                externalOnSubmit(response.data);
+            } else {
+                navigate('/organiser-homepage', { state: { refresh: true } });
+            }
         } catch (err) {
             console.error('Failed to create match:', err);
             // Add more detailed error logging
@@ -111,6 +117,7 @@ const CreateMatchPage = () => {
             }
             const errorMessage = err.response?.data?.error || err.response?.data?.details || err.message || 'Please try again.';
             alert('Failed to create match: ' + errorMessage);
+            alert('Failed to ' + (isEdit ? 'update' : 'create') + ' match. ' + (err.message || 'Please try again.'));
         }
     };
 
@@ -125,7 +132,7 @@ const CreateMatchPage = () => {
             case 4:
                 return <ScorerAccess data={matchData} setData={setMatchData} nextStep={nextStep} prevStep={prevStep} />;
             case 5:
-                return <Confirmation data={matchData} prevStep={prevStep} submit={submitMatch} />;
+                return <Confirmation data={matchData} prevStep={prevStep} submit={submitMatch} isEdit={isEdit} />;
             default:
                 return <div>Step not found</div>;
         }

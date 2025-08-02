@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Components } from '../../exports';
+import Stepper from './components/Stepper';
+import TournamentBasicInfo from './components/TournamentBasicInfo';
+import TournamentTeams from './components/TournamentTeams';
+import TournamentRules from './components/TournamentRules';
+import ScorerAccess from './components/ScorerAccess';
+import Confirmation from './components/Confirmation';
 
-const {
-  Stepper,
-  TournamentBasicInfo,
-  TournamentTeams,
-  TournamentRules,
-  ScorerAccess,
-  Confirmation,
-} = Components;
 
 const TournamentDetailPage = () => {
     const { id } = useParams();
@@ -83,6 +80,26 @@ const TournamentDetailPage = () => {
         setStep(1);
     };
 
+    const handleDelete = async () => {
+        if (window.confirm('Are you sure you want to delete this tournament?')) {
+            try {
+                const response = await fetch(`/api/tournaments/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete tournament');
+                }
+
+                alert('Tournament deleted successfully!');
+                navigate('/organiser-homepage');
+
+            } catch (err) {
+                alert('Error deleting tournament: ' + err.message);
+            }
+        }
+    };
+
     const submitTournament = async () => {
         try {
             const payload = {
@@ -124,15 +141,15 @@ const TournamentDetailPage = () => {
     const renderStep = () => {
         switch (step) {
             case 1:
-                return <TournamentBasicInfo data={tournamentData} setData={setTournamentData} nextStep={nextStep} />;
+                return <TournamentBasicInfo data={tournamentData} updateData={setTournamentData} nextStep={nextStep} />;
             case 2:
-                return <TournamentTeams data={tournamentData} setData={setTournamentData} nextStep={nextStep} prevStep={prevStep} />;
+                return <TournamentTeams data={tournamentData} updateData={setTournamentData} nextStep={nextStep} prevStep={prevStep} />;
             case 3:
-                return <TournamentRules data={tournamentData} setData={setTournamentData} nextStep={nextStep} prevStep={prevStep} />;
+                return <TournamentRules data={tournamentData} updateData={setTournamentData} nextStep={nextStep} prevStep={prevStep} />;
             case 4:
-                return <ScorerAccess data={tournamentData} setData={setTournamentData} nextStep={nextStep} prevStep={prevStep} />;
+                return <ScorerAccess data={tournamentData} updateData={setTournamentData} nextStep={nextStep} prevStep={prevStep} />;
             case 5:
-                return <Confirmation data={tournamentData} prevStep={prevStep} submit={submitTournament} />;
+                return <Confirmation data={tournamentData} prevStep={prevStep} submit={submitTournament} isEdit={isEditing} />;
             default:
                 return <div>Step not found</div>;
         }

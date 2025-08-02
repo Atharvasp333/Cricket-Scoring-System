@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const Confirmation = ({ data, prevStep, submit }) => {
 
@@ -9,22 +9,35 @@ const Confirmation = ({ data, prevStep, submit }) => {
         </div>
     );
 
-    const PlayerList = ({ players }) => (
-        <ul className="divide-y divide-gray-200 rounded-md border border-gray-200">
-            {players.map((player, index) => (
-                <li key={index} className="flex items-center justify-between py-3 pl-3 pr-4 text-sm">
-                    <div className="flex w-0 flex-1 items-center">
-                        <span className="ml-2 w-0 flex-1 truncate font-medium">{player.name}</span>
-                        <span className="flex-shrink-0 text-gray-500">{player.role}</span>
-                    </div>
-                    <div className="ml-4 flex-shrink-0">
-                        {player.isCaptain && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">C</span>}
-                        {player.isWicketKeeper && <span className="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">WK</span>}
-                    </div>
-                </li>
-            ))}
-        </ul>
-    );
+  const PlayerList = ({ players }) => (
+    <ul className="divide-y divide-gray-200 rounded-md border border-gray-200">
+      {players.map((player, index) => (
+        <li
+          key={index}
+          className="flex items-center justify-between py-3 pl-3 pr-4 text-sm"
+        >
+          <div className="flex w-0 flex-1 items-center">
+            <span className="ml-2 w-0 flex-1 truncate font-medium">
+              {player.name}
+            </span>
+            <span className="flex-shrink-0 text-gray-500">{player.role}</span>
+          </div>
+          <div className="ml-4 flex-shrink-0">
+            {player.isCaptain && (
+              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                C
+              </span>
+            )}
+            {player.isWicketKeeper && (
+              <span className="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                WK
+              </span>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
 
     return (
         <div>

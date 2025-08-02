@@ -171,4 +171,20 @@ router.put('/:id', verifyToken, async (req, res) => {
   }
 });
 
+// Delete a tournament by ID
+router.delete('/:id', async (req, res) => {
+  try {
+    const tournament = await Tournament.findByIdAndDelete(req.params.id);
+    if (!tournament) {
+      return res.status(404).json({ error: 'Tournament not found' });
+    }
+    // Emit socket event for deleted tournament
+    const io = req.app.get('io');
+    if (io) io.emit('tournamentDeleted', req.params.id);
+    res.json({ message: 'Tournament deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import UserSelect from '../../../Components/UserSelect';
 
 const TeamCard = ({ team, index, handleChange, handleRemove }) => (
@@ -44,26 +44,33 @@ const TeamCard = ({ team, index, handleChange, handleRemove }) => (
 );
 
 const TournamentTeams = ({ data, updateData, nextStep, prevStep }) => {
-  const [teams, setTeams] = useState(data.teams || [
-    { name: '', coach: '', logo: null, captains: [] },
-    { name: '', coach: '', logo: null, captains: [] }
-  ]);
-  const [error, setError] = useState('');
+  // Only use default teams if data.teams is undefined (not just empty)
+  const teams = (Array.isArray(data.teams) && data.teams.length > 0)
+    ? data.teams
+    : (data.teams === undefined
+        ? [
+            { name: '', coach: '', logo: null, captains: [] },
+            { name: '', coach: '', logo: null, captains: [] }
+          ]
+        : []);
+  const [error, setError] = React.useState('');
 
   const handleChange = (idx, field, value) => {
-    setTeams(prev => {
-      const updated = [...prev];
-      updated[idx] = { ...updated[idx], [field]: value };
-      return updated;
-    });
+    const updated = [...teams];
+    updated[idx] = { ...updated[idx], [field]: value };
+    updateData({ teams: updated });
   };
 
   const handleAdd = () => {
-    setTeams(prev => [...prev, { name: '', coach: '', logo: null, captains: [] }]);
+    const updated = [...teams, { name: '', coach: '', logo: null, captains: [] }];
+    updateData({ teams: updated });
   };
 
   const handleRemove = (idx) => {
-    setTeams(prev => prev.length > 2 ? prev.filter((_, i) => i !== idx) : prev);
+    if (teams.length > 2) {
+      const updated = teams.filter((_, i) => i !== idx);
+      updateData({ teams: updated });
+    }
   };
 
   const validate = () => {
@@ -84,7 +91,6 @@ const TournamentTeams = ({ data, updateData, nextStep, prevStep }) => {
   const handleContinue = (e) => {
     e.preventDefault();
     if (validate()) {
-      updateData({ teams });
       nextStep();
     }
   };

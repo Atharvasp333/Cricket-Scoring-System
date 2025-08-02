@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 import { Components, Icons } from '../../exports';
+import CreateMatchPage from './CreateMatchPage';
 
 const {
   Card,
@@ -37,6 +38,7 @@ const MatchDetailPage = () => {
     const [match, setMatch] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
         const fetchMatch = async () => {
@@ -58,6 +60,12 @@ const MatchDetailPage = () => {
     const handleEditMatch = () => {
         // Navigate to edit match page
         navigate(`/organiser/matches/edit/${id}`);
+        setIsEditing(true);
+    };
+
+    const handleEditSubmit = (updatedMatch) => {
+        setMatch(updatedMatch);
+        setIsEditing(false);
     };
 
     const handleDeleteMatch = async () => {
@@ -117,6 +125,24 @@ const MatchDetailPage = () => {
                     </div>
                 </div>
             </div>
+        );
+    }
+
+    if (isEditing) {
+        // Convert match data to matchData shape for the form
+        const matchData = {
+            ...match,
+            dateTime: match.date && match.time ? `${match.date}T${match.time}` : '',
+            overs: match.total_overs,
+            powerplayOvers: match.powerplay_overs,
+            drsEnabled: match.drs_enabled,
+        };
+        return (
+            <CreateMatchPage
+                initialData={matchData}
+                isEdit={true}
+                onSubmit={handleEditSubmit}
+            />
         );
     }
 

@@ -64,7 +64,7 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
         }
         nextStep();
     };
-    
+
     const handleCaptainChange = (team, value) => {
         // Extract the captain object from the array if it's an array
         const captainObject = Array.isArray(value) ? value[0] : value;
@@ -132,6 +132,8 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
 
     return (
         <div>
+            <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Player Registration</h2>
+
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Team Captains Selection</h2>
             
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
@@ -155,7 +157,7 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
                     </div>
                 </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                     <div className="flex items-center mb-4">
