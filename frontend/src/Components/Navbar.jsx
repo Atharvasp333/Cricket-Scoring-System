@@ -12,48 +12,64 @@ const Navbar = () => {
   const { currentUser, userRole } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Initialize from localStorage or default to false
+    return localStorage.getItem('darkMode') === 'true' || false;
+  });
   const dropdownRef = useRef(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Dark theme CSS variables
-  const darkThemeStyles = {
-    '--primary-dark': '#A8FD24',
-    '--secondary-dark': '#D6F917',
-    '--secondary-alt-dark': '#FFFFFF',
-    '--neutral-dark': '#1E1E1E',
-    '--text-primary-dark': '#FFFFFF',
-    '--text-muted-dark': '#B3B3B3',
-    '--error-dark': '#ED1515',
-    '--success-dark': '#00C26B',
-    '--warning-dark': '#ED1515',
-    '--border-dark': '#B3AC9B',
-  };
-
-  // Apply dark theme styles
+  // Apply dark theme styles and persist preference
   useEffect(() => {
+    const root = document.documentElement;
+    
     if (darkMode) {
-      Object.entries(darkThemeStyles).forEach(([key, value]) => {
-        document.documentElement.style.setProperty(key, value);
-      });
-      document.documentElement.classList.add('dark');
+      // Apply dark theme
+      root.style.setProperty('--primary-dark', '#A8FD24');
+      root.style.setProperty('--secondary-dark', '#D6F917');
+      root.style.setProperty('--secondary-alt-dark', '#FFFFFF');
+      root.style.setProperty('--neutral-dark', '#1E1E1E');
+      root.style.setProperty('--text-primary-dark', '#FFFFFF');
+      root.style.setProperty('--text-muted-dark', '#B3B3B3');
+      root.style.setProperty('--error-dark', '#ED1515');
+      root.style.setProperty('--success-dark', '#00C26B');
+      root.style.setProperty('--warning-dark', '#ED1515');
+      root.style.setProperty('--border-dark', '#B3AC9B');
+      
+      root.classList.add('dark');
+      document.body.style.backgroundColor = '#1E1E1E';
+      document.body.style.color = '#FFFFFF';
     } else {
-      document.documentElement.classList.remove('dark');
-      // Reset to default light theme colors (original blue theme)
-      document.documentElement.style.setProperty('--primary-dark', '');
-      document.documentElement.style.setProperty('--secondary-dark', '');
-      // ... reset other dark theme variables if needed
+      // Reset to light theme
+      root.style.removeProperty('--primary-dark');
+      root.style.removeProperty('--secondary-dark');
+      root.style.removeProperty('--secondary-alt-dark');
+      root.style.removeProperty('--neutral-dark');
+      root.style.removeProperty('--text-primary-dark');
+      root.style.removeProperty('--text-muted-dark');
+      root.style.removeProperty('--error-dark');
+      root.style.removeProperty('--success-dark');
+      root.style.removeProperty('--warning-dark');
+      root.style.removeProperty('--border-dark');
+      
+      root.classList.remove('dark');
+      document.body.style.backgroundColor = '#ffffff';
+      document.body.style.color = '#000000';
     }
+    
+    // Persist preference
+    localStorage.setItem('darkMode', darkMode.toString());
   }, [darkMode]);
 
   const isActive = (path) => {
-    return location.pathname === path
+    const isCurrentPath = location.pathname === path;
+    return isCurrentPath
       ? darkMode
-        ? 'text-primary-dark font-medium'
+        ? 'text-[#A8FD24] font-medium'
         : 'text-white font-medium'
       : darkMode
-        ? 'text-text-primary-dark hover:text-primary-dark'
-        : 'text-white hover:text-gray-200';
+        ? 'text-white hover:text-[#A8FD24] transition-colors'
+        : 'text-white hover:text-gray-200 transition-colors';
   };
 
   const handleLogout = async () => {
@@ -107,11 +123,15 @@ const Navbar = () => {
     <>
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} darkMode={darkMode} />
 
-      <div className={`md:hidden w-full p-3 shadow-md flex justify-between items-center ${darkMode ? 'bg-neutral-dark' : 'bg-[#16638A]'}`}>
+      <div className={`md:hidden w-full p-3 shadow-md flex justify-between items-center transition-colors ${
+        darkMode ? 'bg-[#1E1E1E] border-b border-[#B3AC9B]/20' : 'bg-[#16638A]'
+      }`}>
         {/* Menu Button */}
         <button
           onClick={toggleSidebar}
-          className={`p-1 rounded-md focus:outline-none ${darkMode ? 'text-text-primary-dark' : 'text-white'}`}
+          className={`p-1 rounded-md focus:outline-none transition-colors ${
+            darkMode ? 'text-white hover:text-[#A8FD24]' : 'text-white hover:text-gray-200'
+          }`}
         >
           <FiMenu className="h-6 w-6" />
         </button>
@@ -129,14 +149,20 @@ const Navbar = () => {
         <div className="flex items-center space-x-3">
           <button
             onClick={toggleDarkMode}
-            className={`p-1 rounded-md focus:outline-none ${darkMode ? 'text-text-primary-dark' : 'text-white'}`}
+            className={`p-1 rounded-md focus:outline-none transition-colors ${
+              darkMode ? 'text-white hover:text-[#A8FD24]' : 'text-white hover:text-gray-200'
+            }`}
           >
             {darkMode ? <FiSun className="h-5 w-5" /> : <FiMoon className="h-5 w-5" />}
           </button>
 
           <div className="relative" ref={dropdownRef}>
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition ${darkMode ? 'bg-primary-dark text-neutral-dark' : 'bg-white text-[#16638A]'}`}
+              className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+                darkMode 
+                  ? 'bg-[#A8FD24] text-[#1E1E1E] hover:bg-[#D6F917]' 
+                  : 'bg-white text-[#16638A] hover:bg-gray-100'
+              }`}
               onClick={() => setShowDropdown(!showDropdown)}
             >
               {currentUser && currentUser.photoURL ? (
@@ -148,43 +174,55 @@ const Navbar = () => {
 
             {/* Mobile Dropdown Menu */}
             {showDropdown && (
-              <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-10 ${darkMode ? 'bg-neutral-dark border border-border-dark' : 'bg-white border border-gray-200'}`}>
+              <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-50 ${
+                darkMode 
+                  ? 'bg-[#1E1E1E] border border-[#B3AC9B]/20' 
+                  : 'bg-white border border-gray-200'
+              }`}>
                 {currentUser ? (
                   <>
-                    {/* User Info Section - Clickable for players */}
+                    {/* User Info Section */}
                     <div 
-                      className={`px-4 py-2 text-sm border-b ${darkMode ? 'border-border-dark' : 'border-gray-200'} ${
-                        userRole === 'player' ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-800' : ''
-                      }`}
+                      className={`px-4 py-2 text-sm border-b ${
+                        darkMode ? 'border-[#B3AC9B]/20' : 'border-gray-200'
+                      } ${userRole === 'player' ? 'cursor-pointer hover:bg-opacity-10 hover:bg-gray-500' : ''}`}
                       onClick={userRole === 'player' ? handleProfileClick : undefined}
                     >
-                      <p className={`font-medium ${darkMode ? 'text-text-primary-dark' : 'text-gray-800'}`}>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                         {currentUser.displayName || 'User'}
                       </p>
-                      <p className={`text-xs ${darkMode ? 'text-text-muted-dark' : 'text-gray-500'}`}>
+                      <p className={`text-xs ${darkMode ? 'text-[#B3B3B3]' : 'text-gray-500'}`}>
                         {currentUser.email}
                       </p>
-                      <p className={`text-xs capitalize mt-1 ${darkMode ? 'text-text-muted-dark' : 'text-gray-500'}`}>
+                      <p className={`text-xs capitalize mt-1 ${darkMode ? 'text-[#B3B3B3]' : 'text-gray-500'}`}>
                         Role: {userRole || 'Viewer'}
                       </p>
                       {userRole === 'player' && (
-                        <p className={`text-xs mt-1 ${darkMode ? 'text-primary-dark' : 'text-blue-600'}`}>
+                        <p className={`text-xs mt-1 ${darkMode ? 'text-[#A8FD24]' : 'text-blue-600'}`}>
                           Click to view profile
                         </p>
                       )}
                     </div>
                     
-                    {/* View Profile Button for all users */}
+                    {/* View Profile Button */}
                     <button
                       onClick={handleProfileClick}
-                      className={`block w-full text-left px-4 py-2 text-sm flex items-center ${darkMode ? 'text-text-primary-dark hover:bg-neutral-dark/50' : 'text-gray-700 hover:bg-gray-100'}`}
+                      className={`block w-full text-left px-4 py-2 text-sm flex items-center transition-colors ${
+                        darkMode 
+                          ? 'text-white hover:bg-[#B3AC9B]/10' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
                     >
                       <FiUser className="mr-2" /> View Profile
                     </button>
 
                     <button
                       onClick={handleLogout}
-                      className={`block w-full text-left px-4 py-2 text-sm flex items-center ${darkMode ? 'text-text-primary-dark hover:bg-neutral-dark/50' : 'text-gray-700 hover:bg-gray-100'}`}
+                      className={`block w-full text-left px-4 py-2 text-sm flex items-center transition-colors ${
+                        darkMode 
+                          ? 'text-white hover:bg-[#B3AC9B]/10' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
                     >
                       <FiLogOut className="mr-2" /> Sign out
                     </button>
@@ -193,14 +231,22 @@ const Navbar = () => {
                   <>
                     <Link
                       to="/login"
-                      className={`block px-4 py-2 text-sm ${darkMode ? 'text-text-primary-dark hover:bg-neutral-dark/50' : 'text-gray-700 hover:bg-gray-100'}`}
+                      className={`block px-4 py-2 text-sm transition-colors ${
+                        darkMode 
+                          ? 'text-white hover:bg-[#B3AC9B]/10' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
                       onClick={() => setShowDropdown(false)}
                     >
                       Sign in
                     </Link>
                     <Link
                       to="/signup"
-                      className={`block px-4 py-2 text-sm ${darkMode ? 'text-text-primary-dark hover:bg-neutral-dark/50' : 'text-gray-700 hover:bg-gray-100'}`}
+                      className={`block px-4 py-2 text-sm transition-colors ${
+                        darkMode 
+                          ? 'text-white hover:bg-[#B3AC9B]/10' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
                       onClick={() => setShowDropdown(false)}
                     >
                       Sign up
@@ -217,7 +263,9 @@ const Navbar = () => {
 
   // Desktop Navigation
   const DesktopNav = () => (
-    <nav className={`hidden md:block w-full p-4 shadow-md ${darkMode ? 'bg-neutral-dark' : 'bg-[#16638A]'}`}>
+    <nav className={`hidden md:block w-full p-4 shadow-md transition-colors ${
+      darkMode ? 'bg-[#1E1E1E] border-b border-[#B3AC9B]/20' : 'bg-[#16638A]'
+    }`}>
       <div className="mx-auto flex gap-10 justify-between items-center">
         {/* Left side - Logo */}
         <div className="flex items-center">
@@ -293,14 +341,20 @@ const Navbar = () => {
           <div className="flex items-center space-x-4">
             <button
               onClick={toggleDarkMode}
-              className={`p-1 rounded-md focus:outline-none ${darkMode ? 'text-text-primary-dark' : 'text-white'}`}
+              className={`p-1 rounded-md focus:outline-none transition-colors ${
+                darkMode ? 'text-white hover:text-[#A8FD24]' : 'text-white hover:text-gray-200'
+              }`}
             >
               {darkMode ? <FiSun className="h-5 w-5" /> : <FiMoon className="h-5 w-5" />}
             </button>
 
             <div className="relative" ref={dropdownRef}>
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition ${darkMode ? 'bg-primary-dark text-neutral-dark' : 'bg-white text-[#16638A]'}`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+                  darkMode 
+                    ? 'bg-[#A8FD24] text-[#1E1E1E] hover:bg-[#D6F917]' 
+                    : 'bg-white text-[#16638A] hover:bg-gray-100'
+                }`}
                 onClick={() => setShowDropdown(!showDropdown)}
               >
                 {currentUser && currentUser.photoURL ? (
@@ -312,43 +366,55 @@ const Navbar = () => {
 
               {/* Desktop Dropdown Menu */}
               {showDropdown && (
-                <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-10 ${darkMode ? 'bg-neutral-dark border border-border-dark' : 'bg-white border border-gray-200'}`}>
+                <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-50 ${
+                  darkMode 
+                    ? 'bg-[#1E1E1E] border border-[#B3AC9B]/20' 
+                    : 'bg-white border border-gray-200'
+                }`}>
                   {currentUser ? (
                     <>
-                      {/* User Info Section - Clickable for players */}
+                      {/* User Info Section */}
                       <div 
-                        className={`px-4 py-2 text-sm border-b ${darkMode ? 'border-border-dark' : 'border-gray-200'} ${
-                          userRole === 'player' ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-800' : ''
-                        }`}
+                        className={`px-4 py-2 text-sm border-b ${
+                          darkMode ? 'border-[#B3AC9B]/20' : 'border-gray-200'
+                        } ${userRole === 'player' ? 'cursor-pointer hover:bg-opacity-10 hover:bg-gray-500' : ''}`}
                         onClick={userRole === 'player' ? handleProfileClick : undefined}
                       >
-                        <p className={`font-medium ${darkMode ? 'text-text-primary-dark' : 'text-gray-800'}`}>
+                        <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                           {currentUser.displayName || 'User'}
                         </p>
-                        <p className={`text-xs ${darkMode ? 'text-text-muted-dark' : 'text-gray-500'}`}>
+                        <p className={`text-xs ${darkMode ? 'text-[#B3B3B3]' : 'text-gray-500'}`}>
                           {currentUser.email}
                         </p>
-                        <p className={`text-xs capitalize mt-1 ${darkMode ? 'text-text-muted-dark' : 'text-gray-500'}`}>
+                        <p className={`text-xs capitalize mt-1 ${darkMode ? 'text-[#B3B3B3]' : 'text-gray-500'}`}>
                           Role: {userRole || 'Viewer'}
                         </p>
                         {userRole === 'player' && (
-                          <p className={`text-xs mt-1 ${darkMode ? 'text-primary-dark' : 'text-blue-600'}`}>
+                          <p className={`text-xs mt-1 ${darkMode ? 'text-[#A8FD24]' : 'text-blue-600'}`}>
                             Click to view profile
                           </p>
                         )}
                       </div>
                       
-                      {/* View Profile Button for all users */}
+                      {/* View Profile Button */}
                       <button
                         onClick={handleProfileClick}
-                        className={`block w-full text-left px-4 py-2 text-sm flex items-center ${darkMode ? 'text-text-primary-dark hover:bg-neutral-dark/50' : 'text-gray-700 hover:bg-gray-100'}`}
+                        className={`block w-full text-left px-4 py-2 text-sm flex items-center transition-colors ${
+                          darkMode 
+                            ? 'text-white hover:bg-[#B3AC9B]/10' 
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
                       >
                         <FiUser className="mr-2" /> View Profile
                       </button>
 
                       <button
                         onClick={handleLogout}
-                        className={`block w-full text-left px-4 py-2 text-sm flex items-center ${darkMode ? 'text-text-primary-dark hover:bg-neutral-dark/50' : 'text-gray-700 hover:bg-gray-100'}`}
+                        className={`block w-full text-left px-4 py-2 text-sm flex items-center transition-colors ${
+                          darkMode 
+                            ? 'text-white hover:bg-[#B3AC9B]/10' 
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
                       >
                         <FiLogOut className="mr-2" /> Sign out
                       </button>
@@ -357,14 +423,22 @@ const Navbar = () => {
                     <>
                       <Link
                         to="/login"
-                        className={`block px-4 py-2 text-sm ${darkMode ? 'text-text-primary-dark hover:bg-neutral-dark/50' : 'text-gray-700 hover:bg-gray-100'}`}
+                        className={`block px-4 py-2 text-sm transition-colors ${
+                          darkMode 
+                            ? 'text-white hover:bg-[#B3AC9B]/10' 
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
                         onClick={() => setShowDropdown(false)}
                       >
                         Sign in
                       </Link>
                       <Link
                         to="/signup"
-                        className={`block px-4 py-2 text-sm ${darkMode ? 'text-text-primary-dark hover:bg-neutral-dark/50' : 'text-gray-700 hover:bg-gray-100'}`}
+                        className={`block px-4 py-2 text-sm transition-colors ${
+                          darkMode 
+                            ? 'text-white hover:bg-[#B3AC9B]/10' 
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
                         onClick={() => setShowDropdown(false)}
                       >
                         Sign up
@@ -382,7 +456,9 @@ const Navbar = () => {
 
   // Mobile Bottom Navigation
   const MobileBottomNav = () => (
-    <div className={`md:hidden fixed bottom-0 left-0 right-0 shadow-lg z-40 ${darkMode ? 'bg-neutral-dark' : 'bg-[#16638A]'}`}>
+    <div className={`md:hidden fixed bottom-0 left-0 right-0 shadow-lg z-40 transition-colors ${
+      darkMode ? 'bg-[#1E1E1E] border-t border-[#B3AC9B]/20' : 'bg-[#16638A]'
+    }`}>
       <ul className="flex justify-around items-center p-2">
         <li className="flex-1 text-center">
           <Link
