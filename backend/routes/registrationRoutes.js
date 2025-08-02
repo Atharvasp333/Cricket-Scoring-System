@@ -54,17 +54,20 @@ router.post('/', verifyToken, async (req, res) => {
       registrationData.matchId = new mongoose.Types.ObjectId(registrationData.matchId);
     }
     
-    // Check if user already registered for this event
-    const existingRegistration = await Registration.findOne({
-      userId: registrationData.userId,
-      $or: [
-        { tournamentId: registrationData.tournamentId },
-        { matchId: registrationData.matchId }
-      ]
-    });
+    // Check if user already registered for this specific event
+    let existingRegistrationQuery = { userId: registrationData.userId };
+    
+    // Add the specific event ID to the query
+    if (registrationData.registrationType === 'tournament') {
+      existingRegistrationQuery.tournamentId = registrationData.tournamentId;
+    } else {
+      existingRegistrationQuery.matchId = registrationData.matchId;
+    }
+    
+    const existingRegistration = await Registration.findOne(existingRegistrationQuery);
     
     if (existingRegistration) {
-      console.log('User already registered for this event:', existingRegistration._id);
+      console.log('User already registered for this specific event:', existingRegistration._id);
       return res.status(400).json({ error: 'You have already registered for this event' });
     }
     
@@ -270,7 +273,8 @@ router.put('/:id/status', verifyToken, async (req, res) => {
             match[teamKey].push({
               userId: registration.userId,
               name: registration.playerName,
-              role: registration.role,
+              // Convert 'Wicket-Keeper' role to 'All-Rounder' or another valid role
+              role: registration.role === 'Wicket-Keeper' ? 'All-Rounder' : registration.role,
               isCaptain: registration.isCaptain,
               isWicketKeeper: registration.isWicketKeeper,
               status: 'approved',

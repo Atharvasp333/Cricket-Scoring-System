@@ -78,15 +78,19 @@ const MatchSetup = () => {
   // Handle team selection submission
   const handleTeamSelectionSubmit = (e) => {
     e.preventDefault();
-    // Check if both teams have equal number of players and at least 2 players each
-    if (team1Players.length >= 2 && team2Players.length >= 2 && team1Players.length === team2Players.length) {
+    // Check if both teams have equal number of players and at most 11 players each
+    if (team1Players.length > 0 && team2Players.length > 0 && team1Players.length === team2Players.length) {
+      if (team1Players.length > 11) {
+        setError("Each team can have at most 11 players including captain and wicket-keeper");
+        return;
+      }
       setTeamSelectionCompleted(true);
     } else if (team1Players.length !== team2Players.length) {
-      alert('Both teams must have equal number of players');
+      setError("Both teams must have an equal number of players");
     } else {
-      alert('Each team must have at least 2 players');
+      setError("Each team must have at least one player");
     }
-  };
+};
 
   // Handle player selection for team 1
   const handleTeam1PlayerSelection = (player) => {

@@ -103,15 +103,17 @@ router.get('/available', verifyToken, async (req, res) => {
   }
 });
 
-// Get matches by scorer email (only for matches organized by the logged-in user)
+// Get matches by scorer email (accessible to all authenticated users)
 router.get('/scorer/:email', verifyToken, async (req, res) => {
   try {
     const { email } = req.params;
-    console.log(`Getting matches for scorer ${email} and organizer ${req.user.uid}`);
+    console.log(`Getting matches for scorer ${email}`);
+    
+    // Remove the organizerId filter to allow scorers to see all matches assigned to them
     const matches = await Match.find({ 
-      organizerId: req.user.uid,
       scorers: email 
     }).sort({ date: 1, time: 1 });
+    
     console.log(`Found ${matches.length} matches for scorer ${email}`);
     res.json(matches);
   } catch (err) {

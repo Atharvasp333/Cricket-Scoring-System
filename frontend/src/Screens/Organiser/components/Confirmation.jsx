@@ -53,7 +53,7 @@ const Confirmation = ({ data, prevStep, submit }) => {
                                 {data.team1_captains && data.team1_captains.length > 0 ? (
                                     <div className="flex items-center">
                                         <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 mr-2">C</span>
-                                        {typeof data.team1_captains[0] === 'object' ? data.team1_captains[0].displayName : data.team1_captains[0]}
+                                        {typeof data.team1_captains[0] === 'object' ? data.team1_captains[0].name : data.team1_captains[0]}
                                     </div>
                                 ) : (
                                     <span className="text-gray-500">No captain assigned</span>
@@ -68,7 +68,7 @@ const Confirmation = ({ data, prevStep, submit }) => {
                                 {data.team2_captains && data.team2_captains.length > 0 ? (
                                     <div className="flex items-center">
                                         <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 mr-2">C</span>
-                                        {typeof data.team2_captains[0] === 'object' ? data.team2_captains[0].displayName : data.team2_captains[0]}
+                                        {typeof data.team2_captains[0] === 'object' ? data.team2_captains[0].name : data.team2_captains[0]}
                                     </div>
                                 ) : (
                                     <span className="text-gray-500">No captain assigned</span>

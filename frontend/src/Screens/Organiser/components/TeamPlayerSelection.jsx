@@ -66,10 +66,59 @@ const TeamPlayerSelection = ({ data, setData, nextStep, prevStep }) => {
     };
     
     const handleCaptainChange = (team, value) => {
+        // Extract the captain object from the array if it's an array
+        const captainObject = Array.isArray(value) ? value[0] : value;
+        
         if (team === 1) {
-            setData(prev => ({ ...prev, team1_captains: value ? [value] : [] }));
+            setData(prev => {
+                // Add captain to team1_players if not already there
+                const captainAlreadyInPlayers = prev.team1_players?.some(p => 
+                    (p.userId === captainObject?.id));
+                
+                let updatedPlayers = [...(prev.team1_players || [])];
+                if (captainObject && !captainAlreadyInPlayers) {
+                    updatedPlayers.push({
+                        userId: captainObject.id,
+                        name: captainObject.name,
+                        role: 'Batsman',
+                        isCaptain: true,
+                        isWicketKeeper: false,
+                        status: 'approved',
+                        approvedBy: 'organiser'
+                    });
+                }
+                
+                return { 
+                    ...prev, 
+                    team1_captains: captainObject ? [captainObject] : [], // Store as a simple array
+                    team1_players: updatedPlayers
+                };
+            });
         } else {
-            setData(prev => ({ ...prev, team2_captains: value ? [value] : [] }));
+            setData(prev => {
+                // Add captain to team2_players if not already there
+                const captainAlreadyInPlayers = prev.team2_players?.some(p => 
+                    (p.userId === captainObject?.id));
+                
+                let updatedPlayers = [...(prev.team2_players || [])];
+                if (captainObject && !captainAlreadyInPlayers) {
+                    updatedPlayers.push({
+                        userId: captainObject.id,
+                        name: captainObject.name,
+                        role: 'Batsman',
+                        isCaptain: true,
+                        isWicketKeeper: false,
+                        status: 'approved',
+                        approvedBy: 'organiser'
+                    });
+                }
+                
+                return { 
+                    ...prev, 
+                    team2_captains: captainObject ? [captainObject] : [], // Store as a simple array
+                    team2_players: updatedPlayers
+                };
+            });
         }
     };
 

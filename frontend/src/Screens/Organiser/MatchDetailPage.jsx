@@ -56,9 +56,8 @@ const MatchDetailPage = () => {
     }, [id]);
 
     const handleEditMatch = () => {
-        // Navigate to edit match page or implement inline editing
-        // This is a placeholder for future functionality
-        console.log('Edit match clicked');
+        // Navigate to edit match page
+        navigate(`/organiser/matches/edit/${id}`);
     };
 
     const handleDeleteMatch = async () => {
@@ -197,11 +196,13 @@ const MatchDetailPage = () => {
                             <div className="bg-gray-50 p-4 rounded-lg">
                                 <div className="flex flex-col mb-3">
                                     <h4 className="text-md font-medium text-gray-900">{match.team1_name}</h4>
-                                    {match.team1_players && match.team1_players.find(player => player.isCaptain) ? (
+                                    {match.team1_captains && match.team1_captains.length > 0 && match.team1_captains[0] ? (
                                         <div className="flex items-center mt-1">
                                             <span className="text-sm text-gray-600">Captain: </span>
                                             <span className="ml-1 text-sm font-medium text-gray-900">
-                                                {match.team1_players.find(player => player.isCaptain)?.name}
+                                                {Array.isArray(match.team1_captains[0]) && match.team1_captains[0][0] ? 
+                                                    match.team1_captains[0][0].name : 
+                                                    (typeof match.team1_captains[0] === 'object' ? match.team1_captains[0].name : 'Unknown')}
                                             </span>
                                         </div>
                                     ) : (
@@ -233,11 +234,13 @@ const MatchDetailPage = () => {
                             <div className="bg-gray-50 p-4 rounded-lg">
                                 <div className="flex flex-col mb-3">
                                     <h4 className="text-md font-medium text-gray-900">{match.team2_name}</h4>
-                                    {match.team2_players && match.team2_players.find(player => player.isCaptain) ? (
+                                    {match.team2_captains && match.team2_captains.length > 0 && match.team2_captains[0] ? (
                                         <div className="flex items-center mt-1">
                                             <span className="text-sm text-gray-600">Captain: </span>
                                             <span className="ml-1 text-sm font-medium text-gray-900">
-                                                {match.team2_players.find(player => player.isCaptain)?.name}
+                                                {Array.isArray(match.team2_captains[0]) && match.team2_captains[0][0] ? 
+                                                    match.team2_captains[0][0].name : 
+                                                    (typeof match.team2_captains[0] === 'object' ? match.team2_captains[0].name : 'Unknown')}
                                             </span>
                                         </div>
                                     ) : (

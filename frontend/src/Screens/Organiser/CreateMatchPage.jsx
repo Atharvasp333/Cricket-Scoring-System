@@ -44,6 +44,11 @@ const CreateMatchPage = () => {
 
     const submitMatch = async () => {
         console.log('Submitting match:', matchData);
+        console.log('Team 1 Captains structure:', JSON.stringify(matchData.team1_captains));
+        console.log('Team 1 Players structure:', JSON.stringify(matchData.team1_players));
+        console.log('Team 2 Captains structure:', JSON.stringify(matchData.team2_captains));
+        console.log('Team 2 Players structure:', JSON.stringify(matchData.team2_players));
+        
         // Validate required fields
         if (!matchData.match_name || !matchData.team1_name || !matchData.team2_name || !matchData.dateTime || !matchData.venue) {
             alert('Please fill in all required fields: Match Name, Team 1, Team 2, Venue, and Date/Time.');
@@ -98,6 +103,12 @@ const CreateMatchPage = () => {
             navigate('/organiser-homepage', { state: { refresh: true } });
         } catch (err) {
             console.error('Failed to create match:', err);
+            // Add more detailed error logging
+            if (err.response) {
+                console.error('Error response data:', JSON.stringify(err.response.data));
+                console.error('Error response status:', err.response.status);
+                console.error('Error response headers:', err.response.headers);
+            }
             const errorMessage = err.response?.data?.error || err.response?.data?.details || err.message || 'Please try again.';
             alert('Failed to create match: ' + errorMessage);
         }
