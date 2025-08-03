@@ -1506,6 +1506,7 @@ const Scoring = () => {
       legByes: 0,
       total: 0
     },
+    isFreeHit: false,
     matchStatus: 'Live'
   });
 
@@ -2002,18 +2003,41 @@ const Scoring = () => {
   }, []);
 
   // Helper function to get ball display text
-  const getBallDisplayText = (runs, isExtra, extraType, isWicket, shotDirection) => {
-    if (isWicket) return 'W';
+  const getBallDisplayText = (runs, isExtra, extraType, isWicket, shotDirection, isFreeHit, shouldAllowWicket) => {
+    let displayText = '';
+    
+    // Handle extras first
     if (isExtra) {
       switch (extraType) {
-        case 'wide': return runs > 0 ? `Wd+${runs}` : 'Wd';
-        case 'no-ball': return runs > 0 ? `Nb+${runs}` : 'Nb';
-        case 'bye': return runs > 0 ? `B+${runs}` : 'B';
-        case 'leg-bye': return runs > 0 ? `Lb+${runs}` : 'Lb';
-        default: return 'E';
+        case 'wide': 
+          displayText = runs > 0 ? `Wd+${runs}` : 'Wd';
+          break;
+        case 'no-ball': 
+          displayText = runs > 0 ? `Nb+${runs}` : 'Nb';
+          break;
+        case 'bye': 
+          displayText = runs > 0 ? `B+${runs}` : 'B';
+          break;
+        case 'leg-bye': 
+          displayText = runs > 0 ? `Lb+${runs}` : 'Lb';
+          break;
+        default: 
+          displayText = 'E';
+          break;
       }
+    } else if (runs !== null) {
+      displayText = runs.toString();
     }
-    return runs !== null ? runs.toString() : '';
+    
+    // Add wicket indicator if wicket fell and is allowed
+    if (isWicket && shouldAllowWicket) {
+      displayText += 'W';
+    } else if (isWicket && isFreeHit && !shouldAllowWicket) {
+      // On free hit, show that wicket was prevented
+      displayText += 'Nb'; // Show as no-ball (free hit) without wicket
+    }
+    
+    return displayText;
   };
 
   // Handle submit ball
@@ -2076,7 +2100,8 @@ const Scoring = () => {
                 ...prev.extras,
                 noBalls: prev.extras.noBalls + 1,
                 total: prev.extras.total + runsToAdd
-              }
+              },
+              isFreeHit: true // Set free hit for next ball
             }));
             break;
           case 'bye':
@@ -2117,12 +2142,15 @@ const Scoring = () => {
         bowler: matchState.currentBowler.name,
         batsman: matchState.striker.name,
         shotDirection: uiState.selectedShotDirection,
+        isFreeHit: matchState.isFreeHit,
         displayText: getBallDisplayText(
           uiState.runsScored,
           uiState.isExtra,
           uiState.extraType,
           uiState.isWicket,
-          uiState.selectedShotDirection
+          uiState.selectedShotDirection,
+          matchState.isFreeHit,
+          shouldAllowWicket
         ),
         timestamp: new Date().toISOString()
       };
@@ -2139,15 +2167,27 @@ const Scoring = () => {
         score: prev.score + runsToAdd
       }));
 
-      // Update wickets if wicket fell
-      if (uiState.isWicket) {
+      // Check if this is a free hit and handle wicket prevention
+      const isFreeHitInEffect = matchState.isFreeHit;
+      let shouldAllowWicket = true;
+      
+      if (isFreeHitInEffect && uiState.isWicket && uiState.wicketType !== 'Run Out') {
+        // On free hit, only run out is allowed as a wicket
+        shouldAllowWicket = false;
+        // Don't update wickets, don't mark batsman as out, don't show new batsman modal
+      }
+
+      // Update wickets if wicket fell and is allowed
+      if (uiState.isWicket && shouldAllowWicket) {
         setMatchState(prev => ({
           ...prev,
           wickets: prev.wickets + 1
         }));
 
-        // Mark batsman as out
-        updateBatsmanStats(matchState.striker.name, { isOut: true });
+        // For run-outs, mark non-striker as out (since striker would be safe)
+        // For all other wicket types, mark striker as out
+        const batsmanToMarkOut = uiState.wicketType === 'Run Out' ? matchState.nonStriker : matchState.striker;
+        updateBatsmanStats(batsmanToMarkOut.name, { isOut: true });
       }
 
       // Update batsman stats for legal deliveries or no-balls
@@ -2192,8 +2232,8 @@ const Scoring = () => {
         // Add runs conceded
         updatedBowler.runs += runsToAdd;
 
-        // Add wickets
-        if (uiState.isWicket) {
+        // Add wickets (except for run-outs, which don't credit the bowler, and prevented wickets on free hits)
+        if (uiState.isWicket && uiState.wicketType !== 'Run Out' && shouldAllowWicket) {
           updatedBowler.wickets += 1;
         }
 
@@ -2206,9 +2246,32 @@ const Scoring = () => {
         const oversBowled = updatedBowler.balls / 6;
         updatedBowler.economy = oversBowled > 0 ? parseFloat((updatedBowler.runs / oversBowled).toFixed(2)) : 0;
 
-        // Check for maiden over
-        if (isLegalDelivery && matchState.balls === 5 && updatedBowler.runs === 0) {
-          updatedBowler.maidens += 1;
+        // Check for maiden over (6 legal balls with 0 runs in the over)
+        if (isLegalDelivery && matchState.balls === 6) {
+          // Check if this over had 0 runs (maiden over)
+          const currentOverRuns = matchState.currentOver.reduce((total, ball) => {
+            if (ball.isExtra) {
+              // For extras, add the extra runs plus any additional runs
+              switch (ball.extraType) {
+                case 'wide':
+                  return total + 1 + (ball.runs || 0);
+                case 'no-ball':
+                  return total + 1 + (ball.runs || 0);
+                case 'bye':
+                case 'leg-bye':
+                  return total + (ball.runs || 0);
+                default:
+                  return total + (ball.runs || 0);
+              }
+            } else {
+              // For legal deliveries, add the runs scored
+              return total + (ball.runs || 0);
+            }
+          }, 0);
+          
+          if (currentOverRuns === 0) {
+            updatedBowler.maidens += 1;
+          }
         }
 
         setMatchState(prev => ({
@@ -2229,13 +2292,13 @@ const Scoring = () => {
       }
 
       // Check if over is complete and end over automatically
-      if (isLegalDelivery && matchState.balls === 5) {
+      if (isLegalDelivery && matchState.balls === 6) {
         handleEndOver();
       }
 
       // Check if innings is over
       if (matchState.wickets === 10 ||
-        (matchData?.total_overs && matchState.overs === matchData.total_overs - 1 && matchState.balls === 5 && isLegalDelivery)) {
+        (matchData?.total_overs && matchState.overs === matchData.total_overs - 1 && matchState.balls === 6 && isLegalDelivery)) {
         // End of innings
         if (matchState.innings === 1) {
           // Set target for second innings
@@ -2254,7 +2317,9 @@ const Scoring = () => {
       }
 
       // Swap striker if odd runs on legal delivery that counts against batsman
-      if (uiState.runsScored && uiState.runsScored % 2 === 1 && isBatsmanDelivery) {
+      // or if odd runs on leg-byes (batsmen swap ends for leg-byes)
+      if (uiState.runsScored && uiState.runsScored % 2 === 1 && 
+          (isBatsmanDelivery || (uiState.isExtra && uiState.extraType === 'leg-bye'))) {
         setMatchState(prev => ({
           ...prev,
           striker: prev.nonStriker,
@@ -2274,8 +2339,16 @@ const Scoring = () => {
         selectedShotDirection: null
       }));
 
-      // Show new batsman modal if a wicket fell
-      if (uiState.isWicket) {
+      // Reset free hit status after the free hit ball is bowled
+      if (matchState.isFreeHit) {
+        setMatchState(prev => ({
+          ...prev,
+          isFreeHit: false
+        }));
+      }
+
+      // Show new batsman modal if a wicket fell, innings is not over, and wicket is allowed
+      if (uiState.isWicket && matchState.wickets < 10 && shouldAllowWicket) {
         setUiState(prev => ({ ...prev, showNewBatsmanModal: true }));
       }
 
